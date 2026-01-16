@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Auth\LoginController;
 
-Route::get('/', function () {
-    return view('main');
-});
+Route::get('/login', [LoginController::class, 'validasiLogin'])->name('login');
+Route::post('/login', [LoginController::class, 'simpanData'])->name('login.attempt');
 
-Route::get('/stok', function () {
-    return view('stok');
-});
+// Contoh halaman setelah login
+Route::get('/dashboard', function () {
+    return 'Dashboard';
+})->middleware('auth')->name('dashboard');
