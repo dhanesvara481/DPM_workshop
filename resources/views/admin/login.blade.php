@@ -21,9 +21,9 @@
                         </svg>
                     </div>
                     <h1 class="text-2xl font-bold text-white tracking-tight">
-                        Welcome Back
+                        Selamat Datang Admin
                     </h1>
-                    <p class="text-slate-300 text-sm mt-2">Sign in to continue to your account</p>
+                    <p class="text-slate-300 text-sm mt-2">Masukan username dan password</p>
                 </div>
 
                 <!-- Form -->
@@ -125,7 +125,7 @@
 
             <!-- Bottom Text -->
             <p class="text-center mt-6 text-sm text-slate-500">
-                © 2025 Your Company. All rights reserved.
+                © DPW Workshop 2025
             </p>
         </div>
     </div>
