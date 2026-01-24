@@ -7,11 +7,25 @@ use Illuminate\Http\Request;
 class BarangController extends Controller
 {
     /**
-     * view aka tampilan.
+     *tampilan.kelola_barang.
      */
-    public function index()
+    public function getBarang()
     {
-        //
+        //View barang
+         return view('admin.mengelola_barang.tampilan_barang', [
+        'barangs' => [],
+    ]);
+    }
+
+       /**
+     *tampilan.tambah_barang.
+     */
+    public function getTambahBarang()
+    {
+        //View barang
+         return view('admin.mengelola_barang.tambah_barang', [
+        'barangs' => [],
+    ]);
     }
 
     /**
