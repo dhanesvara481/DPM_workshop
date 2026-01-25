@@ -12,12 +12,14 @@
 
     {{-- ================= SIDEBAR (same vibe) ================= --}}
    {{-- SIDEBAR (SAMA PERSIS STYLE TAMPILAN BARANG) --}}
-    <aside class="w-[280px] shrink-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-r border-white/5">
+    <aside class="relative w-[280px] shrink-0 text-white border-r border-white/5 overflow-hidden
+              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        
+              
         <div class="h-16 px-5 flex items-center gap-3 border-b border-white/10">
             <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
                 {{-- Optional: logo kecil --}}
-                {{-- <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo"> --}}
-                <span class="text-xs font-semibold text-white/80">DPW</span>
+                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
             </div>
             <div class="leading-tight">
                 <p class="font-semibold tracking-tight">DPM Workshop</p>
@@ -54,7 +56,7 @@
 
                     {{-- Kelola Barang --}}
                     <a href="{{ route('mengelola_barang') ?? '#' }}"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- box --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -71,7 +73,7 @@
                     <div class="mt-2 ml-4 pl-4 border-l border-white/10 space-y-1">
 
                         <a href="{{ route('tambah_barang') ?? '#' }}"
-                        class="group flex items-center gap-3 rounded-xl px-4 py-2 text-[13px]
+                        class="nav-glow {{ request()->routeIs('tambah_barang') ? 'is-active' : '' }} group flex items-center gap-3 rounded-xl px-4 py-2 text-[13px]
                                 text-white/75 hover:text-white hover:bg-white/10 transition
                                 {{ request()->routeIs('tambah_barang') ? 'bg-white/12 text-white border border-white/10' : '' }}">
                             <span class="h-7 w-7 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
@@ -86,7 +88,7 @@
                     {{-- Akhir Children --}}
                     
                     <a href="#"
-                    class="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- arrow out --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -98,7 +100,7 @@
                     </a>
 
                     <a href="#"
-                    class="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- arrow in --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -114,7 +116,7 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
                     <a href="#"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- clock --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -126,7 +128,7 @@
                     </a>
 
                     <a href="#"
-                    class="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- receipt --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -138,7 +140,7 @@
                     </a>
 
                     <a href="#"
-                    class="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- chart --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -157,7 +159,7 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
                     <a href="#"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- calendar --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -168,7 +170,7 @@
                     </a>
 
                     <a href="#"
-                    class="mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- users --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -184,7 +186,7 @@
 
                 <div class="mt-4 pt-4 border-t border-white/10">
                     <a href="#"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- logout --}}
                             <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -264,137 +266,167 @@
                     </div>
 
                     {{-- FORM --}}
-                    <form id="formBarang" method="POST" action="#" class="px-6 py-6">
-                        @csrf
+                   <form id="formBarang" method="POST" action="#" class="px-6 py-6">
+                    @csrf
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {{-- Kode Barang --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">KODE BARANG</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h10"/>
-                                        </svg>
-                                    </span>
-                                    <input id="kode_barang" name="kode_barang" type="text" required
-                                           placeholder="Contoh: BRG-001"
-                                           class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                  placeholder:text-slate-400
-                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                    <button type="button" id="btnGenerate"
-                                            class="absolute inset-y-0 right-0 mr-2 my-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold">
-                                        Auto
-                                    </button>
-                                </div>
-                                <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode cepat.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                        {{-- Kode Barang --}}
+                        <div class="field">
+                            <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">KODE BARANG</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h10"/>
+                                    </svg>
+                                </span>
+                                <input id="kode_barang" name="kode_barang" type="text" required
+                                    placeholder="Contoh: BRG-001"
+                                    class="w-full pl-9 pr-20 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
+                                            placeholder:text-slate-400
+                                            focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                <button type="button" id="btnGenerate"
+                                        class="absolute inset-y-0 right-0 mr-2 my-2 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold">
+                                    Auto
+                                </button>
                             </div>
+                            <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode cepat.</p>
+                        </div>
 
-                            {{-- Nama Barang --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">NAMA BARANG</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V8a2 2 0 012-2h6a2 2 0 012 2v8"/>
-                                        </svg>
-                                    </span>
-                                    <input id="nama_barang" name="nama_barang" type="text" required
-                                           placeholder="Contoh: Oli Mesin"
-                                           class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                  placeholder:text-slate-400
-                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                </div>
-                            </div>
-
-                            {{-- Satuan --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">SATUAN</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6M9 12h6M9 17h6"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h14v16H5z"/>
-                                        </svg>
-                                    </span>
-                                    <select id="satuan" name="satuan" required
-                                            class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                   focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                        <option value="" selected disabled>Pilih satuan</option>
-                                        <option value="pcs">pcs</option>
-                                        <option value="unit">unit</option>
-                                        <option value="botol">botol</option>
-                                        <option value="liter">liter</option>
-                                        <option value="set">set</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {{-- Total Stok --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">TOTAL STOK</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
-                                        </svg>
-                                    </span>
-                                    <input id="total_stok" name="total_stok" type="number" min="0" value="0" required
-                                           class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                </div>
-                            </div>
-
-                            {{-- Harga Beli --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA BELI</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
-                                    <input id="harga_beli" name="harga_beli" type="text" inputmode="numeric" required
-                                           placeholder="0"
-                                           class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                  placeholder:text-slate-400
-                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                </div>
-                                <p class="mt-2 text-[11px] text-slate-500">Masukkan harga dalam format angka.</p>
-                            </div>
-
-                            {{-- Harga Jual --}}
-                            <div class="field">
-                                <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA JUAL</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
-                                    <input id="harga_jual" name="harga_jual" type="text" inputmode="numeric" required
-                                           placeholder="0"
-                                           class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                                                  placeholder:text-slate-400
-                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                                </div>
-                                <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
-                                    <span>Preview</span>
-                                    <span id="marginPreview" class="font-semibold text-slate-700">Rp 0</span>
-                                </div>
+                        {{-- Nama Barang --}}
+                        <div class="field">
+                            <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">NAMA BARANG</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V8a2 2 0 012-2h6a2 2 0 012 2v8"/>
+                                    </svg>
+                                </span>
+                                <input id="nama_barang" name="nama_barang" type="text" required
+                                    placeholder="Contoh: Oli Mesin"
+                                    class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
+                                            placeholder:text-slate-400
+                                            focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
                             </div>
                         </div>
 
-                        {{-- Actions --}}
-                        <div class="mt-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    
-                        <div class="flex w-full items-center justify-end gap-2">
-                                <button type="button" id="btnReset"
-                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-4 py-2.5 text-sm font-semibold">
-                                    Reset
-                                </button>
+                        {{-- Satuan --}}
+                        <div class="field md:col-span-2">
+                            <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">SATUAN</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6M9 12h6M9 17h6"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h14v16H5z"/>
+                                    </svg>
+                                </span>
+                                <select id="satuan" name="satuan" required
+                                        class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
+                                            focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                    <option value="" selected disabled>Pilih satuan</option>
+                                    <option value="pcs">pcs</option>
+                                    <option value="unit">unit</option>
+                                    <option value="botol">botol</option>
+                                    <option value="liter">liter</option>
+                                    <option value="set">set</option>
+                                </select>
+                            </div>
+                        </div>
 
-                                <button type="submit" id="btnSave"
+                        {{-- ====== SECTION HARGA (rapi 2 kolom) ====== --}}
+                        <div class="md:col-span-2">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p class="text-xs font-semibold tracking-widest text-slate-600">HARGA</p>
+                                        <p class="text-[11px] text-slate-500 mt-1">Isi harga beli & jual (stok diatur lewat Stok Masuk).</p>
+                                    </div>
+                                    <span class="text-[11px] text-slate-500">Preview margin di bawah</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {{-- Harga Beli --}}
+                                    <div class="field">
+                                        <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA BELI</label>
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
+                                            <input id="harga_beli" name="harga_beli" type="text" inputmode="numeric" required
+                                                placeholder="0"
+                                                class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
+                                                        placeholder:text-slate-400
+                                                        focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                        </div>
+                                        <p class="mt-2 text-[11px] text-slate-500">Masukkan harga dalam format angka.</p>
+                                    </div>
+
+                                    {{-- Harga Jual --}}
+                                    <div class="field">
+                                        <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA JUAL</label>
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
+                                            <input id="harga_jual" name="harga_jual" type="text" inputmode="numeric" required
+                                                placeholder="0"
+                                                class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
+                                                        placeholder:text-slate-400
+                                                        focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                        </div>
+
+                                        {{-- mini hint kanan biar seimbang --}}
+                                        <p class="mt-2 text-[11px] text-slate-500">Disarankan ≥ harga beli.</p>
+                                    </div>
+
+                                {{-- Preview margin full width --}}
+                                <div class="md:col-span-2">
+                                    <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-[11px] text-slate-500">
+                                                Preview Harga
+                                                <span class="ml-2 text-[11px] text-slate-400">(Beli & Jual)</span>
+                                            </div>
+                                            <div class="text-[11px] text-slate-400">Live</div>
+                                        </div>
+
+                                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div class="rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3">
+                                                <div class="text-[11px] tracking-widest text-slate-500 font-semibold">HARGA BELI</div>
+                                                <div id="previewBeli" class="mt-1 text-sm font-semibold text-slate-900">Rp 0</div>
+                                            </div>
+
+                                            <div class="rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3">
+                                                <div class="text-[11px] tracking-widest text-slate-500 font-semibold">HARGA JUAL</div>
+                                                <div id="previewJual" class="mt-1 text-sm font-semibold text-slate-900">Rp 0</div>
+                                            </div>
+
+                                            <div class="rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3">
+                                                <div class="text-[11px] tracking-widest text-slate-500 font-semibold">SELISIH</div>
+                                                <div id="previewSelisih" class="mt-1 text-sm font-semibold text-slate-900">Rp 0</div>
+                                                <div id="selisihHint" class="mt-1 text-[11px] text-slate-500">—</div>
+                                            </div>
+                                        </div>
+
+                                </div>
+                            </div>
+                        {{-- ====== END SECTION HARGA ====== --}}
+                        </div>
+
+                    {{-- Actions --}}
+                    <div class="mt-7 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                        <div class="flex w-full items-center justify-end gap-2">
+                            <button type="button" id="btnReset"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-4 py-2.5 text-sm font-semibold">
+                                Reset
+                            </button>
+
+                            <button type="submit" id="btnSave"
                                     class="btn-shine inline-flex items-center gap-2 rounded-xl bg-blue-950 hover:bg-blue-900 transition px-5 py-2.5 text-sm font-semibold text-white
                                         shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                                    Simpan
-                                </button>
-                            </div>
+                                Simpan
+                            </button>
                         </div>
-                    </form>
+                    </div>
+                </form>
+
 
                     <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
                         © DPW Workshop 2025
@@ -453,6 +485,74 @@
                 100% { transform: translateX(0) }
             }
             .shake { animation: shake .28s ease; }
+
+        /* ===== Sidebar nav glow (flat by default) ===== */
+        .nav-glow{
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+        background: transparent;                 /* <— penting */
+        border: 1px solid transparent;           /* <— penting */
+        transition: background .18s ease, border-color .18s ease;
+        }
+
+        /* layer glow halus */
+        .nav-glow::before{
+        content:"";
+        position:absolute;
+        inset:-2px;
+        background:
+            radial-gradient(120px 60px at 18% 50%, rgba(255,255,255,.18), transparent 65%),
+            linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.04), transparent);
+        opacity: 0;
+        transition: opacity .18s ease;
+        pointer-events:none;
+        }
+
+        /* garis cahaya kiri */
+        .nav-glow::after{
+        content:"";
+        position:absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 60%;
+        border-radius: 999px;
+        background: linear-gradient(to bottom, transparent, rgba(255,255,255,.85), transparent);
+        opacity: 0;
+        transition: opacity .18s ease;
+        pointer-events:none;
+        }
+
+        /* hanya nyala saat hover */
+        .nav-glow:hover{
+        background: rgba(255,255,255,.08);
+        border-color: rgba(255,255,255,.14);
+        }
+        /* .nav-glow:hover::before,
+        .nav-glow:hover::after{ */
+        opacity: 1;
+        }
+
+        /* state aktif */
+        .nav-glow.is-active{
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.18);
+        }
+        .nav-glow.is-active::before,
+        .nav-glow.is-active::after{
+        opacity: 1;
+        }
+
+        /* submenu lebih “inset” */
+        .nav-glow.sub{
+        border-radius: 1.1rem;
+        }
+        .nav-glow.sub:hover{ background: rgba(255,255,255,.07); }
+        .nav-glow.sub.is-active{ background: rgba(255,255,255,.09); }
+
+
         </style>
 
         <script>
@@ -503,39 +603,70 @@
             });
 
             // reset
-            document.getElementById('btnReset')?.addEventListener('click', () => {
+           document.getElementById('btnReset')?.addEventListener('click', () => {
                 document.getElementById('formBarang').reset();
-                document.getElementById('marginPreview').textContent = 'Rp 0';
+                if (previewBeli) previewBeli.textContent = 'Rp 0';
+                if (previewJual) previewJual.textContent = 'Rp 0';
+                if (previewSelisih) previewSelisih.textContent = 'Rp 0';
+                if (selisihHint) selisihHint.textContent = '—';
                 showToast('Reset', 'Form dikosongkan.', 'success');
             });
 
-            // money formatting + margin preview
+
+          
+            // preview harga (beli & jual)
             const beli = document.getElementById('harga_beli');
             const jual = document.getElementById('harga_jual');
-            const margin = document.getElementById('marginPreview');
 
-            const updateMargin = () => {
+            const previewBeli = document.getElementById('previewBeli');
+            const previewJual = document.getElementById('previewJual');
+            const previewSelisih = document.getElementById('previewSelisih');
+            const selisihHint = document.getElementById('selisihHint');
+
+
+           const updatePreviewHarga = () => {
                 const b = parseMoney(beli.value);
                 const j = parseMoney(jual.value);
-                margin.textContent = rupiah(Math.max(0, j - b));
+                const s = j - b;
+
+                if (previewBeli) previewBeli.textContent = rupiah(b);
+                if (previewJual) previewJual.textContent = rupiah(j);
+
+                if (previewSelisih) previewSelisih.textContent = rupiah(Math.abs(s));
+
+                // hint status selisih
+                if (selisihHint) {
+                    if (b === 0 && j === 0) {
+                        selisihHint.textContent = '—';
+                    } else if (s > 0) {
+                        selisihHint.textContent = 'Untung';
+                    } else if (s < 0) {
+                        selisihHint.textContent = 'Rugi';
+                    } else {
+                        selisihHint.textContent = 'Impas';
+                    }
+                }
             };
 
-            document.querySelectorAll('.money').forEach(el => {
+
+
+           document.querySelectorAll('.money').forEach(el => {
                 el.addEventListener('input', () => {
                     formatMoneyInput(el);
-                    updateMargin();
+                    updatePreviewHarga();
                 });
                 el.addEventListener('blur', () => {
                     formatMoneyInput(el);
-                    updateMargin();
+                    updatePreviewHarga();
                 });
             });
+
 
             // submit (UI only for now)
             document.getElementById('formBarang')?.addEventListener('submit', (e) => {
                 e.preventDefault(); // nanti kamu hapus kalau udah connect ke store()
 
-                const requiredIds = ['kode_barang','nama_barang','satuan','total_stok','harga_beli','harga_jual'];
+                const requiredIds = ['kode_barang','nama_barang','satuan', 'harga_beli','harga_jual'];
                 let ok = true;
 
                 requiredIds.forEach(id => {
