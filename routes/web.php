@@ -22,4 +22,4 @@ Route::get('/tampilan_barang', [BarangController::class, 'getBarang'])->name('me
 Route::get('/tambah_barang', [BarangController::class, 'getTambahBarang'])->name('tambah_barang');
 
 //routes/ubah_barang
-
+Route::get('/ubah_barang', [BarangController::class, 'getUbahBarang'])->name('ubah_barang');

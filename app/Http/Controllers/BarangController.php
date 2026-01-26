@@ -29,6 +29,17 @@ class BarangController extends Controller
     }
 
     /**
+     *tampilan.ubah_barang.
+     */
+    public function getUbahBarang()
+    {
+        //View barang
+         return view('admin.mengelola_barang.ubah_barang', [
+        'barangs' => [],
+    ]);
+    }
+
+    /**
      * untuk create data.
      */
     public function create()

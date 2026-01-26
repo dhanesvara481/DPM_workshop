@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('barang_id')->constrained('barang', 'barang_id')->onDelete('cascade');
             $table->string('jumlah_keluar', 10);
             $table->date('tanggal_keluar');
-            $table->string('keterangan', 100);
+            $table->enum('keterangan', ['Barang Rusak', 'Barang Dikembalikan','Penyesuaian Stok', 'Invoice']);
+            $table->string('ref_invoice')->nullable();
             $table->timestamps();
         });
     }

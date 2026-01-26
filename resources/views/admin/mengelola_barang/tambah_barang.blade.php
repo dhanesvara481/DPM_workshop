@@ -10,20 +10,35 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <div class="min-h-screen flex">
 
-    {{-- ================= SIDEBAR (same vibe) ================= --}}
-   {{-- SIDEBAR (SAMA PERSIS STYLE TAMPILAN BARANG) --}}
-    <aside class="relative w-[280px] shrink-0 text-white border-r border-white/5 overflow-hidden
-              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        
-              
-        <div class="h-16 px-5 flex items-center gap-3 border-b border-white/10">
-            <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                {{-- Optional: logo kecil --}}
-                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+    {{-- ================= SIDEBAR ================= --}}
+    <aside id="sidebar"
+    class="fixed inset-y-0 left-0 z-40 h-screen
+            w-[280px] md:w-[280px]
+            -translate-x-full md:translate-x-0
+            bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
+            border-r border-white/5
+            transition-[transform,width] duration-300 ease-out
+            overflow-y-auto">
+
+        <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
+                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+                </div>
+                <div class="leading-tight">
+                    <p class="font-semibold tracking-tight">DPM Workshop</p>
+                </div>
             </div>
-            <div class="leading-tight">
-                <p class="font-semibold tracking-tight">DPM Workshop</p>
-            </div>
+
+            {{-- close button (mobile) --}}
+            <button id="btnCloseSidebar"
+                    type="button"
+                    class="md:hidden h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition grid place-items-center"
+                    aria-label="Tutup menu">
+                <svg class="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
 
         <div class="px-5 py-5">
@@ -40,10 +55,9 @@
             <nav class="mt-5 space-y-1">
 
                 <a href="#"
-                class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                     <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                        {{-- home --}}
-                        <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
                         </svg>
@@ -56,10 +70,9 @@
 
                     {{-- Kelola Barang --}}
                     <a href="{{ route('mengelola_barang') ?? '#' }}"
-                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- box --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
@@ -68,30 +81,24 @@
                         Kelola Barang
                     </a>
 
-                    {{-- CHILDREN: Submenu --}}
-                    {{-- Tambah Barang --}}
+                    {{-- submenu: Tambah Barang (aktif) --}}
                     <div class="mt-2 ml-4 pl-4 border-l border-white/10 space-y-1">
-
                         <a href="{{ route('tambah_barang') ?? '#' }}"
-                        class="nav-glow {{ request()->routeIs('tambah_barang') ? 'is-active' : '' }} group flex items-center gap-3 rounded-xl px-4 py-2 text-[13px]
-                                text-white/75 hover:text-white hover:bg-white/10 transition
-                                {{ request()->routeIs('tambah_barang') ? 'bg-white/12 text-white border border-white/10' : '' }}">
+                        class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2 text-[13px]
+                                bg-white/12 text-white border border-white/10 relative overflow-hidden">
                             <span class="h-7 w-7 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                                {{-- icon plus --}}
-                                <svg class="h-[16px] w-[16px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <svg class="h-[16px] w-[16px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
                                 </svg>
                             </span>
                             Tambah Barang
                         </a>
                     </div>
-                    {{-- Akhir Children --}}
-                    
+
                     <a href="#"
-                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- arrow out --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
                             </svg>
@@ -100,111 +107,130 @@
                     </a>
 
                     <a href="#"
-                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                    class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- arrow in --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
                             </svg>
                         </span>
                         Barang Masuk
                     </a>
-                </div>
 
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
+                    {{-- ================= RIWAYAT & LAPORAN ================= --}}
+                    <div class="mt-3">
+                        <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
-                    <a href="#"
-                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- clock --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </span>
-                        Riwayat Perubahan Stok
-                    </a>
+                        <a href="#"
+                        data-nav
+                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: clock --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            Riwayat Perubahan Stok
+                        </a>
 
-                    <a href="#"
-                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- receipt --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
-                            </svg>
-                        </span>
-                        Riwayat Transaksi
-                    </a>
+                        <a href="#"
+                        data-nav
+                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: receipt --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
+                                </svg>
+                            </span>
+                            Riwayat Transaksi
+                        </a>
 
-                    <a href="#"
-                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- chart --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17V9"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-3"/>
-                            </svg>
-                        </span>
-                        Laporan Penjualan
-                    </a>
-                </div>
+                        <a href="#"
+                        data-nav
+                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: chart --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 17V9"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-3"/>
+                                </svg>
+                            </span>
+                            Laporan Penjualan
+                        </a>
+                    </div>
 
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
+                    {{-- ================= MANAJEMEN ================= --}}
+                    <div class="mt-3">
+                        <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
-                    <a href="#"
-                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- calendar --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </span>
-                        Kelola Jadwal Kerja
-                    </a>
+                        <a href="#"
+                        data-nav
+                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: calendar --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </span>
+                            Kelola Jadwal Kerja
+                        </a>
 
-                    <a href="#"
-                    class="nav-glow mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- users --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 20c0-1.7-1.4-3.1-3.3-3.7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7a2.5 2.5 0 01-1.5 2.3"/>
-                            </svg>
-                        </span>
-                        Manajemen Staf
-                    </a>
-                </div>
+                        <a href="#"
+                        data-nav
+                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: users --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 20c0-1.7-1.4-3.1-3.3-3.7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7a2.5 2.5 0 01-1.5 2.3"/>
+                                </svg>
+                            </span>
+                            Manajemen Staf
+                        </a>
+                    </div>
 
-                <div class="mt-4 pt-4 border-t border-white/10">
-                    <a href="#"
-                    class="nav-glow flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- logout --}}
-                            <svg class="h-[18px] w-[18px] text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
-                            </svg>
-                        </span>
-                        Logout
-                    </a>
+                    {{-- ================= LOGOUT ================= --}}
+                    <div class="mt-4 pt-4 border-t border-white/10">
+                        <a href="#"
+                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                                hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                                {{-- icon: logout --}}
+                                <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
+                                </svg>
+                            </span>
+                            Logout
+                        </a>
+                    </div>
                 </div>
             </nav>
         </div>
     </aside>
 
+    {{-- overlay (mobile) - PASTIIN CUMA SATU --}}
+    <div id="overlay"
+        class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
+
+
 
     {{-- ================= MAIN ================= --}}
-    <main class="flex-1 min-w-0 relative overflow-hidden">
+    <main id="main"
+      class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
         {{-- background (grid scan) --}}
         <div class="pointer-events-none absolute inset-0">
@@ -229,23 +255,47 @@
 
         {{-- TOPBAR --}}
         <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-            <div class="h-full px-6 flex items-center justify-between">
+            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                {{-- hamburger (mobile) --}}
+                <button id="btnSidebar"
+                        type="button"
+                        class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                        aria-label="Buka menu">
+                    <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <div class="min-w-0">
                     <h1 class="text-sm font-semibold tracking-tight text-slate-900">Tambah Barang</h1>
                     <p class="text-xs text-slate-500">Input data barang baru ke sistem.</p>
                 </div>
+                </div>
 
                 <div class="flex items-center gap-2">
+                    {{-- notif aja --}}
+                    <button type="button"
+                            class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                            data-tip="Notifikasi">
+                        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
+                        </svg>
+                    </button>
+
+                    {{-- tombol kembali tetap boleh, tapi jadi icon/button biar konsisten --}}
                     <a href="{{ route('mengelola_barang') ?? '#' }}"
-                       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
                         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                         </svg>
                         Kembali
                     </a>
                 </div>
             </div>
         </header>
+
 
         {{-- CONTENT --}}
        <section class="relative p-6">
@@ -486,18 +536,19 @@
             }
             .shake { animation: shake .28s ease; }
 
-        /* ===== Sidebar nav glow (flat by default) ===== */
-        .nav-glow{
+        /* ===== Sidebar nav-item ===== */
+        .nav-item{
         position: relative;
         overflow: hidden;
         border-radius: 1rem;
-        background: transparent;                 /* <— penting */
-        border: 1px solid transparent;           /* <— penting */
+        background: transparent;
+        border: 1px solid transparent;
         transition: background .18s ease, border-color .18s ease;
+        isolation: isolate; /* penting biar glow ga ketimpa */
         }
 
         /* layer glow halus */
-        .nav-glow::before{
+        .nav-item::before{
         content:"";
         position:absolute;
         inset:-2px;
@@ -507,10 +558,11 @@
         opacity: 0;
         transition: opacity .18s ease;
         pointer-events:none;
+        z-index: 0;
         }
 
         /* garis cahaya kiri */
-        .nav-glow::after{
+        .nav-item::after{
         content:"";
         position:absolute;
         left: 6px;
@@ -523,34 +575,38 @@
         opacity: 0;
         transition: opacity .18s ease;
         pointer-events:none;
+        z-index: 0;
         }
 
-        /* hanya nyala saat hover */
-        .nav-glow:hover{
+        /* pastiin icon & text di atas glow */
+        .nav-item > *{
+        position: relative;
+        z-index: 1;
+        }
+
+        /* hover */
+        .nav-item:hover{
         background: rgba(255,255,255,.08);
         border-color: rgba(255,255,255,.14);
         }
-        /* .nav-glow:hover::before,
-        .nav-glow:hover::after{ */
         opacity: 1;
         }
 
-        /* state aktif */
-        .nav-glow.is-active{
+        /* active */
+        .nav-item.is-active{
         background: rgba(255,255,255,.10);
         border-color: rgba(255,255,255,.18);
         }
-        .nav-glow.is-active::before,
-        .nav-glow.is-active::after{
+        .nav-item.is-active::before,
+        .nav-item.is-active::after{
         opacity: 1;
         }
 
-        /* submenu lebih “inset” */
-        .nav-glow.sub{
-        border-radius: 1.1rem;
+        /* sidebar scroll smooth di iOS */
+        #sidebar{
+        -webkit-overflow-scrolling: touch;
         }
-        .nav-glow.sub:hover{ background: rgba(255,255,255,.07); }
-        .nav-glow.sub.is-active{ background: rgba(255,255,255,.09); }
+
 
 
         </style>
@@ -688,6 +744,43 @@
 
                 showToast('Berhasil', 'Data barang siap disimpan (UI demo).', 'success');
             });
+
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const btnSidebar = document.getElementById('btnSidebar');
+            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+
+            const openSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            };
+
+            const closeSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            };
+
+            if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
+            if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
+            if (overlay) overlay.addEventListener('click', closeSidebar);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSidebar();
+            });
+
+            const syncOnResize = () => {
+                if (window.innerWidth >= 768) {
+                overlay.classList.add('hidden');
+                sidebar.classList.remove('-translate-x-full');
+                document.body.classList.remove('overflow-hidden');
+                } else {
+                sidebar.classList.add('-translate-x-full');
+                }
+            };
+            window.addEventListener('resize', syncOnResize);
+            syncOnResize();
         </script>
 
     </main>

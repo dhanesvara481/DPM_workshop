@@ -11,17 +11,36 @@
 <div class="min-h-screen flex">
 
     {{-- ================= SIDEBAR ================= --}}
-    <aside class="w-[280px] shrink-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white border-r border-white/5">
-        <div class="h-16 px-5 flex items-center gap-3 border-b border-white/10">
+    <aside id="sidebar"
+       class="fixed inset-y-0 left-0 z-40 h-screen
+              w-[280px] md:w-[280px]
+              -translate-x-full md:translate-x-0
+              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
+              border-r border-white/5
+              transition-[transform,width] duration-300 ease-out
+              overflow-y-auto">
+
+        <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
+        <div class="flex items-center gap-3">
             <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-            
-               <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
-                --}}
+                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
             </div>
             <div class="leading-tight">
                 <p class="font-semibold tracking-tight">DPM Workshop</p>
             </div>
         </div>
+
+            {{-- close button (mobile) --}}
+            <button id="btnCloseSidebar"
+                    type="button"
+                    class="md:hidden h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition grid place-items-center"
+                    aria-label="Tutup menu">
+                <svg class="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
 
         <div class="px-5 py-5">
             {{-- Profile --}}
@@ -188,9 +207,17 @@
             </nav>
         </div>
     </aside>
+    <div id="overlay"
+     class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
+
+    {{-- overlay (mobile) --}}
+    <div id="overlay"
+    class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
+
 
     {{-- ================= MAIN ================= --}}
-    <main class="flex-1 min-w-0 relative overflow-hidden">
+   <main id="main"
+      class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
         {{-- BACKGROUND --}}
         <div class="pointer-events-none absolute inset-0">
@@ -219,10 +246,23 @@
 
         {{-- TOPBAR --}}
         <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-            <div class="h-full px-6 flex items-center justify-between">
-                <div class="min-w-0">
-                    <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
-                    <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
+           <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    {{-- hamburger (mobile) --}}
+                   <button id="btnSidebar"
+                        type="button"
+                        class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                        aria-label="Buka menu">
+                        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+
+
+                    <div class="min-w-0">
+                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
+                        <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -234,26 +274,17 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
                         </svg>
                     </button>
-
-                    <button type="button"
-                            class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                            data-tip="Akun">
-                        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 21c0-3.3-3.6-6-8-6s-8 2.7-8 6"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                    </button>
                 </div>
             </div>
         </header>
 
         {{-- CONTENT --}}
-        <section class="relative p-6">
+        <section class="relative p-4 sm:p-6">
             <div class="max-w-[1120px]">
 
                 {{-- TOOLBAR --}}
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <a href="#"
+                    <a href="/tambah_barang"
                        class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
                               bg-blue-950 text-white hover:bg-blue-900 transition
                               shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
@@ -296,7 +327,6 @@
                                 <th class="px-5 py-4 font-semibold">Kode Barang</th>
                                 <th class="px-5 py-4 font-semibold">Nama Barang</th>
                                 <th class="px-5 py-4 font-semibold">Satuan</th>
-                                <th class="px-5 py-4 font-semibold">Total Stok</th>
                                 <th class="px-5 py-4 font-semibold">Harga Beli</th>
                                 <th class="px-5 py-4 font-semibold">Harga Jual</th>
                                 <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
@@ -310,7 +340,7 @@
                                     <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang ?? '-' }}</td>
                                     <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang ?? '-' }}</td>
                                     <td class="px-5 py-4 text-slate-700">{{ $b->satuan ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->total_stok ?? 0 }}</td>
+                                    
                                     <td class="px-5 py-4 text-slate-700">
                                         {{ isset($b->harga_beli) ? 'Rp '.number_format($b->harga_beli,0,',','.') : '-' }}
                                     </td>
@@ -446,9 +476,15 @@
                 pointer-events:none;
                 transition: .15s ease;
             }
-            .tip:hover::after{ opacity:1; transform: translateY(0); }
+            .tip:hover::after{ opacity:1; transform: translateY(0);
+            }
+           
+            /* Mobile */
+              #sidebar { -webkit-overflow-scrolling: touch; }
+              
         </style>
 
+        {{-- Mobile --}}
         {{-- ===== JS (tiny, clean) ===== --}}
         <script>
             // sidebar active indicator
@@ -482,6 +518,59 @@
                 btn.addEventListener('click', () => { input.value = ""; input.focus(); sync(); });
             }
         </script>
+
+        {{-- Mobile Sidebar --}}
+        <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const btnSidebar = document.getElementById('btnSidebar');
+        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+
+        const openSidebar = () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+
+        const closeSidebar = () => {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
+        if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        // close on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // close when click menu item in mobile
+        document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
+            a.addEventListener('click', () => {
+            if (window.innerWidth < 768) closeSidebar();
+            });
+        });
+
+        // when enter desktop, ensure state OK
+        const syncOnResize = () => {
+            if (window.innerWidth >= 768) {
+            overlay.classList.add('hidden');
+            sidebar.classList.remove('-translate-x-full');
+            document.body.classList.remove('overflow-hidden');
+            } else {
+            sidebar.classList.add('-translate-x-full');
+            }
+        };
+        window.addEventListener('resize', syncOnResize);
+        syncOnResize();
+        // end mobile sidebar
+        
+        </script>
+
+
 
     </main>
 </div>
