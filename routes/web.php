@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\BarangKeluarController;
 
 //routes/login
 Route::get('/login', [LoginController::class, 'validasiLogin'])->name('login');
@@ -23,3 +24,6 @@ Route::get('/tambah_barang', [BarangController::class, 'getTambahBarang'])->name
 
 //routes/ubah_barang
 Route::get('/ubah_barang', [BarangController::class, 'getUbahBarang'])->name('ubah_barang');
+
+//routes/barang_keluar
+Route::get('/barang_keluar', [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
