@@ -618,7 +618,7 @@
     // ===== Reset button =====
     btnReset?.addEventListener('click', () => {
         if (isDirty()) {
-        const ok = confirm("Reset semua perubahan ke data awal?");
+        const ok = confirm("Konfirmasi reset? Semua perubahan akan hilang");
         if (!ok) return;
         }
         // reset ke nilai awal server (prefill)
@@ -643,7 +643,7 @@
     // ===== Konfirmasi sebelum submit =====
     form?.addEventListener('submit', (e) => {
         // kalau mau konfirmasi sebelum simpan:
-        const ok = confirm("Simpan perubahan barang ini?");
+        const ok = confirm("Simpan Perubahan?");
         if (!ok) {
         e.preventDefault();
         return;

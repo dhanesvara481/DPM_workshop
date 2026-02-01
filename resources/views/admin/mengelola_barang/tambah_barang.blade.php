@@ -70,7 +70,7 @@
 
                     {{-- Kelola Barang --}}
                     <a href="{{ route('mengelola_barang') ?? '#' }}"
-                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                    class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
@@ -79,10 +79,10 @@
                             </svg>
                         </span>
                         Kelola Barang
-                    </a>
+                    </a>    
 
                     {{-- submenu: Tambah Barang (aktif) --}}
-                    <div class="mt-2 ml-4 pl-4 border-l border-white/10 space-y-1">
+                    {{-- <div class="mt-2 ml-4 pl-4 border-l border-white/10 space-y-1">
                         <a href="{{ route('tambah_barang') ?? '#' }}"
                         class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2 text-[13px]
                                 bg-white/12 text-white border border-white/10 relative overflow-hidden">
@@ -93,7 +93,7 @@
                             </span>
                             Tambah Barang
                         </a>
-                    </div>
+                    </div> --}}
 
                     <a href="#"
                     class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
@@ -537,70 +537,42 @@
             .shake { animation: shake .28s ease; }
 
         /* ===== Sidebar nav-item ===== */
+        /* sidebar active indicator (clean & kalem) */
         .nav-item{
-        position: relative;
-        overflow: hidden;
-        border-radius: 1rem;
-        background: transparent;
-        border: 1px solid transparent;
-        transition: background .18s ease, border-color .18s ease;
-        isolation: isolate; /* penting biar glow ga ketimpa */
+            position: relative;
         }
 
-        /* layer glow halus */
         .nav-item::before{
-        content:"";
-        position:absolute;
-        inset:-2px;
-        background:
-            radial-gradient(120px 60px at 18% 50%, rgba(255,255,255,.18), transparent 65%),
-            linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,.04), transparent);
-        opacity: 0;
-        transition: opacity .18s ease;
-        pointer-events:none;
-        z-index: 0;
-        }
-
-        /* garis cahaya kiri */
-        .nav-item::after{
-        content:"";
-        position:absolute;
-        left: 6px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 3px;
-        height: 60%;
-        border-radius: 999px;
-        background: linear-gradient(to bottom, transparent, rgba(255,255,255,.85), transparent);
-        opacity: 0;
-        transition: opacity .18s ease;
-        pointer-events:none;
-        z-index: 0;
-        }
-
-        /* pastiin icon & text di atas glow */
-        .nav-item > *{
-        position: relative;
-        z-index: 1;
-        }
-
-        /* hover */
-        .nav-item:hover{
-        background: rgba(255,255,255,.08);
-        border-color: rgba(255,255,255,.14);
-        }
-        opacity: 1;
+            content:"";
+            position:absolute;
+            left:0;
+            top:10px;
+            bottom:10px;
+            width:3px;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,.75),
+                rgba(255,255,255,0)
+            );
+            opacity:0;
+            transform: translateX(-6px);
+            transition: .25s ease;
+            border-radius: 999px;
         }
 
         /* active */
         .nav-item.is-active{
-        background: rgba(255,255,255,.10);
-        border-color: rgba(255,255,255,.18);
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.10);
         }
-        .nav-item.is-active::before,
-        .nav-item.is-active::after{
-        opacity: 1;
+
+        .nav-item.is-active::before{
+            opacity:.95;
+            transform: translateX(0);
         }
+
+    
 
         /* sidebar scroll smooth di iOS */
         #sidebar{
@@ -781,6 +753,74 @@
             };
             window.addEventListener('resize', syncOnResize);
             syncOnResize();
+
+            // Text Setelah Aksi
+            // ===== UNSAVED CHANGES GUARD =====
+            const form = document.getElementById('formBarang');
+            const btnReset = document.getElementById('btnReset');
+            const backLink = document.querySelector('a[href="{{ route('mengelola_barang') ?? '#' }}"]');
+            let isDirty = false;
+
+            // tandai form berubah
+            const markDirty = () => { isDirty = true; };
+            if (form) {
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('input', markDirty);
+                el.addEventListener('change', markDirty);
+                });
+            }
+
+            // ===== KONFIRMASI RESET =====
+            btnReset?.addEventListener('click', () => {
+                const ok = confirm('Konfirmasi reset? Semua perubahan akan hilang.');
+                if (!ok) return;
+
+                form.reset();
+
+                // reset preview harga juga (punyamu sudah ada variabel previewBeli dll)
+                if (typeof previewBeli !== 'undefined' && previewBeli) previewBeli.textContent = 'Rp 0';
+                if (typeof previewJual !== 'undefined' && previewJual) previewJual.textContent = 'Rp 0';
+                if (typeof previewSelisih !== 'undefined' && previewSelisih) previewSelisih.textContent = 'Rp 0';
+                if (typeof selisihHint !== 'undefined' && selisihHint) selisihHint.textContent = '—';
+
+                isDirty = false;
+                if (typeof showToast === 'function') showToast('Reset', 'Form dikosongkan.', 'success');
+            });
+
+            // ===== KONFIRMASI KEMBALI =====
+            // (kalau user klik tombol kembali di topbar)
+            backLink?.addEventListener('click', (e) => {
+                if (!isDirty) return; // kalau ga ada perubahan, langsung boleh
+
+                const ok = confirm('Perubahan belum disimpan. Tetap mau keluar?');
+                if (!ok) e.preventDefault();
+            });
+
+            // ===== BLOKIR TUTUP TAB / RELOAD kalau belum save =====
+            window.addEventListener('beforeunload', (e) => {
+                if (!isDirty) return;
+                e.preventDefault();
+                e.returnValue = ''; // wajib untuk sebagian browser
+            });
+
+            // ===== KONFIRMASI SIMPAN =====
+            form?.addEventListener('submit', (e) => {
+                // kalau kamu masih pakai e.preventDefault() untuk demo UI, biarkan seperti sekarang
+                // tapi kita tambahin konfirmasi dulu sebelum lanjut logic submit kamu
+
+                const ok = confirm('Simpan Perubahan?');
+                if (!ok) {
+                e.preventDefault();
+                return;
+                }
+
+                // kalau user setuju, form dianggap "clean"
+                isDirty = false;
+
+                // NOTE:
+                // - kalau kamu nanti sudah connect backend beneran, hapus e.preventDefault() di handler submit milikmu
+                // - atau gabungkan jadi satu handler submit (biar ga dobel).
+            });
         </script>
 
     </main>
