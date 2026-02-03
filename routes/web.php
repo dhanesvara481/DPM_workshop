@@ -5,6 +5,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\BarangMasukController;
+use App\Http\Controllers\RiwayatPerubahanStokController;
+use App\Http\Controllers\RiwayatTransaksiController;
 
 //routes/login
 Route::get('/login', [LoginController::class, 'validasiLogin'])->name('login');
@@ -31,3 +33,9 @@ Route::get('/barang_keluar', [BarangKeluarController::class, 'getBarangKeluar'])
 
 //routes/barang_masuk
 Route::get('/barang_masuk', [BarangMasukController::class, 'getBarangMasuk'])->name('barang_masuk');
+
+// routes/riwayat_perubahan_stok
+Route::get('/riwayat_perubahan_stok', [RiwayatPerubahanStokController::class, 'getRiwayatPerubahanStok'])->name('riwayat_perubahan_stok');
+
+// routes/riwayat_perubahan_stok
+Route::get('/riwayat_transaksi', [RiwayatTransaksiController::class, 'getRiwayatTransaksi'])->name('riwayat_transaksi');

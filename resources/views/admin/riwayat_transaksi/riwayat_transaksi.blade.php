@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kelola Barang</title>
+    <title>Riwayat Transaksi</title>
     @vite('resources/js/app.js')
 </head>
 
@@ -21,16 +21,15 @@
               overflow-y-auto">
 
         <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
+                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+                </div>
+                <div class="leading-tight">
+                    <p class="font-semibold tracking-tight">DPM Workshop</p>
+                </div>
             </div>
-            <div class="leading-tight">
-                <p class="font-semibold tracking-tight">DPM Workshop</p>
-            </div>
-        </div>
 
-            {{-- close button (mobile) --}}
             <button id="btnCloseSidebar"
                     type="button"
                     class="md:hidden h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition grid place-items-center"
@@ -40,7 +39,6 @@
                 </svg>
             </button>
         </div>
-
 
         <div class="px-5 py-5">
             {{-- Profile --}}
@@ -59,7 +57,6 @@
                    data-nav
                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                     <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                        {{-- icon: home --}}
                         <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
@@ -71,12 +68,11 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
 
-                    <a href="#"
-                       data-nav data-active="true"
-                       class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              bg-white/12 text-white border border-white/10 relative overflow-hidden">
+                    <a href="/tampilan_barang"
+                       data-nav
+                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                            text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: box --}}
                             <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
@@ -90,7 +86,6 @@
                        data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: arrow up-right --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
@@ -103,7 +98,6 @@
                        data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: arrow down-left --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
@@ -116,11 +110,10 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
-                    <a href="#"
+                    <a href="/riwayat_perubahan_stok"
                        data-nav
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: clock --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -129,12 +122,14 @@
                         Riwayat Perubahan Stok
                     </a>
 
-                    <a href="#"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                    {{-- ACTIVE: Riwayat Transaksi --}}
+                    <a href="/riwayat_transaksi"
+                       data-nav data-active="true"
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                            bg-white/12 text-white border border-white/10
+                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: receipt --}}
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
                             </svg>
@@ -142,11 +137,10 @@
                         Riwayat Transaksi
                     </a>
 
-                    <a href="#"
+                    <a href="/laporan_penjualan"
                        data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: chart --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
@@ -166,7 +160,6 @@
                        data-nav
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: calendar --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -178,7 +171,6 @@
                        data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: users --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -194,7 +186,6 @@
                     <a href="#"
                        class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: logout --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
@@ -207,37 +198,27 @@
             </nav>
         </div>
     </aside>
-    <div id="overlay"
-     class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
-    {{-- overlay (mobile) --}}
-    <div id="overlay"
-    class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
-
+    <div id="overlay" class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
     {{-- ================= MAIN ================= --}}
-   <main id="main"
-      class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
+    <main id="main" class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
         {{-- BACKGROUND --}}
         <div class="pointer-events-none absolute inset-0">
             <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-
             <div class="absolute inset-0 opacity-[0.12]"
                  style="background-image:
                     linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
                     background-size: 56px 56px;">
             </div>
-
-            {{-- animated grid highlight --}}
             <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
                  style="background-image:
                     repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
                     repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
                     background-size: 112px 112px, 112px 112px;">
             </div>
-
             <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
                         bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
             <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
@@ -246,22 +227,19 @@
 
         {{-- TOPBAR --}}
         <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-           <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    {{-- hamburger (mobile) --}}
-                   <button id="btnSidebar"
-                        type="button"
-                        class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                        aria-label="Buka menu">
+                    <button id="btnSidebar" type="button"
+                            class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                            aria-label="Buka menu">
                         <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
 
-
                     <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
-                        <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
+                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Riwayat Transaksi</h1>
+                        <p class="text-xs text-slate-500">Daftar transaksi yang terjadi (tap untuk lihat detail).</p>
                     </div>
                 </div>
 
@@ -280,21 +258,13 @@
 
         {{-- CONTENT --}}
         <section class="relative p-4 sm:p-6">
-            <div class="max-w-[1120px]">
+            <div class="max-w-[980px] mx-auto w-full">
 
                 {{-- TOOLBAR --}}
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <a href="/tambah_barang"
-                       class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                              bg-blue-950 text-white hover:bg-blue-900 transition
-                              shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
-                        </svg>
-                        Tambah
-                    </a>
-
-                    <div class="w-full sm:w-[380px]">
+                <form method="GET" action="{{ route('riwayat_transaksi') }}"
+                      class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                    <div class="w-full sm:w-[420px]">
+                        <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">CARI</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -302,89 +272,108 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
                                 </svg>
                             </span>
-
-                            <input id="searchBarang"
-                                   type="text"
-                                   placeholder="Cari kode / nama barang..."
-                                   class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
+                            <input name="q" value="{{ $q ?? '' }}"
+                                   type="text" placeholder="Cari user / kode transaksi..."
+                                   class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-white/90
                                           text-sm placeholder:text-slate-400
                                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-
-                            {{-- clear button injected by JS --}}
                         </div>
                     </div>
-                </div>
 
-                {{-- TABLE CARD (sharp) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
+                        <div>
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">DARI</label>
+                            <input type="date" name="dari" value="{{ $dari ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">SAMPAI</label>
+                            <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div class="flex gap-2 sm:justify-end sm:items-end">
+                            <button type="submit"
+                                    class="btn-shine inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                           bg-blue-950 text-white hover:bg-blue-900 transition
+                                           shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
+                                Filter
+                            </button>
+
+                            <a href="{{ route('riwayat_transaksi') }}"
+                               class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                      border border-slate-200 bg-white hover:bg-slate-50 transition">
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+
+                {{-- LIST CARD --}}
                 <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                             shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
-                            <tr class="text-left text-slate-600">
-                                <th class="px-5 py-4 font-semibold w-[70px]">No</th>
-                                <th class="px-5 py-4 font-semibold">Kode Barang</th>
-                                <th class="px-5 py-4 font-semibold">Nama Barang</th>
-                                <th class="px-5 py-4 font-semibold">Satuan</th>
-                                <th class="px-5 py-4 font-semibold">Harga Beli</th>
-                                <th class="px-5 py-4 font-semibold">Harga Jual</th>
-                                <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
-                            </tr>
-                            </thead>
+                    <div class="p-5 sm:p-6 space-y-6">
 
-                            <tbody class="divide-y divide-slate-200">
-                            @forelse (($barangs ?? []) as $i => $b)
-                                <tr class="row-lift hover:bg-slate-50/70 transition">
-                                    <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
-                                    <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->satuan ?? '-' }}</td>
-                                    
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_beli) ? 'Rp '.number_format($b->harga_beli,0,',','.') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual,0,',','.') : '-' }}
-                                    </td>
+                        {{-- Contoh struktur data:
+                           $groups = collect($rows)->groupBy(fn($r)=> \Carbon\Carbon::parse($r->created_at)->toDateString());
+                        --}}
 
-                                    <td class="px-5 py-4">
-                                        <div class="flex flex-col items-end gap-2">
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                                Ubah
-                                            </button>
+                        @php
+                            $groups = collect($rows ?? [])->groupBy(fn($r) => \Carbon\Carbon::parse($r->created_at)->toDateString());
+                        @endphp
 
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
-                                                Hapus
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                @for($r=1;$r<=3;$r++)
-                                    <tr class="row-lift hover:bg-slate-50/70 transition">
-                                        <td class="px-5 py-5 text-slate-400">{{ $r }}</td>
-                                        <td class="px-5 py-5"><div class="h-4 w-28 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-52 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-20 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-16 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5">
-                                            <div class="flex flex-col items-end gap-2">
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
+                        @forelse($groups as $date => $items)
+                            <div>
+                                <div class="text-lg font-semibold text-slate-900">
+                                    {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }}
+                                </div>
+                                <div class="mt-3 h-px bg-slate-200"></div>
+
+                                <div class="mt-3 space-y-2">
+                                    @foreach($items as $t)
+                                        <a href="{{ route('detail_riwayat_transaksi', $t->id ?? 0) }}"
+                                           class="trx-row group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 hover:bg-slate-50/70 transition">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <div class="h-10 w-10 rounded-full bg-slate-900/10 border border-slate-200"></div>
+
+                                                <div class="min-w-0">
+                                                    <div class="font-semibold text-slate-900 truncate">
+                                                        {{ $t->nama_pengguna ?? 'User' }}
+                                                    </div>
+                                                    <div class="text-xs text-slate-500 truncate">
+                                                        {{ $t->kode_transaksi ?? 'TRX-' . ($t->id ?? '-') }}
+                                                        • {{ \Carbon\Carbon::parse($t->created_at)->format('H:i') }}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </td>
-                                    </tr>
-                                @endfor
-                            @endforelse
-                            </tbody>
-                        </table>
+
+                                            <div class="text-right shrink-0">
+                                                @php
+                                                    $amount = (int)($t->total ?? 0);
+                                                    $isPlus = ($t->jenis ?? 'masuk') !== 'keluar'; // sesuaikan kalau perlu
+                                                @endphp
+
+                                                <div class="text-sm font-semibold {{ $isPlus ? 'text-emerald-700' : 'text-red-700' }}">
+                                                    {{ $isPlus ? '+' : '-' }}Rp.{{ number_format(abs($amount), 0, ',', '.') }}
+                                                </div>
+                                                <div class="text-[11px] text-slate-500">
+                                                    Tap untuk detail
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @empty
+                            <div class="px-2 py-10 text-center text-slate-500">
+                                Belum ada riwayat transaksi.
+                            </div>
+                        @endforelse
+
                     </div>
 
                     <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
@@ -394,13 +383,11 @@
             </div>
         </section>
 
-        {{-- ===== CSS + Animations + Micro interactions ===== --}}
         <style>
             @media (prefers-reduced-motion: reduce) {
-                .animate-grid-scan, .row-lift, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
+                .animate-grid-scan, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
             }
 
-            /* background scan */
             @keyframes gridScan {
                 0%   { background-position: 0 0, 0 0; opacity: 0.10; }
                 40%  { opacity: 0.22; }
@@ -410,12 +397,13 @@
             .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
 
             /* sidebar active indicator */
+            .nav-item{ position: relative; overflow: hidden; }
             .nav-item::before{
                 content:"";
                 position:absolute;
                 left:0; top:10px; bottom:10px;
                 width:3px;
-                background: linear-gradient(to bottom, rgba(255,255,255,.0), rgba(255,255,255,.75), rgba(255,255,255,.0));
+                background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.75), rgba(255,255,255,0));
                 opacity:0;
                 transform: translateX(-6px);
                 transition: .25s ease;
@@ -423,17 +411,6 @@
             }
             .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
 
-            /* table lift hover */
-            .row-lift{
-                transform: translateY(0);
-                transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
-            }
-            .row-lift:hover{
-                transform: translateY(-1px);
-                box-shadow: 0 10px 26px rgba(2,6,23,0.06);
-            }
-
-            /* button shine */
             .btn-shine{ position: relative; overflow: hidden; }
             .btn-shine::after{
                 content:"";
@@ -445,20 +422,6 @@
             }
             .btn-shine:hover::after{ transform: translateX(120%); }
 
-            /* search clear button */
-            .clear-btn{
-                opacity:0;
-                pointer-events:none;
-                transform: scale(.9);
-                transition: .15s ease;
-            }
-            .clear-btn.show{
-                opacity:1;
-                pointer-events:auto;
-                transform: scale(1);
-            }
-
-            /* tooltip topbar */
             .tip{ position: relative; }
             .tip[data-tip]::after{
                 content: attr(data-tip);
@@ -476,101 +439,58 @@
                 pointer-events:none;
                 transition: .15s ease;
             }
-            .tip:hover::after{ opacity:1; transform: translateY(0);
-            }
-           
-            /* Mobile */
-              #sidebar { -webkit-overflow-scrolling: touch; }
-              
+            .tip:hover::after{ opacity:1; transform: translateY(0); }
+
+            #sidebar { -webkit-overflow-scrolling: touch; }
+
+            /* row feel */
+            .trx-row{ border: 1px solid transparent; }
+            .trx-row:hover{ border-color: rgba(2,6,23,0.08); }
         </style>
 
-        {{-- Mobile --}}
-        {{-- ===== JS (tiny, clean) ===== --}}
         <script>
-            // sidebar active indicator
+            // sidebar active indicator (pakai data-active)
             document.querySelectorAll('[data-nav]').forEach(a => {
                 if (a.dataset.active === "true") a.classList.add('is-active');
-                a.addEventListener('click', () => {
-                    document.querySelectorAll('[data-nav].is-active').forEach(x => x.classList.remove('is-active'));
-                    a.classList.add('is-active');
-                });
             });
 
-            // search clear button
-            const input = document.getElementById('searchBarang');
-            if (input) {
-                const wrap = input.parentElement;
+            // mobile sidebar
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const btnSidebar = document.getElementById('btnSidebar');
+            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
 
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
-                btn.innerHTML = `
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                `;
-                wrap.appendChild(btn);
+            const openSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            };
+            const closeSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            };
 
-                const sync = () => btn.classList.toggle('show', input.value.trim().length > 0);
-                sync();
+            btnSidebar?.addEventListener('click', openSidebar);
+            btnCloseSidebar?.addEventListener('click', closeSidebar);
+            overlay?.addEventListener('click', closeSidebar);
 
-                input.addEventListener('input', sync);
-                btn.addEventListener('click', () => { input.value = ""; input.focus(); sync(); });
-            }
-        </script>
-
-        {{-- Mobile Sidebar --}}
-        <script>
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const btnSidebar = document.getElementById('btnSidebar');
-        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-        const openSidebar = () => {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        };
-
-        const closeSidebar = () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        };
-
-        if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
-        if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
-        if (overlay) overlay.addEventListener('click', closeSidebar);
-
-        // close on ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeSidebar();
-        });
-
-        // close when click menu item in mobile
-        document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
-            a.addEventListener('click', () => {
-            if (window.innerWidth < 768) closeSidebar();
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSidebar();
             });
-        });
 
-        // when enter desktop, ensure state OK
-        const syncOnResize = () => {
-            if (window.innerWidth >= 768) {
-            overlay.classList.add('hidden');
-            sidebar.classList.remove('-translate-x-full');
-            document.body.classList.remove('overflow-hidden');
-            } else {
-            sidebar.classList.add('-translate-x-full');
-            }
-        };
-        window.addEventListener('resize', syncOnResize);
-        syncOnResize();
-        // end mobile sidebar
-        
+            const syncOnResize = () => {
+                if (window.innerWidth >= 768) {
+                    overlay.classList.add('hidden');
+                    sidebar.classList.remove('-translate-x-full');
+                    document.body.classList.remove('overflow-hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            };
+            window.addEventListener('resize', syncOnResize);
+            syncOnResize();
         </script>
-
-
 
     </main>
 </div>

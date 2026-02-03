@@ -10,25 +10,25 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <div class="min-h-screen flex">
 
-    {{-- ================= SIDEBAR ================= --}}
+   {{-- ================= SIDEBAR ================= --}}
     <aside id="sidebar"
-           class="fixed inset-y-0 left-0 z-40 h-screen
-                  w-[280px] md:w-[280px]
-                  -translate-x-full md:translate-x-0
-                  bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
-                  border-r border-white/5
-                  transition-[transform,width] duration-300 ease-out
-                  overflow-y-auto">
+       class="fixed inset-y-0 left-0 z-40 h-screen
+              w-[280px] md:w-[280px]
+              -translate-x-full md:translate-x-0
+              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
+              border-r border-white/5
+              transition-[transform,width] duration-300 ease-out
+              overflow-y-auto">
 
         <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
-                </div>
-                <div class="leading-tight">
-                    <p class="font-semibold tracking-tight">DPM Workshop</p>
-                </div>
+        <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
+                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
             </div>
+            <div class="leading-tight">
+                <p class="font-semibold tracking-tight">DPM Workshop</p>
+            </div>
+        </div>
 
             {{-- close button (mobile) --}}
             <button id="btnCloseSidebar"
@@ -40,6 +40,7 @@
                 </svg>
             </button>
         </div>
+
 
         <div class="px-5 py-5">
             {{-- Profile --}}
@@ -53,10 +54,12 @@
 
             {{-- Menu --}}
             <nav class="mt-5 space-y-1">
+
                 <a href="#"
                    data-nav
                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                     <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                        {{-- icon: home --}}
                         <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
@@ -69,11 +72,12 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
 
                     <a href="/tampilan_barang"
-                       data-nav
+                       data-nav 
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                            text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hiddenn">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            {{-- icon: box --}}
+                            <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
@@ -84,9 +88,9 @@
 
                     <a href="/barang_keluar"
                        data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: arrow up-right --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
@@ -95,13 +99,13 @@
                         Barang Keluar
                     </a>
 
-                    {{-- ACTIVE: Barang Masuk --}}
                     <a href="/barang_masuk"
                        data-nav data-active="true"
                        class="nav-item is-active group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              bg-white/12 text-white border border-white/10 relative overflow-hidden">
+                            bg-white/12 text-white border border-white/10 relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            {{-- icon: arrow down-left --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
                             </svg>
@@ -110,7 +114,97 @@
                     </a>
                 </div>
 
-                {{-- (bagian menu lain biarin sama kayak punya kamu) --}}
+                <div class="mt-3">
+                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
+
+                    <a href="/riwayat_perubahan_stok"
+                       data-nav
+                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: clock --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>
+                        Riwayat Perubahan Stok
+                    </a>
+
+                    <a href="#"
+                       data-nav
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: receipt --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
+                            </svg>
+                        </span>
+                        Riwayat Transaksi
+                    </a>
+
+                    <a href="#"
+                       data-nav
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: chart --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17V9"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-3"/>
+                            </svg>
+                        </span>
+                        Laporan Penjualan
+                    </a>
+                </div>
+
+                <div class="mt-3">
+                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
+
+                    <a href="#"
+                       data-nav
+                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: calendar --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </span>
+                        Kelola Jadwal Kerja
+                    </a>
+
+                    <a href="#"
+                       data-nav
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: users --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 20c0-1.7-1.4-3.1-3.3-3.7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7a2.5 2.5 0 01-1.5 2.3"/>
+                            </svg>
+                        </span>
+                        Manajemen Staf
+                    </a>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <a href="#"
+                       class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                            {{-- icon: logout --}}
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
+                            </svg>
+                        </span>
+                        Logout
+                    </a>
+                </div>
             </nav>
         </div>
     </aside>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kelola Barang</title>
+    <title>Riwayat Perubahan Stok</title>
     @vite('resources/js/app.js')
 </head>
 
@@ -71,10 +71,10 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
 
-                    <a href="#"
-                       data-nav data-active="true"
-                       class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              bg-white/12 text-white border border-white/10 relative overflow-hidden">
+                    <a href="/tampilan_barang"
+                       data-nav 
+                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                            text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- icon: box --}}
                             <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -100,9 +100,11 @@
                     </a>
 
                     <a href="/barang_masuk"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+                        data-nav
+                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80
+                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                        <!-- icon -->
+                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- icon: arrow down-left --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
@@ -116,9 +118,11 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
-                    <a href="#"
-                       data-nav
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                    <a href="/riwayat_perubahan_stok"
+                       data-nav data-active="true"
+                       class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                            bg-white/12 text-white border border-white/10
+                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
                             {{-- icon: clock --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -129,7 +133,7 @@
                         Riwayat Perubahan Stok
                     </a>
 
-                    <a href="#"
+                    <a href="/riwayat_transaksi"
                        data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
@@ -207,16 +211,11 @@
             </nav>
         </div>
     </aside>
-    <div id="overlay"
-     class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
-    {{-- overlay (mobile) --}}
-    <div id="overlay"
-    class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
-
+    <div id="overlay" class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
     {{-- ================= MAIN ================= --}}
-   <main id="main"
+    <main id="main"
       class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
         {{-- BACKGROUND --}}
@@ -230,7 +229,6 @@
                     background-size: 56px 56px;">
             </div>
 
-            {{-- animated grid highlight --}}
             <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
                  style="background-image:
                     repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
@@ -248,8 +246,7 @@
         <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    {{-- hamburger (mobile) --}}
-                   <button id="btnSidebar"
+                    <button id="btnSidebar"
                         type="button"
                         class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
                         aria-label="Buka menu">
@@ -258,10 +255,9 @@
                         </svg>
                     </button>
 
-
                     <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
-                        <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
+                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Riwayat Perubahan Stok</h1>
+                        <p class="text-xs text-slate-500">Semua perubahan stok (masuk & keluar) tercatat di sini.</p>
                     </div>
                 </div>
 
@@ -282,19 +278,11 @@
         <section class="relative p-4 sm:p-6">
             <div class="max-w-[1120px]">
 
-                {{-- TOOLBAR --}}
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <a href="/tambah_barang"
-                       class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                              bg-blue-950 text-white hover:bg-blue-900 transition
-                              shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
-                        </svg>
-                        Tambah
-                    </a>
-
-                    <div class="w-full sm:w-[380px]">
+                {{-- TOOLBAR: Search + Filter + Reset --}}
+                <form method="GET" action="{{ route('riwayat_perubahan_stok') }}"
+                      class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-4">
+                    <div class="w-full lg:w-[420px]">
+                        <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">CARI</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -302,105 +290,148 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
                                 </svg>
                             </span>
-
-                            <input id="searchBarang"
-                                   type="text"
-                                   placeholder="Cari kode / nama barang..."
-                                   class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
+                            <input name="q" value="{{ $q ?? '' }}"
+                                   type="text" placeholder="Cari kode / nama / keterangan..."
+                                   class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-white/90
                                           text-sm placeholder:text-slate-400
                                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-
-                            {{-- clear button injected by JS --}}
                         </div>
                     </div>
-                </div>
 
-                {{-- TABLE CARD (sharp) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full">
+                        <div>
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">TIPE</label>
+                            <select name="tipe"
+                                    class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                <option value="">Semua</option>
+                                <option value="masuk" {{ ($tipe ?? '')==='masuk' ? 'selected' : '' }}>Masuk</option>
+                                <option value="keluar" {{ ($tipe ?? '')==='keluar' ? 'selected' : '' }}>Keluar</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">DARI</label>
+                            <input type="date" name="dari" value="{{ $dari ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">SAMPAI</label>
+                            <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div class="flex gap-2 sm:justify-end sm:items-end">
+                            <button type="submit"
+                                class="btn-shine inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                       bg-blue-950 text-white hover:bg-blue-900 transition
+                                       shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
+                                Filter
+                            </button>
+
+                            <a href="{{ route('riwayat_perubahan_stok') }}"
+                               class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                      border border-slate-200 bg-white hover:bg-slate-50 transition">
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+
+                {{-- TABLE CARD --}}
                 <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                             shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
+                        <table class="min-w-[1050px] w-full text-sm">
                             <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
                             <tr class="text-left text-slate-600">
                                 <th class="px-5 py-4 font-semibold w-[70px]">No</th>
                                 <th class="px-5 py-4 font-semibold">Kode Barang</th>
                                 <th class="px-5 py-4 font-semibold">Nama Barang</th>
-                                <th class="px-5 py-4 font-semibold">Satuan</th>
-                                <th class="px-5 py-4 font-semibold">Harga Beli</th>
-                                <th class="px-5 py-4 font-semibold">Harga Jual</th>
-                                <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
+                                <th class="px-5 py-4 font-semibold">Nama Pengguna</th>
+                                <th class="px-5 py-4 font-semibold text-right">Masuk</th>
+                                <th class="px-5 py-4 font-semibold text-right">Keluar</th>
+                                <th class="px-5 py-4 font-semibold text-right">Stok Awal</th>
+                                <th class="px-5 py-4 font-semibold text-right">Stok Akhir</th>
+                                <th class="px-5 py-4 font-semibold">Keterangan</th>
+                                <th class="px-5 py-4 font-semibold">Tanggal</th>
                             </tr>
                             </thead>
 
                             <tbody class="divide-y divide-slate-200">
-                            @forelse (($barangs ?? []) as $i => $b)
+                            {{-- @forelse ($rows as $i => $r)
                                 <tr class="row-lift hover:bg-slate-50/70 transition">
-                                    <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
-                                    <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->satuan ?? '-' }}</td>
-                                    
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_beli) ? 'Rp '.number_format($b->harga_beli,0,',','.') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual,0,',','.') : '-' }}
+                                    <td class="px-5 py-4 text-slate-600">
+                                        {{ ($rows->firstItem() ?? 1) + $i }}
                                     </td>
 
-                                    <td class="px-5 py-4">
-                                        <div class="flex flex-col items-end gap-2">
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                                Ubah
-                                            </button>
+                                    <td class="px-5 py-4 font-semibold text-slate-900">{{ $r->kode_barang }}</td>
+                                    <td class="px-5 py-4 text-slate-700">{{ $r->nama_barang }}</td>
+                                    <td class="px-5 py-4 text-slate-700">{{ $r->nama_pengguna }}</td>
 
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
-                                                Hapus
-                                            </button>
-                                        </div>
+                                    <td class="px-5 py-4 text-right">
+                                        @if($r->tipe === 'masuk')
+                                            <span class="inline-flex rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 text-xs font-semibold">
+                                                +{{ $r->qty }}
+                                            </span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-5 py-4 text-right">
+                                        @if($r->tipe === 'keluar')
+                                            <span class="inline-flex rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-1 text-xs font-semibold">
+                                                -{{ $r->qty }}
+                                            </span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-5 py-4 text-right text-slate-700">{{ $r->stok_awal }}</td>
+                                    <td class="px-5 py-4 text-right font-semibold text-slate-900">{{ $r->stok_akhir }}</td>
+
+                                    <td class="px-5 py-4 text-slate-700">
+                                        <span class="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs">
+                                            {{ $r->keterangan }}
+                                        </span>
+                                    </td>
+
+                                    <td class="px-5 py-4 text-slate-700">
+                                        {{ \Carbon\Carbon::parse($r->created_at)->format('d/m/Y H:i') }}
                                     </td>
                                 </tr>
                             @empty
-                                @for($r=1;$r<=3;$r++)
-                                    <tr class="row-lift hover:bg-slate-50/70 transition">
-                                        <td class="px-5 py-5 text-slate-400">{{ $r }}</td>
-                                        <td class="px-5 py-5"><div class="h-4 w-28 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-52 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-20 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-16 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5">
-                                            <div class="flex flex-col items-end gap-2">
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endfor
-                            @endforelse
+                                <tr>
+                                    <td colspan="10" class="px-6 py-10 text-center text-slate-500">
+                                        Belum ada riwayat perubahan stok.
+                                    </td>
+                                </tr>
+                            @endforelse --}}
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                        © DPW Workshop 2025
-                    </div>
+                    {{-- <div class="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="text-xs text-slate-500">© DPW Workshop 2025</div>
+                        <div class="text-sm">
+                            {{ $rows->links() }}
+                        </div>
+                    </div> --}}
                 </div>
             </div>
         </section>
 
-        {{-- ===== CSS + Animations + Micro interactions ===== --}}
         <style>
             @media (prefers-reduced-motion: reduce) {
                 .animate-grid-scan, .row-lift, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
             }
 
-            /* background scan */
             @keyframes gridScan {
                 0%   { background-position: 0 0, 0 0; opacity: 0.10; }
                 40%  { opacity: 0.22; }
@@ -409,7 +440,7 @@
             }
             .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
 
-            /* sidebar active indicator */
+            /* sidebar active indicator (sama kayak tampilan_barang) */
             .nav-item::before{
                 content:"";
                 position:absolute;
@@ -423,7 +454,6 @@
             }
             .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
 
-            /* table lift hover */
             .row-lift{
                 transform: translateY(0);
                 transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
@@ -433,7 +463,6 @@
                 box-shadow: 0 10px 26px rgba(2,6,23,0.06);
             }
 
-            /* button shine */
             .btn-shine{ position: relative; overflow: hidden; }
             .btn-shine::after{
                 content:"";
@@ -445,20 +474,6 @@
             }
             .btn-shine:hover::after{ transform: translateX(120%); }
 
-            /* search clear button */
-            .clear-btn{
-                opacity:0;
-                pointer-events:none;
-                transform: scale(.9);
-                transition: .15s ease;
-            }
-            .clear-btn.show{
-                opacity:1;
-                pointer-events:auto;
-                transform: scale(1);
-            }
-
-            /* tooltip topbar */
             .tip{ position: relative; }
             .tip[data-tip]::after{
                 content: attr(data-tip);
@@ -476,16 +491,11 @@
                 pointer-events:none;
                 transition: .15s ease;
             }
-            .tip:hover::after{ opacity:1; transform: translateY(0);
-            }
-           
-            /* Mobile */
-              #sidebar { -webkit-overflow-scrolling: touch; }
-              
+            .tip:hover::after{ opacity:1; transform: translateY(0); }
+
+            #sidebar { -webkit-overflow-scrolling: touch; }
         </style>
 
-        {{-- Mobile --}}
-        {{-- ===== JS (tiny, clean) ===== --}}
         <script>
             // sidebar active indicator
             document.querySelectorAll('[data-nav]').forEach(a => {
@@ -496,81 +506,50 @@
                 });
             });
 
-            // search clear button
-            const input = document.getElementById('searchBarang');
-            if (input) {
-                const wrap = input.parentElement;
+            // mobile sidebar
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const btnSidebar = document.getElementById('btnSidebar');
+            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
 
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
-                btn.innerHTML = `
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                `;
-                wrap.appendChild(btn);
+            const openSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            };
 
-                const sync = () => btn.classList.toggle('show', input.value.trim().length > 0);
-                sync();
+            const closeSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            };
 
-                input.addEventListener('input', sync);
-                btn.addEventListener('click', () => { input.value = ""; input.focus(); sync(); });
-            }
-        </script>
+            if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
+            if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
+            if (overlay) overlay.addEventListener('click', closeSidebar);
 
-        {{-- Mobile Sidebar --}}
-        <script>
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const btnSidebar = document.getElementById('btnSidebar');
-        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-        const openSidebar = () => {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        };
-
-        const closeSidebar = () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        };
-
-        if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
-        if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
-        if (overlay) overlay.addEventListener('click', closeSidebar);
-
-        // close on ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeSidebar();
-        });
-
-        // close when click menu item in mobile
-        document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
-            a.addEventListener('click', () => {
-            if (window.innerWidth < 768) closeSidebar();
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSidebar();
             });
-        });
 
-        // when enter desktop, ensure state OK
-        const syncOnResize = () => {
-            if (window.innerWidth >= 768) {
-            overlay.classList.add('hidden');
-            sidebar.classList.remove('-translate-x-full');
-            document.body.classList.remove('overflow-hidden');
-            } else {
-            sidebar.classList.add('-translate-x-full');
-            }
-        };
-        window.addEventListener('resize', syncOnResize);
-        syncOnResize();
-        // end mobile sidebar
-        
+            document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
+                a.addEventListener('click', () => {
+                    if (window.innerWidth < 768) closeSidebar();
+                });
+            });
+
+            const syncOnResize = () => {
+                if (window.innerWidth >= 768) {
+                    overlay.classList.add('hidden');
+                    sidebar.classList.remove('-translate-x-full');
+                    document.body.classList.remove('overflow-hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            };
+            window.addEventListener('resize', syncOnResize);
+            syncOnResize();
         </script>
-
-
 
     </main>
 </div>
