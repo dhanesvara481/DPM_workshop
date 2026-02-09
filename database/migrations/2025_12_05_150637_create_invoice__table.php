@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('invoice_id');
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
             $table->date('tanggal_invoice');
+            $table->decimal('subtotal', 12,2);
             $table->timestamps();
         });
     }

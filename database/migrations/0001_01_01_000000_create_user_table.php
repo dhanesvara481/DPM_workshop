@@ -16,8 +16,10 @@ return new class extends Migration
             $table->string('username', 20)->unique();
             $table->string('password', 255);
             $table->enum('role', ['admin', 'staff'])->default('staff');
-            $table->string('kontak', 12);
+            $table->string('kontak', 15);
             $table->string('email', 100)->unique();
+            $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');
+            $table->string('catatan', 255)->nullable();
             $table->timestamps();
         });
 

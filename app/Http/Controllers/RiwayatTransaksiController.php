@@ -13,16 +13,40 @@ class RiwayatTransaksiController extends Controller
     {
         return view('admin.riwayat_transaksi.riwayat_transaksi', [
         'riwayatTransaksis' => [],
-    ]);
+        ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function getDetailRiwayatTransaksi()
     {
-        //
+        return view('admin.riwayat_transaksi.detail_riwayat_transaksi', [
+        'detailRiwayatTransaksis' => [],
+        ]);
     }
+    
+    // public function detail($id)
+    // {
+    //     $trx = Transaksi::with(['items.barang'])->findOrFail($id); // sesuaikan relasi
+    //     $items = $trx->items ?? [];
+
+    //     return view('admin.detail_riwayat_transaksi', [
+    //         'trx' => $trx,
+    //         'items' => $items,
+    //         'userName' => auth()->user()->name ?? 'User',
+    //         'role' => auth()->user()->role ?? 'Admin',
+    //     ]);
+    // }
+
+    // public function nota($id)
+    // {
+    //     $trx = Transaksi::with(['items.barang'])->findOrFail($id);
+    //     $items = $trx->items ?? [];
+
+    //     // Versi 1 (paling gampang): halaman print biasa (window.print)
+    //     return view('admin.riwayat_transaksi.print_transaksi', compact('trx', 'items'));
+    // }
 
     /**
      * Store a newly created resource in storage.

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained('invoice', 'invoice_id')->onDelete('cascade');
             $table->string('jumlah', 10);
             $table->decimal('total', 12,2);
-            $table->decimal('subtotal', 12,2);
             $table->string('deskripsi', 100);
             $table->enum('tipe_transaksi', ['Barang', 'Jasa']);
             $table->timestamps();

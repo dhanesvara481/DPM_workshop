@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Riwayat Transaksi</title>
+    <title>Laporan Penjualan</title>
     @vite('resources/js/app.js')
 </head>
 
@@ -122,14 +122,11 @@
                         Riwayat Perubahan Stok
                     </a>
 
-                    {{-- ACTIVE: Riwayat Transaksi --}}
                     <a href="/riwayat_transaksi"
-                       data-nav data-active="true"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                            bg-white/12 text-white border border-white/10
-                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                       data-nav
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
                             </svg>
@@ -137,11 +134,14 @@
                         Riwayat Transaksi
                     </a>
 
+                    {{-- ACTIVE: Laporan Penjualan --}}
                     <a href="/laporan_penjualan"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                       data-nav data-active="true"
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                            bg-white/12 text-white border border-white/10
+                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
@@ -156,7 +156,7 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
-                    <a href="/kelola_jadwal_kerja"
+                    <a href="/tampilan_jadwal_kerja"
                        data-nav
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
@@ -238,8 +238,8 @@
                     </button>
 
                     <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Riwayat Transaksi</h1>
-                        <p class="text-xs text-slate-500">Daftar transaksi yang terjadi (tap untuk lihat detail).</p>
+                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Laporan Penjualan</h1>
+                        <p class="text-xs text-slate-500">Pilih range (minggu/bulan/tahun/custom) lalu export ke PDF.</p>
                     </div>
                 </div>
 
@@ -260,123 +260,168 @@
         <section class="relative p-4 sm:p-6">
             <div class="max-w-[980px] mx-auto w-full">
 
+                @php
+                    $mode   = request('mode', 'custom'); // custom|week|month|year
+                    $dari   = request('dari');
+                    $sampai = request('sampai');
+                    $week   = request('week');   // YYYY-W##
+                    $month  = request('month');  // YYYY-MM
+                    $year   = request('year');   // YYYY
+
+                    $hasRange = false;
+                    if ($mode === 'custom') $hasRange = !empty($dari) && !empty($sampai);
+                    if ($mode === 'week')   $hasRange = !empty($week);
+                    if ($mode === 'month')  $hasRange = !empty($month);
+                    if ($mode === 'year')   $hasRange = !empty($year);
+                @endphp
+
                 {{-- TOOLBAR --}}
-                <form method="GET" action="{{ route('riwayat_transaksi') }}"
-                      class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-                    <div class="w-full sm:w-[420px]">
-                        <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">CARI</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
-                                </svg>
-                            </span>
-                            <input name="q" value="{{ $q ?? '' }}"
-                                   type="text" placeholder="Cari user / kode transaksi..."
-                                   class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-white/90
-                                          text-sm placeholder:text-slate-400
+                <form method="GET" action="{{ route('laporan_penjualan') }}"
+                      class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-5">
+
+                    {{-- pilih mode --}}
+                    <div class="w-full lg:max-w-[280px]">
+                        <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">RANGE</label>
+                        <select name="mode" id="mode"
+                                class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                       focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                            <option value="custom" {{ $mode==='custom'?'selected':'' }}>Custom (Dari - Sampai)</option>
+                            <option value="week"   {{ $mode==='week'?'selected':'' }}>Mingguan</option>
+                            <option value="month"  {{ $mode==='month'?'selected':'' }}>Bulanan</option>
+                            <option value="year"   {{ $mode==='year'?'selected':'' }}>Tahunan</option>
+                        </select>
+                    </div>
+
+                    {{-- input range --}}
+                    <div class="w-full lg:max-w-[520px]">
+                        <div id="box-custom" class="{{ $mode==='custom' ? '' : 'hidden' }}">
+                            <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3">
+                                <div>
+                                    <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">DARI</label>
+                                    <input type="date" name="dari" value="{{ $dari ?? '' }}"
+                                           class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                </div>
+                                <div class="hidden sm:flex items-end justify-center pb-2 text-slate-400 font-semibold">—</div>
+                                <div>
+                                    <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">SAMPAI</label>
+                                    <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
+                                           class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                                  focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="box-week" class="{{ $mode==='week' ? '' : 'hidden' }}">
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">MINGGU</label>
+                            <input type="week" name="week" value="{{ $week ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div id="box-month" class="{{ $mode==='month' ? '' : 'hidden' }}">
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">BULAN</label>
+                            <input type="month" name="month" value="{{ $month ?? '' }}"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
+                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                        </div>
+
+                        <div id="box-year" class="{{ $mode==='year' ? '' : 'hidden' }}">
+                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">TAHUN</label>
+                            <input type="number" min="2000" max="2100" name="year" value="{{ $year ?? '' }}"
+                                   placeholder="2026"
+                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
                                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
-                        <div>
-                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">DARI</label>
-                            <input type="date" name="dari" value="{{ $dari ?? '' }}"
-                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
+                    {{-- buttons --}}
+                    <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto lg:justify-end">
+                        <button type="submit"
+                                class="btn-shine inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                       bg-blue-950 text-white hover:bg-blue-900 transition
+                                       shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
+                            Filter
+                        </button>
 
-                        <div>
-                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">SAMPAI</label>
-                            <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
-                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
+                        <a href="{{ route('laporan_penjualan') }}"
+                           class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                                  border border-slate-200 bg-white hover:bg-slate-50 transition">
+                            Reset
+                        </a>
 
-                        <div class="flex gap-2 sm:justify-end sm:items-end">
-                            <button type="submit"
-                                    class="btn-shine inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                                           bg-blue-950 text-white hover:bg-blue-900 transition
-                                           shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                                Filter
-                            </button>
-
-                            <a href="{{ route('riwayat_transaksi') }}"
-                               class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                                      border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                Reset
-                            </a>
-                        </div>
+                        {{-- Tampilkan Laporan (PDF) --}}
+                        <a href="{{ $hasRange ? route('laporan_penjualan.pdf', request()->query()) : '#' }}"
+                           class="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold
+                                  {{ $hasRange ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-300 text-slate-500 cursor-not-allowed' }}
+                                  transition shadow-[0_12px_24px_rgba(2,6,23,0.18)] sm:ml-2"
+                           {{ $hasRange ? '' : 'aria-disabled=true onclick=event.preventDefault()' }}>
+                            Tampilkan<br class="hidden sm:block">Laporan
+                        </a>
                     </div>
                 </form>
 
-                {{-- LIST CARD --}}
+                {{-- TABLE CONTAINER --}}
                 <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                             shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
-                    <div class="p-5 sm:p-6 space-y-6">
+                    <div class="p-5 sm:p-6">
 
-                        {{-- Contoh struktur data:
-                           $groups = collect($rows)->groupBy(fn($r)=> \Carbon\Carbon::parse($r->created_at)->toDateString());
-                        --}}
-                        @php
-                            $groups = collect($rows ?? [])->groupBy(fn($r) => \Carbon\Carbon::parse($r->created_at)->toDateString());
-                        @endphp
+                        {{-- info periode --}}
+                        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="text-sm font-semibold text-slate-900">Daftar Transaksi</div>
+                            <div class="text-xs text-slate-500">
+                                @if($mode==='custom')
+                                    Periode: <span class="font-semibold">{{ $dari ?? '-' }}</span> s/d <span class="font-semibold">{{ $sampai ?? '-' }}</span>
+                                @elseif($mode==='week')
+                                    Minggu: <span class="font-semibold">{{ $week ?? '-' }}</span>
+                                @elseif($mode==='month')
+                                    Bulan: <span class="font-semibold">{{ $month ?? '-' }}</span>
+                                @elseif($mode==='year')
+                                    Tahun: <span class="font-semibold">{{ $year ?? '-' }}</span>
+                                @endif
+                            </div>
+                        </div>
 
-                        @forelse($groups as $date => $items)
-                            <div>
-                                <div class="text-lg font-semibold text-slate-900">
-                                    {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }}
-                                </div>
-                                <div class="mt-3 h-px bg-slate-200"></div>
+                        <div class="rounded-xl bg-slate-200 border border-slate-300 overflow-hidden">
+                            {{-- header tabel --}}
+                            <div class="grid grid-cols-[80px_1fr_220px] items-center bg-slate-200 text-slate-900 font-semibold">
+                                <div class="px-4 py-3 border-r-4 border-slate-900">No</div>
+                                <div class="px-4 py-3 border-r-4 border-slate-900 text-center">Kode Transaksi</div>
+                                <div class="px-4 py-3 text-center">Tanggal</div>
+                            </div>
 
-                                <div class="mt-3 space-y-2">
-                                    @foreach($items as $t)
-                                        <a href="{{ route('detail_riwayat_transaksi', $t->id ?? 0) }}"
-                                           class="trx-row group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 hover:bg-slate-50/70 transition">
-                                            <div class="flex items-center gap-3 min-w-0">
-                                                <div class="h-10 w-10 rounded-full bg-slate-900/10 border border-slate-200"></div>
+                            <div class="h-1 bg-slate-900"></div>
 
-                                                <div class="min-w-0">
-                                                    <div class="font-semibold text-slate-900 truncate">
-                                                        {{ $t->nama_pengguna ?? 'User' }}
-                                                    </div>
-                                                    <div class="text-xs text-slate-500 truncate">
-                                                        {{ $t->kode_transaksi ?? 'TRX-' . ($t->id ?? '-') }}
-                                                        • {{ \Carbon\Carbon::parse($t->created_at)->format('H:i') }}
-                                                    </div>
-                                                </div>
+                            {{-- body --}}
+                            <div class="min-h-[260px]">
+                                @php $rows = $rows ?? []; @endphp
+
+                                @if(!empty($rows))
+                                    @foreach($rows as $i => $r)
+                                        <div class="grid grid-cols-[80px_1fr_220px] items-center">
+                                            <div class="px-4 py-3 border-r-4 border-slate-900">{{ $i+1 }}</div>
+                                            <div class="px-4 py-3 border-r-4 border-slate-900 text-center font-semibold">
+                                                {{ $r->kode_transaksi ?? $r->kode ?? ('TRX-'.($r->id ?? '-')) }}
                                             </div>
-
-                                            <div class="text-right shrink-0">
-                                                @php
-                                                    $amount = (int)($t->total ?? 0);
-                                                    $isPlus = ($t->jenis ?? 'masuk') !== 'keluar'; // sesuaikan kalau perlu
-                                                @endphp
-
-                                                <div class="text-sm font-semibold {{ $isPlus ? 'text-emerald-700' : 'text-red-700' }}">
-                                                    {{ $isPlus ? '+' : '-' }}Rp.{{ number_format(abs($amount), 0, ',', '.') }}
-                                                </div>
-                                                <div class="text-[11px] text-slate-500">
-                                                    Tap untuk detail
-                                                </div>
+                                            <div class="px-4 py-3 text-center">
+                                                {{ isset($r->created_at) ? \Carbon\Carbon::parse($r->created_at)->format('Y-m-d') : ($r->tanggal ?? '-') }}
                                             </div>
-                                        </a>
+                                        </div>
+                                        <div class="h-px bg-slate-300"></div>
                                     @endforeach
-                                </div>
+                                @else
+                                    <div class="p-10 text-center text-slate-600">
+                                        <div class="text-sm font-semibold">Belum ada data untuk ditampilkan.</div>
+                                        <div class="text-xs mt-1">Pilih range lalu klik <span class="font-semibold">Filter</span>.</div>
+                                    </div>
+                                @endif
                             </div>
-                        @empty
-                            <div class="px-2 py-10 text-center text-slate-500">
-                                Belum ada riwayat transaksi.
-                            </div>
-                        @endforelse
-
+                        </div>
                     </div>
 
                     <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                        © DPW Workshop 2025
+                        © DPM Workshop 2025
                     </div>
                 </div>
             </div>
@@ -441,10 +486,6 @@
             .tip:hover::after{ opacity:1; transform: translateY(0); }
 
             #sidebar { -webkit-overflow-scrolling: touch; }
-
-            /* row feel */
-            .trx-row{ border: 1px solid transparent; }
-            .trx-row:hover{ border-color: rgba(2,6,23,0.08); }
         </style>
 
         <script>
@@ -452,6 +493,21 @@
             document.querySelectorAll('[data-nav]').forEach(a => {
                 if (a.dataset.active === "true") a.classList.add('is-active');
             });
+
+            // switch input mode
+            const modeEl = document.getElementById('mode');
+            const boxes = {
+                custom: document.getElementById('box-custom'),
+                week: document.getElementById('box-week'),
+                month: document.getElementById('box-month'),
+                year: document.getElementById('box-year'),
+            };
+            function showBox(mode){
+                Object.values(boxes).forEach(b => b && b.classList.add('hidden'));
+                boxes[mode] && boxes[mode].classList.remove('hidden');
+            }
+            modeEl?.addEventListener('change', (e) => showBox(e.target.value));
+            showBox(modeEl?.value || 'custom');
 
             // mobile sidebar
             const sidebar = document.getElementById('sidebar');

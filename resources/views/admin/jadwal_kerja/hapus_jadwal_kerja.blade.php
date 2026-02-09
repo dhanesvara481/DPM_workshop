@@ -1,9 +1,10 @@
+{{-- resources/views/admin/jadwal_kerja/hapus_jadwal_kerja.blade.php --}}
 <!doctype html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Riwayat Transaksi</title>
+    <title>Hapus Jadwal Kerja</title>
     @vite('resources/js/app.js')
 </head>
 
@@ -12,13 +13,13 @@
 
     {{-- ================= SIDEBAR ================= --}}
     <aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-40 h-screen
-              w-[280px] md:w-[280px]
-              -translate-x-full md:translate-x-0
-              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
-              border-r border-white/5
-              transition-[transform,width] duration-300 ease-out
-              overflow-y-auto">
+           class="fixed inset-y-0 left-0 z-40 h-screen
+                  w-[280px] md:w-[280px]
+                  -translate-x-full md:translate-x-0
+                  bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
+                  border-r border-white/5
+                  transition-[transform,width] duration-300 ease-out
+                  overflow-y-auto">
 
         <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
             <div class="flex items-center gap-3">
@@ -52,7 +53,6 @@
 
             {{-- Menu --}}
             <nav class="mt-5 space-y-1">
-
                 <a href="#"
                    data-nav
                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
@@ -70,10 +70,9 @@
 
                     <a href="/tampilan_barang"
                        data-nav
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                            text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
@@ -122,14 +121,11 @@
                         Riwayat Perubahan Stok
                     </a>
 
-                    {{-- ACTIVE: Riwayat Transaksi --}}
                     <a href="/riwayat_transaksi"
-                       data-nav data-active="true"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                            bg-white/12 text-white border border-white/10
-                            hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                       data-nav
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
                             </svg>
@@ -156,11 +152,13 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
-                    <a href="/kelola_jadwal_kerja"
-                       data-nav
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
+                    <a href="/tampilan_jadwal_kerja"
+                       data-nav data-active="true"
+                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                              bg-white/12 text-white border border-white/10
+                              hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </span>
@@ -226,8 +224,8 @@
         </div>
 
         {{-- TOPBAR --}}
-        <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+        <header class="relative bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
+            <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <button id="btnSidebar" type="button"
                             class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
@@ -238,8 +236,8 @@
                     </button>
 
                     <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Riwayat Transaksi</h1>
-                        <p class="text-xs text-slate-500">Daftar transaksi yang terjadi (tap untuk lihat detail).</p>
+                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Hapus Jadwal Kerja</h1>
+                        <p class="text-xs text-slate-500">Konfirmasi sebelum menghapus jadwal.</p>
                     </div>
                 </div>
 
@@ -260,123 +258,115 @@
         <section class="relative p-4 sm:p-6">
             <div class="max-w-[980px] mx-auto w-full">
 
-                {{-- TOOLBAR --}}
-                <form method="GET" action="{{ route('riwayat_transaksi') }}"
-                      class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-                    <div class="w-full sm:w-[420px]">
-                        <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">CARI</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
-                                </svg>
-                            </span>
-                            <input name="q" value="{{ $q ?? '' }}"
-                                   type="text" placeholder="Cari user / kode transaksi..."
-                                   class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-white/90
-                                          text-sm placeholder:text-slate-400
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
-                    </div>
+                @php
+                    // Prefill sementara (nanti ambil dari $jadwal)
+                    $data = $data ?? [
+                        'nama' => request('nama') ?? '—',
+                        'tanggal' => request('date') ?? '—',
+                        'jam_mulai' => request('jam_mulai') ?? '—',
+                        'jam_selesai' => request('jam_selesai') ?? '—',
+                        'waktu_shift' => request('waktu_shift') ?? '—',
+                        'status' => request('status') ?? '—',
+                        'deskripsi' => request('deskripsi') ?? '—',
+                    ];
+                @endphp
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
-                        <div>
-                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">DARI</label>
-                            <input type="date" name="dari" value="{{ $dari ?? '' }}"
-                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-2">SAMPAI</label>
-                            <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
-                                   class="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white/90 text-sm
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
-
-                        <div class="flex gap-2 sm:justify-end sm:items-end">
-                            <button type="submit"
-                                    class="btn-shine inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                                           bg-blue-950 text-white hover:bg-blue-900 transition
-                                           shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                                Filter
-                            </button>
-
-                            <a href="{{ route('riwayat_transaksi') }}"
-                               class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                                      border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                Reset
-                            </a>
-                        </div>
-                    </div>
-                </form>
-
-                {{-- LIST CARD --}}
                 <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                             shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
-                    <div class="p-5 sm:p-6 space-y-6">
-
-                        {{-- Contoh struktur data:
-                           $groups = collect($rows)->groupBy(fn($r)=> \Carbon\Carbon::parse($r->created_at)->toDateString());
-                        --}}
-                        @php
-                            $groups = collect($rows ?? [])->groupBy(fn($r) => \Carbon\Carbon::parse($r->created_at)->toDateString());
-                        @endphp
-
-                        @forelse($groups as $date => $items)
-                            <div>
-                                <div class="text-lg font-semibold text-slate-900">
-                                    {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }}
-                                </div>
-                                <div class="mt-3 h-px bg-slate-200"></div>
-
-                                <div class="mt-3 space-y-2">
-                                    @foreach($items as $t)
-                                        <a href="{{ route('detail_riwayat_transaksi', $t->id ?? 0) }}"
-                                           class="trx-row group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 hover:bg-slate-50/70 transition">
-                                            <div class="flex items-center gap-3 min-w-0">
-                                                <div class="h-10 w-10 rounded-full bg-slate-900/10 border border-slate-200"></div>
-
-                                                <div class="min-w-0">
-                                                    <div class="font-semibold text-slate-900 truncate">
-                                                        {{ $t->nama_pengguna ?? 'User' }}
-                                                    </div>
-                                                    <div class="text-xs text-slate-500 truncate">
-                                                        {{ $t->kode_transaksi ?? 'TRX-' . ($t->id ?? '-') }}
-                                                        • {{ \Carbon\Carbon::parse($t->created_at)->format('H:i') }}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="text-right shrink-0">
-                                                @php
-                                                    $amount = (int)($t->total ?? 0);
-                                                    $isPlus = ($t->jenis ?? 'masuk') !== 'keluar'; // sesuaikan kalau perlu
-                                                @endphp
-
-                                                <div class="text-sm font-semibold {{ $isPlus ? 'text-emerald-700' : 'text-red-700' }}">
-                                                    {{ $isPlus ? '+' : '-' }}Rp.{{ number_format(abs($amount), 0, ',', '.') }}
-                                                </div>
-                                                <div class="text-[11px] text-slate-500">
-                                                    Tap untuk detail
-                                                </div>
-                                            </div>
-                                        </a>
-                                    @endforeach
+                    <div class="px-5 sm:px-6 py-5 border-b border-slate-200">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Konfirmasi Hapus</div>
+                                <div class="text-xs text-slate-500 mt-1">
+                                    Aksi ini <span class="font-semibold text-rose-700">tidak bisa dibatalkan</span>.
                                 </div>
                             </div>
-                        @empty
-                            <div class="px-2 py-10 text-center text-slate-500">
-                                Belum ada riwayat transaksi.
+
+                            <div class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2">
+                                <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+                                <span class="text-xs font-semibold text-rose-800">Peringatan!</span>
                             </div>
-                        @endforelse
+                        </div>
+                    </div>
+
+                    <div class="p-5 sm:p-6">
+                        {{-- Ringkasan data yang akan dihapus --}}
+                        <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-200">
+                                <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
+                                <div class="text-[11px] text-slate-500">Cek sekali lagi sebelum hapus.</div>
+                            </div>
+
+                            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <div class="text-[11px] text-slate-500">Nama</div>
+                                    <div class="font-semibold text-slate-900">{{ $data['nama'] }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] text-slate-500">Tanggal</div>
+                                    <div class="font-semibold text-slate-900">{{ $data['tanggal'] }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] text-slate-500">Jam</div>
+                                    <div class="font-semibold text-slate-900">{{ $data['jam_mulai'] }} — {{ $data['jam_selesai'] }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] text-slate-500">Shift</div>
+                                    <div class="font-semibold text-slate-900">{{ $data['waktu_shift'] }}</div>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <div class="text-[11px] text-slate-500">Status</div>
+                                    <div class="inline-flex items-center gap-2 mt-1">
+                                        <span class="h-2 w-2 rounded-full
+                                            {{ $data['status'] === 'ok' ? 'bg-emerald-500' : ($data['status'] === 'warn' ? 'bg-amber-500' : 'bg-rose-500') }}"></span>
+                                        <span class="font-semibold text-slate-900">{{ $data['status'] }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <div class="text-[11px] text-slate-500">Deskripsi</div>
+                                    <div class="mt-1 text-slate-800">{{ $data['deskripsi'] }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Tombol aksi --}}
+                        <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:p-5">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-rose-900">Yakin mau hapus jadwal ini?</div>
+                                    <div class="text-[11px] text-rose-800/80">Kalau salah hapus, harus buat ulang jadwalnya.</div>
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                                    <a href="/tampilan_jadwal_kerja"
+                                       class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
+                                        Batal
+                                    </a>
+
+                                    {{-- NOTE:
+                                       action + method kamu sesuaikan nanti ke route destroy yang bener.
+                                       Contoh Laravel: action="{{ route('jadwal.destroy', $jadwal->id) }}" method="POST" + @method('DELETE')
+                                    --}}
+                                    <form action="#" method="POST" class="inline">
+                                        @csrf
+                                        {{-- @method('DELETE') --}}
+                                        <button type="submit"
+                                                class="h-11 px-5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition text-sm font-semibold
+                                                       shadow-[0_12px_24px_rgba(244,63,94,0.25)]">
+                                            Hapus Jadwal
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
 
                     <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                        © DPW Workshop 2025
+                        Tips: biasanya tombol "Hapus" muncul dari halaman detail / ubah jadwal.
                     </div>
                 </div>
             </div>
@@ -384,7 +374,7 @@
 
         <style>
             @media (prefers-reduced-motion: reduce) {
-                .animate-grid-scan, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
+                .animate-grid-scan, .nav-item::before { animation: none !important; transition: none !important; }
             }
 
             @keyframes gridScan {
@@ -395,7 +385,6 @@
             }
             .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
 
-            /* sidebar active indicator */
             .nav-item{ position: relative; overflow: hidden; }
             .nav-item::before{
                 content:"";
@@ -409,51 +398,14 @@
                 border-radius: 999px;
             }
             .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
-
-            .btn-shine{ position: relative; overflow: hidden; }
-            .btn-shine::after{
-                content:"";
-                position:absolute;
-                inset:0;
-                transform: translateX(-120%);
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
-                transition: transform .65s ease;
-            }
-            .btn-shine:hover::after{ transform: translateX(120%); }
-
-            .tip{ position: relative; }
-            .tip[data-tip]::after{
-                content: attr(data-tip);
-                position:absolute;
-                right:0;
-                top: calc(100% + 10px);
-                background: rgba(15,23,42,.92);
-                color: rgba(255,255,255,.92);
-                font-size: 11px;
-                padding: 6px 10px;
-                border-radius: 10px;
-                white-space: nowrap;
-                opacity:0;
-                transform: translateY(-4px);
-                pointer-events:none;
-                transition: .15s ease;
-            }
-            .tip:hover::after{ opacity:1; transform: translateY(0); }
-
             #sidebar { -webkit-overflow-scrolling: touch; }
-
-            /* row feel */
-            .trx-row{ border: 1px solid transparent; }
-            .trx-row:hover{ border-color: rgba(2,6,23,0.08); }
         </style>
 
         <script>
-            // sidebar active indicator (pakai data-active)
             document.querySelectorAll('[data-nav]').forEach(a => {
                 if (a.dataset.active === "true") a.classList.add('is-active');
             });
 
-            // mobile sidebar
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const btnSidebar = document.getElementById('btnSidebar');
