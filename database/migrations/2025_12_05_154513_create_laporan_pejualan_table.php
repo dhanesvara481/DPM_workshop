@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('laporan', function (Blueprint $table) {
-            $table->id('laporan_id');
-            $table->foreignId('riwayat_stok_id')->constrained('riwayat_stok', 'riwayat_stok_id')->onDelete('cascade');
+        Schema::create('laporan_penjualan', function (Blueprint $table) {
+            $table->id('laporan__penjualan_id');
             $table->foreignId('invoice_id')->constrained('invoice', 'invoice_id')->onDelete('cascade');
             $table->datetime('tanggal_cetak');
             $table->timestamps();
