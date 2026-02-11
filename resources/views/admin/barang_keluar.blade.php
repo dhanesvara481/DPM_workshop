@@ -436,13 +436,19 @@ _toggle_  <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white
                             </div>
 
                             <div class="flex gap-2">
-                                <a href="/tampilan_barang"
+                                <a id="btnKembaliKeluar" href="/tampilan_barang"
                                 class="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold
                                         border border-slate-200 bg-white hover:bg-slate-50 transition">
                                     Kembali
                                 </a>
 
-                                <button type="submit"
+                                <button type="button" id="btnResetKeluar"
+                                        class="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold
+                                            border border-slate-200 bg-white hover:bg-slate-50 transition">
+                                    Reset
+                                </button>
+
+                                <button type="submit" id="btnSimpanKeluar"
                                         class="btn-shine inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
                                             bg-blue-950 text-white hover:bg-blue-900 transition
                                             shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
@@ -453,6 +459,7 @@ _toggle_  <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white
                                     Simpan
                                 </button>
                             </div>
+
                         </div>
                     </form>
                 </div>
@@ -734,7 +741,98 @@ _toggle_  <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white
                 kodeSelect.addEventListener('change', syncBarangFields);
                 syncBarangFields(); // buat old selected pas reload
             }
+
+            
+            // ===== TOAST (pastikan elemen toast ada SEBELUM script ini) =====
+            const toastEl = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastDot = document.getElementById('toastDot');
+            const toastClose = document.getElementById('toastClose');
+
+            let toastTimer = null;
+            const showToast = (title, msg, type='success') => {
+                if (!toastEl) return;
+                toastTitle.textContent = title;
+                toastMsg.textContent = msg;
+                toastDot.className = "mt-1 h-2.5 w-2.5 rounded-full " + (type === 'success' ? "bg-emerald-500" : "bg-red-500");
+                toastEl.classList.remove('hidden');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2600);
+            };
+            toastClose?.addEventListener('click', () => toastEl.classList.add('hidden'));
+
+            // ===== GUARD UNIVERSAL =====
+            const form = document.querySelector('form[method="POST"]') || document.querySelector('form');
+            const btnReset = document.getElementById('btnResetKeluar');
+            const btnKembali = document.getElementById('btnKembaliKeluar');
+
+            let isDirty = false;
+            const markDirty = () => { isDirty = true; };
+
+            if (form) {
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('input', markDirty);
+                el.addEventListener('change', markDirty);
+                });
+            }
+
+            btnReset?.addEventListener('click', () => {
+                const ok = confirm('Konfirmasi reset? Semua input akan dikosongkan.');
+                if (!ok) return;
+
+                form?.reset();
+
+                // set tanggal balik ke hari ini (kalau ada)
+                const dateInput = form?.querySelector('input[name="tanggal"]');
+                if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+
+                // sync ulang field otomatis (kalau fungsi ada)
+                if (typeof syncBarangFields === 'function') syncBarangFields();
+
+                isDirty = false;
+                showToast('Reset', 'Form dikosongkan.', 'success');
+            });
+
+            btnKembali?.addEventListener('click', (e) => {
+                if (!isDirty) return; // kalau belum ada perubahan, langsung pergi
+                const ok = confirm('Perubahan belum disimpan. Tetap mau keluar?');
+                if (!ok) e.preventDefault();
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (!isDirty) return;
+                e.preventDefault();
+                e.returnValue = '';
+            });
+
+            form?.addEventListener('submit', (e) => {
+                const ok = confirm('Simpan transaksi ini?');
+                if (!ok) {
+                e.preventDefault();
+                return;
+                }
+                isDirty = false;
+            });
+
         </script>
+
+        {{-- Toast --}}
+        <div id="toast"
+            class="fixed bottom-6 right-6 z-50 hidden w-[340px] rounded-2xl border border-slate-200 bg-white/90 backdrop-blur px-4 py-3 shadow-[0_18px_48px_rgba(2,6,23,0.14)]">
+            <div class="flex items-start gap-3">
+                <div id="toastDot" class="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500"></div>
+                <div class="min-w-0">
+                    <p id="toastTitle" class="text-sm font-semibold text-slate-900">Berhasil</p>
+                    <p id="toastMsg" class="text-xs text-slate-600 mt-0.5">Aksi berhasil.</p>
+                </div>
+                <button id="toastClose" class="ml-auto text-slate-500 hover:text-slate-800 transition" type="button" aria-label="Close">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
     </main>
 </div>

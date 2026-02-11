@@ -422,7 +422,7 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
-                                <a href="/tampilan_jadwal_kerja"
+                                <a href="/kelola_jadwal_kerja"
                                    class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
                                     Batal
                                 </a>

@@ -10,6 +10,10 @@ use App\Http\Controllers\RiwayatTransaksiController;
 use App\Http\Controllers\LaporanPenjualanController;
 use App\Http\Controllers\JadwalKerjaController;
 use App\Http\Controllers\ManajemenStafController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StokRealtimeController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\NotifikasiController;
 
 //routes/login
 Route::get('/login', [LoginController::class, 'validasiLogin'])->name('login');
@@ -52,8 +56,8 @@ Route::get('/print_transaksi', [RiwayatTransaksiController::class, 'nota'])->nam
 // routes/riwayat_perubahan_stok
 Route::get('/laporan_penjualan', [LaporanPenjualanController::class, 'getLaporanPenjualan'])->name('laporan_penjualan');
 
-// routes/jadwal_kerja
-Route::get('/tampilan_jadwal_kerja', [JadwalKerjaController::class, 'getJadwalKerja'])->name('tampilan_jadwal_kerja');
+// routes/kelola_jadwal_kerja
+Route::get('/kelola_jadwal_kerja', [JadwalKerjaController::class, 'getKelolaJadwalKerja'])->name('kelola_jadwal_kerja');
 
 // routes/tambah_jadwal_kerja
 Route::get('/tambah_jadwal_kerja', [JadwalKerjaController::class, 'getTambahJadwalKerja'])->name('tambah_jadwal_kerja');
@@ -63,6 +67,9 @@ Route::get('/ubah_jadwal_kerja', [JadwalKerjaController::class, 'getUbahJadwalKe
 
 // routes/hapus_jadwal_kerja
 Route::get('/hapus_jadwal_kerja', [JadwalKerjaController::class, 'getHapusJadwalKerja'])->name('hapus_jadwal_kerja');
+
+// routes/tampilan_jadwal_kerja
+Route::get('/tampilan_jadwal_kerja', [JadwalKerjaController::class, 'getTampilanJadwalKerja'])->name('tampilan_jadwal_kerja');
 
 // routes/tampilan_manajemen_staf
 Route::get('/tampilan_manajemen_staf', [ManajemenStafController::class, 'getTampilanManajemenStaf'])->name('tampilan_manajemen_staf'); 
@@ -75,3 +82,20 @@ Route::get('/ubah_staf', [ManajemenStafController::class, 'getUbahStaf'])->name(
 
 // routes/detail_staf
 Route::get('/detail_staf', [ManajemenStafController::class, 'getDetailStaf'])->name('detail_staf'); 
+
+// routes/nonaktifkan_staf
+
+// routes/tampilan_dashboard
+Route::get('/tampilan_dashboard', [DashboardController::class, 'getTampilanDashboard'])->name('tampilan_dashboard');
+
+// routes/stok_realtime
+Route::get('/stok_realtime', [StokRealtimeController::class, 'getStokRealtime'])->name('stok_realtime');
+
+// routes/tampilan_invoice
+Route::get('/tampilan_invoice', [InvoiceController::class, 'getTampilanInvoice'])->name('tampilan_invoice'); 
+
+// routes/tampilan_notifikasi
+Route::get('/tampilan_notifikasi', [NotifikasiController::class, 'getTampilanNotifikasi'])->name('tampilan_notifikasi');
+
+// routes/detail_notifikasi
+Route::get('/detail_notifikasi', [NotifikasiController::class, 'getDetailNotifikasi'])->name('detail_notifikasi');

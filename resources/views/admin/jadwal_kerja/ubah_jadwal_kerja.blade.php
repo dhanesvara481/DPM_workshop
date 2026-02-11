@@ -153,7 +153,7 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
                     {{-- Kelola Jadwal Kerja --}}
-                    <a href="/tampilan_jadwal_kerja"
+                    <a href="/kelola_jadwal_kerja"
                        data-nav data-active="true"
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                             bg-white/12 text-white border border-white/10
@@ -438,7 +438,7 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
-                                <a href="/tampilan_jadwal_kerja"
+                                <a href="/kelola_jadwal_kerja"
                                 class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
                                     Batal
                                 </a>

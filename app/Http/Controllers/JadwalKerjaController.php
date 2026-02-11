@@ -6,10 +6,11 @@ use Illuminate\Http\Request;
 
 class JadwalKerjaController extends Controller
 {
-    public function getJadwalKerja()
+    // Kelola jadwal kerja
+    public function getKelolaJadwalKerja()
     {
         //View barang_masuk
-        return view('admin.jadwal_kerja.tampilan_jadwal_kerja', [
+        return view('admin.jadwal_kerja.kelola_jadwal_kerja', [
         'jadwalKerjas' => [],
     ]);
     }
@@ -60,14 +61,14 @@ class JadwalKerjaController extends Controller
     }
     // hapus jadwal kerja End
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    // Tampilan jadwal kerja
+     public function getTampilanJadwalKerja()
     {
-        //
+        //View barang_masuk
+        return view('admin.jadwal_kerja.tampilan_jadwal_kerja', [
+        'jadwalKerjas' => [],
+    ]);
     }
-
     /**
      * Remove the specified resource from storage.
      */
