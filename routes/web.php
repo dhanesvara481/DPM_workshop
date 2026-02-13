@@ -16,7 +16,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotifikasiController;
 
 //routes/login
-Route::get('/login', [LoginController::class, 'validasiLogin'])->name('login');
+Route::get('/', [LoginController::class, 'validasiLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'simpanData'])->name('login.attempt');
 
 // Contoh halaman setelah login
@@ -31,9 +31,17 @@ Route::get('/tampilan_barang', [BarangController::class, 'getBarang'])->name('me
 
 //routes/tambah_barang
 Route::get('/tambah_barang', [BarangController::class, 'getTambahBarang'])->name('tambah_barang');
+Route::post('/simpan_barang', [BarangController::class, 'simpanBarang'])->name('simpan_barang');
+Route::get('/barang/buat_kode_barang', [BarangController::class, 'buatKodeBarang'])
+        ->name('buat_kode_barang');
+
 
 //routes/ubah_barang
-Route::get('/ubah_barang', [BarangController::class, 'getUbahBarang'])->name('ubah_barang');
+Route::get('/ubah_barang/{id}', [BarangController::class, 'getUbahBarang'])->name('ubah_barang');
+Route::post('/perbarui_barang/{id}', [BarangController::class, 'perbaruiBarang'])->name('perbarui_barang');
+
+//routes/hapus_barang
+Route::delete('/hapus_barang/{id}', [BarangController::class, 'hapusBarang'])->name('hapus_barang');
 
 //routes/barang_keluar
 Route::get('/barang_keluar', [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');

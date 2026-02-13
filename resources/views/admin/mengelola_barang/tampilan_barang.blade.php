@@ -12,23 +12,23 @@
 
     {{-- ================= SIDEBAR ================= --}}
     <aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-40 h-screen
-              w-[280px] md:w-[280px]
-              -translate-x-full md:translate-x-0
-              bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
-              border-r border-white/5
-              transition-[transform,width] duration-300 ease-out
-              overflow-y-auto">
+           class="fixed inset-y-0 left-0 z-40 h-screen
+                  w-[280px] md:w-[280px]
+                  -translate-x-full md:translate-x-0
+                  bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
+                  border-r border-white/5
+                  transition-[transform,width] duration-300 ease-out
+                  overflow-y-auto">
 
         <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
+                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+                </div>
+                <div class="leading-tight">
+                    <p class="font-semibold tracking-tight">DPM Workshop</p>
+                </div>
             </div>
-            <div class="leading-tight">
-                <p class="font-semibold tracking-tight">DPM Workshop</p>
-            </div>
-        </div>
 
             {{-- close button (mobile) --}}
             <button id="btnCloseSidebar"
@@ -40,7 +40,6 @@
                 </svg>
             </button>
         </div>
-
 
         <div class="px-5 py-5">
             {{-- Profile --}}
@@ -56,10 +55,8 @@
             <nav class="mt-5 space-y-1">
 
                 <a href="#"
-                   data-nav
                    class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                     <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                        {{-- icon: home --}}
                         <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
@@ -71,12 +68,11 @@
                 <div class="mt-3">
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
 
-                    <a href="#"
+                    <a href="{{ route('mengelola_barang') }}"
                        data-nav data-active="true"
                        class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                               bg-white/12 text-white border border-white/10 relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: box --}}
                             <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
@@ -86,11 +82,9 @@
                         Kelola Barang
                     </a>
 
-                    <a href="/barang_keluar"
-                       data-nav
+                    <a href="{{ route('barang_keluar') }}"
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: arrow up-right --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
@@ -99,11 +93,9 @@
                         Barang Keluar
                     </a>
 
-                    <a href="/barang_masuk"
-                       data-nav
+                    <a href="{{ route('barang_masuk') }}"
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: arrow down-left --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
@@ -117,10 +109,8 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
                     <a href="#"
-                       data-nav
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: clock --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -130,10 +120,8 @@
                     </a>
 
                     <a href="#"
-                       data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: receipt --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
@@ -143,10 +131,8 @@
                     </a>
 
                     <a href="#"
-                       data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: chart --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
@@ -163,10 +149,8 @@
                     <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
                     <a href="#"
-                       data-nav
                        class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: calendar --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -175,10 +159,8 @@
                     </a>
 
                     <a href="#"
-                       data-nav
                        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: users --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -194,7 +176,6 @@
                     <a href="#"
                        class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                         <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            {{-- icon: logout --}}
                             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
@@ -207,17 +188,14 @@
             </nav>
         </div>
     </aside>
-    <div id="overlay"
-     class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
     {{-- overlay (mobile) --}}
     <div id="overlay"
-    class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
-
+         class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
     {{-- ================= MAIN ================= --}}
-   <main id="main"
-      class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
+    <main id="main"
+          class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
         {{-- BACKGROUND --}}
         <div class="pointer-events-none absolute inset-0">
@@ -246,18 +224,17 @@
 
         {{-- TOPBAR --}}
         <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-           <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                     {{-- hamburger (mobile) --}}
-                   <button id="btnSidebar"
-                        type="button"
-                        class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                        aria-label="Buka menu">
+                    <button id="btnSidebar"
+                            type="button"
+                            class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                            aria-label="Buka menu">
                         <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-
 
                     <div class="min-w-0">
                         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
@@ -280,11 +257,34 @@
 
         {{-- CONTENT --}}
         <section class="relative p-4 sm:p-6">
-            <div class="max-w-[1120px]">
+            <div class="max-w-[1120px] mx-auto">
+
+                {{-- Flash Messages --}}
+                @if(session('success'))
+                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="h-5 w-5 text-emerald-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-sm text-emerald-800">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                        <div class="flex items-start gap-3">
+                            <svg class="h-5 w-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-sm text-red-800">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- TOOLBAR --}}
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <a href="/tambah_barang"
+                    <a href="{{ route('tambah_barang') }}"
                        class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
                               bg-blue-950 text-white hover:bg-blue-900 transition
                               shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
@@ -309,82 +309,88 @@
                                    class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
                                           text-sm placeholder:text-slate-400
                                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-
-                            {{-- clear button injected by JS --}}
                         </div>
                     </div>
                 </div>
 
-                {{-- TABLE CARD (sharp) --}}
+                {{-- TABLE CARD --}}
                 <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                             shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
-                            <tr class="text-left text-slate-600">
-                                <th class="px-5 py-4 font-semibold w-[70px]">No</th>
-                                <th class="px-5 py-4 font-semibold">Kode Barang</th>
-                                <th class="px-5 py-4 font-semibold">Nama Barang</th>
-                                <th class="px-5 py-4 font-semibold">Satuan</th>
-                                <th class="px-5 py-4 font-semibold">Harga Beli</th>
-                                <th class="px-5 py-4 font-semibold">Harga Jual</th>
-                                <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
-                            </tr>
+                                <tr class="text-left text-slate-600">
+                                    <th class="px-5 py-4 font-semibold w-[70px]">No</th>
+                                    <th class="px-5 py-4 font-semibold">Kode Barang</th>
+                                    <th class="px-5 py-4 font-semibold">Nama Barang</th>
+                                    <th class="px-5 py-4 font-semibold">Satuan</th>
+                                    <th class="px-5 py-4 font-semibold">Harga Beli</th>
+                                    <th class="px-5 py-4 font-semibold">Harga Jual</th>
+                                    <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
+                                </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-slate-200">
-                            @forelse (($barangs ?? []) as $i => $b)
-                                <tr class="row-lift hover:bg-slate-50/70 transition">
-                                    <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
-                                    <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $b->satuan ?? '-' }}</td>
-                                    
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_beli) ? 'Rp '.number_format($b->harga_beli,0,',','.') : '-' }}
-                                    </td>
-                                    <td class="px-5 py-4 text-slate-700">
-                                        {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual,0,',','.') : '-' }}
-                                    </td>
-
-                                    <td class="px-5 py-4">
-                                        <div class="flex flex-col items-end gap-2">
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                                Ubah
-                                            </button>
-
-                                            <button type="button"
-                                                    class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                           border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
-                                                Hapus
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                @for($r=1;$r<=3;$r++)
-                                    <tr class="row-lift hover:bg-slate-50/70 transition">
-                                        <td class="px-5 py-5 text-slate-400">{{ $r }}</td>
-                                        <td class="px-5 py-5"><div class="h-4 w-28 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-52 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-20 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-16 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5">
+                            <tbody class="divide-y divide-slate-200" id="tableBody">
+                                @forelse ($barangs as $i => $b)
+                                    <tr class="row-lift hover:bg-slate-50/70 transition" data-searchable
+                                        data-kode="{{ strtolower($b->kode_barang) }}"
+                                        data-nama="{{ strtolower($b->nama_barang) }}">
+                                        <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
+                                        <td class="px-5 py-4 font-mono text-sm font-semibold text-blue-900">{{ $b->kode_barang }}</td>
+                                        <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->nama_barang }}</td>
+                                        <td class="px-5 py-4 text-slate-700">
+                                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold">
+                                                {{ $b->satuan }}
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-4 text-slate-700">
+                                            Rp {{ number_format($b->harga_beli, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-5 py-4 text-slate-700">
+                                            Rp {{ number_format($b->harga_jual, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-5 py-4">
                                             <div class="flex flex-col items-end gap-2">
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
-                                                <div class="h-8 w-[88px] rounded-md bg-slate-100"></div>
+                                                <a href="{{ route('ubah_barang', $b->barang_id) }}"
+                                                   class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold text-center
+                                                          border border-slate-200 bg-white hover:bg-slate-50 transition">
+                                                    Ubah
+                                                </a>
+
+                                                <button type="button"
+                                                        onclick="confirmDelete({{ $b->barang_id }}, '{{ $b->nama_barang }}')"
+                                                        class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
+                                                               border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
+                                                    Hapus
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
-                                @endfor
-                            @endforelse
+                                @empty
+                                    <tr id="emptyRow">
+                                        <td colspan="7" class="px-5 py-8 text-center text-slate-500">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <svg class="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                                </svg>
+                                                <p class="text-sm font-medium">Belum ada data barang</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    {{-- No results message (hidden by default) --}}
+                    <div id="noResults" class="hidden px-5 py-8 text-center text-slate-500">
+                        <div class="flex flex-col items-center gap-3">
+                            <svg class="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3m0 0A8 8 0 1116.7 4.3a8 8 0 010 12.4z"/>
+                            </svg>
+                            <p class="text-sm font-medium">Tidak ada hasil ditemukan</p>
+                        </div>
                     </div>
 
                     <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
@@ -394,7 +400,12 @@
             </div>
         </section>
 
-        {{-- ===== CSS + Animations + Micro interactions ===== --}}
+        {{-- Hidden form for delete --}}
+        <form id="deleteForm" method="POST" style="display: none;">
+            @csrf
+            @method('DELETE')
+        </form>
+
         <style>
             @media (prefers-reduced-motion: reduce) {
                 .animate-grid-scan, .row-lift, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
@@ -476,18 +487,23 @@
                 pointer-events:none;
                 transition: .15s ease;
             }
-            .tip:hover::after{ opacity:1; transform: translateY(0);
-            }
-           
+            .tip:hover::after{ opacity:1; transform: translateY(0); }
+
             /* Mobile */
-              #sidebar { -webkit-overflow-scrolling: touch; }
-              
+            #sidebar { -webkit-overflow-scrolling: touch; }
         </style>
 
-        {{-- Mobile --}}
-        {{-- ===== JS (tiny, clean) ===== --}}
         <script>
-            // sidebar active indicator
+            // ===== Delete Confirmation =====
+            function confirmDelete(barangId, namaBarang) {
+                if (confirm(`Yakin ingin menghapus barang "${namaBarang}"?`)) {
+                    const form = document.getElementById('deleteForm');
+                    form.action = `/hapus_barang/${barangId}`;
+                    form.submit();
+                }
+            }
+
+            // ===== Sidebar Active Indicator =====
             document.querySelectorAll('[data-nav]').forEach(a => {
                 if (a.dataset.active === "true") a.classList.add('is-active');
                 a.addEventListener('click', () => {
@@ -496,11 +512,16 @@
                 });
             });
 
-            // search clear button
-            const input = document.getElementById('searchBarang');
-            if (input) {
-                const wrap = input.parentElement;
+            // ===== Search Functionality =====
+            const searchInput = document.getElementById('searchBarang');
+            const tableBody = document.getElementById('tableBody');
+            const noResults = document.getElementById('noResults');
+            const emptyRow = document.getElementById('emptyRow');
 
+            if (searchInput) {
+                const wrap = searchInput.parentElement;
+
+                // Add clear button
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
@@ -511,66 +532,97 @@
                 `;
                 wrap.appendChild(btn);
 
-                const sync = () => btn.classList.toggle('show', input.value.trim().length > 0);
-                sync();
+                const syncClearBtn = () => btn.classList.toggle('show', searchInput.value.trim().length > 0);
+                syncClearBtn();
 
-                input.addEventListener('input', sync);
-                btn.addEventListener('click', () => { input.value = ""; input.focus(); sync(); });
+                // Search logic
+                searchInput.addEventListener('input', () => {
+                    syncClearBtn();
+                    const query = searchInput.value.toLowerCase().trim();
+                    const rows = document.querySelectorAll('[data-searchable]');
+                    let visibleCount = 0;
+
+                    rows.forEach(row => {
+                        const kode = row.dataset.kode || '';
+                        const nama = row.dataset.nama || '';
+                        const match = kode.includes(query) || nama.includes(query);
+                        
+                        row.style.display = match ? '' : 'none';
+                        if (match) visibleCount++;
+                    });
+
+                    // Show/hide no results message
+                    if (noResults) {
+                        noResults.classList.toggle('hidden', visibleCount > 0 || query === '');
+                    }
+                    
+                    // Hide empty row if searching
+                    if (emptyRow) {
+                        emptyRow.style.display = query === '' ? '' : 'none';
+                    }
+                });
+
+                btn.addEventListener('click', () => {
+                    searchInput.value = "";
+                    searchInput.focus();
+                    syncClearBtn();
+                    
+                    // Reset all rows
+                    document.querySelectorAll('[data-searchable]').forEach(row => {
+                        row.style.display = '';
+                    });
+                    if (noResults) noResults.classList.add('hidden');
+                    if (emptyRow) emptyRow.style.display = '';
+                });
             }
-        </script>
 
-        {{-- Mobile Sidebar --}}
-        <script>
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const btnSidebar = document.getElementById('btnSidebar');
-        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+            // ===== Mobile Sidebar =====
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const btnSidebar = document.getElementById('btnSidebar');
+            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
 
-        const openSidebar = () => {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        };
+            const openSidebar = () => {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            };
 
-        const closeSidebar = () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        };
+            const closeSidebar = () => {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            };
 
-        if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
-        if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
-        if (overlay) overlay.addEventListener('click', closeSidebar);
+            if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
+            if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
+            if (overlay) overlay.addEventListener('click', closeSidebar);
 
-        // close on ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeSidebar();
-        });
-
-        // close when click menu item in mobile
-        document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
-            a.addEventListener('click', () => {
-            if (window.innerWidth < 768) closeSidebar();
+            // Close on ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSidebar();
             });
-        });
 
-        // when enter desktop, ensure state OK
-        const syncOnResize = () => {
-            if (window.innerWidth >= 768) {
-            overlay.classList.add('hidden');
-            sidebar.classList.remove('-translate-x-full');
-            document.body.classList.remove('overflow-hidden');
-            } else {
-            sidebar.classList.add('-translate-x-full');
-            }
-        };
-        window.addEventListener('resize', syncOnResize);
-        syncOnResize();
-        // end mobile sidebar
-        
+            // Close when click menu item in mobile
+            document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
+                a.addEventListener('click', () => {
+                    if (window.innerWidth < 768) closeSidebar();
+                });
+            });
+
+            // Sync on resize
+            const syncOnResize = () => {
+                if (window.innerWidth >= 768) {
+                    overlay.classList.add('hidden');
+                    sidebar.classList.remove('-translate-x-full');
+                    document.body.classList.remove('overflow-hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            };
+            window.addEventListener('resize', syncOnResize);
+            syncOnResize();
         </script>
-
-
 
     </main>
 </div>

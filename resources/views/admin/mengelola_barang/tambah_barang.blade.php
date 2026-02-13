@@ -285,10 +285,10 @@
                     </button>
 
                     {{-- tombol kembali tetap boleh, tapi jadi icon/button biar konsisten --}}
-                    <a href="{{ route('mengelola_barang') ?? '#' }}"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
+                    <a href="{{ route('mengelola_barang') }}"
+                       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
                         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                         </svg>
                         Kembali
                     </a>
@@ -316,8 +316,46 @@
                     </div>
 
                     {{-- FORM --}}
-                   <form id="formBarang" method="POST" action="#" class="px-6 py-6">
+                   <form id="formBarang" method="POST" action="{{ route('simpan_barang') }}" class="px-6 py-6">
                     @csrf
+                    @if(session('success'))
+                        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                            <div class="flex items-start gap-3">
+                                <svg class="h-5 w-5 text-emerald-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="text-sm text-emerald-800">{{ session('success') }}</p>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                            <div class="flex items-start gap-3">
+                                <svg class="h-5 w-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="text-sm text-red-800">{{ session('error') }}</p>
+                            </div>
+                        </div>
+                    @endif
+                    @if ($errors->any())
+                        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                            <div class="flex items-start gap-3">
+                                <svg class="h-5 w-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-red-800">Terdapat kesalahan:</p>
+                                    <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -331,6 +369,7 @@
                                     </svg>
                                 </span>
                                 <input id="kode_barang" name="kode_barang" type="text" required
+                                    value="{{ old('kode_barang') }}"
                                     placeholder="Contoh: BRG-001"
                                     class="w-full pl-9 pr-20 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
                                             placeholder:text-slate-400
@@ -340,7 +379,7 @@
                                     Auto
                                 </button>
                             </div>
-                            <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode cepat.</p>
+                            <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode otomatis.</p>
                         </div>
 
                         {{-- Nama Barang --}}
@@ -377,13 +416,11 @@
                                     <option value="" selected disabled>Pilih satuan</option>
                                     <option value="pcs">pcs</option>
                                     <option value="unit">unit</option>
-                                    <option value="botol">botol</option>
-                                    <option value="liter">liter</option>
+                                    <option value="gram">gram</option>
                                     <option value="set">set</option>
                                 </select>
                             </div>
                         </div>
-
                         {{-- ====== SECTION HARGA (rapi 2 kolom) ====== --}}
                         <div class="md:col-span-2">
                             <div class="rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
@@ -601,6 +638,40 @@
                 return val;
             };
 
+
+            // Auto generate kode barang
+            let generating = false;
+
+            btnGenerate.addEventListener('click', async () => {
+                if (generating) return;
+                generating = true;
+            
+                try {
+                    btnGenerate.disabled = true;
+                    btnGenerate.textContent = '...';
+                
+                    const res = await fetch('/barang/buat_kode_barang');
+                    const data = await res.json();
+                
+                    if (data.kode) {
+                        kodeBarangInput.value = data.kode;
+                        kodeBarangInput.focus();
+                        showToast('Berhasil', `Kode: ${data.kode}`, 'success');
+                    }
+                
+                } catch (e) {
+                    const rnd = Math.floor(1000 + Math.random() * 9000);
+                    kodeBarangInput.value = `BRG-${rnd}`;
+                } 
+                finally {
+                    btnGenerate.disabled = false;
+                    btnGenerate.textContent = 'Auto';
+                    generating = false;
+                }
+            });
+
+
+
             const toastEl = document.getElementById('toast');
             const toastTitle = document.getElementById('toastTitle');
             const toastMsg = document.getElementById('toastMsg');
@@ -621,15 +692,6 @@
 
             toastClose?.addEventListener('click', () => toastEl.classList.add('hidden'));
 
-            // auto code
-            const kode = document.getElementById('kode_barang');
-            document.getElementById('btnGenerate')?.addEventListener('click', () => {
-                const rnd = Math.floor(100 + Math.random() * 900);
-                kode.value = `BRG-${rnd}`;
-                kode.focus();
-                showToast('Kode dibuat', `Kode: ${kode.value}`, 'success');
-            });
-
             // reset
            document.getElementById('btnReset')?.addEventListener('click', () => {
                 document.getElementById('formBarang').reset();
@@ -639,7 +701,6 @@
                 if (selisihHint) selisihHint.textContent = '—';
                 showToast('Reset', 'Form dikosongkan.', 'success');
             });
-
 
           
             // preview harga (beli & jual)
@@ -689,34 +750,6 @@
                 });
             });
 
-
-            // submit (UI only for now)
-            document.getElementById('formBarang')?.addEventListener('submit', (e) => {
-                e.preventDefault(); // nanti kamu hapus kalau udah connect ke store()
-
-                const requiredIds = ['kode_barang','nama_barang','satuan', 'harga_beli','harga_jual'];
-                let ok = true;
-
-                requiredIds.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (!el || !String(el.value).trim()) {
-                        ok = false;
-                        el?.classList.add('border-red-300');
-                        el?.classList.add('shake');
-                        setTimeout(() => el?.classList.remove('shake'), 300);
-                    } else {
-                        el?.classList.remove('border-red-300');
-                    }
-                });
-
-                if (!ok) {
-                    showToast('Gagal', 'Lengkapi field yang wajib diisi.', 'error');
-                    return;
-                }
-
-                showToast('Berhasil', 'Data barang siap disimpan (UI demo).', 'success');
-            });
-
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const btnSidebar = document.getElementById('btnSidebar');
@@ -757,8 +790,8 @@
             // Text Setelah Aksi
             // ===== UNSAVED CHANGES GUARD =====
             const form = document.getElementById('formBarang');
-            const btnReset = document.getElementById('btnReset');
-            const backLink = document.querySelector('a[href="{{ route('mengelola_barang') ?? '#' }}"]');
+            const btnReset = document.getElementById('btnReset');1
+            const backLink = document.querySelector('a[href*="mengelola_barang"]');
             let isDirty = false;
 
             // tandai form berubah
@@ -805,21 +838,36 @@
 
             // ===== KONFIRMASI SIMPAN =====
             form?.addEventListener('submit', (e) => {
-                // kalau kamu masih pakai e.preventDefault() untuk demo UI, biarkan seperti sekarang
-                // tapi kita tambahin konfirmasi dulu sebelum lanjut logic submit kamu
-
-                const ok = confirm('Simpan Perubahan?');
+                const ok = confirm('Simpan data barang ini?');
                 if (!ok) {
-                e.preventDefault();
-                return;
+                    e.preventDefault();
+                    return;
                 }
 
-                // kalau user setuju, form dianggap "clean"
-                isDirty = false;
+                // Validasi client-side
+                const requiredIds = ['kode_barang','nama_barang','satuan', 'harga_beli','harga_jual'];
+                let isValid = true;
+            
+                requiredIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el || !String(el.value).trim()) {
+                        isValid = false;
+                        el?.classList.add('border-red-300');
+                        el?.classList.add('shake');
+                        setTimeout(() => el?.classList.remove('shake'), 300);
+                    } else {
+                        el?.classList.remove('border-red-300');
+                    }
+                });
+            
+                if (!isValid) {
+                    e.preventDefault();
+                    showToast('Gagal', 'Lengkapi field yang wajib diisi.', 'error');
+                    return;
+                }
 
-                // NOTE:
-                // - kalau kamu nanti sudah connect backend beneran, hapus e.preventDefault() di handler submit milikmu
-                // - atau gabungkan jadi satu handler submit (biar ga dobel).
+                // Form akan submit ke backend
+                isDirty = false;
             });
         </script>
 
