@@ -310,8 +310,8 @@
                         </div>
                     </div>
 
-                    <form action="{{ url('/barang_masuk/store') }}" method="POST" class="px-6 py-6">
-                        @csrf
+                    <form action="{{ route('simpan_barang_masuk') }}" method="POST" class="px-6 py-6">
+                    @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
 
@@ -324,12 +324,12 @@
                                             focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
                                     <option value="">-- Pilih Kode Barang --</option>
                                     @foreach(($barangs ?? []) as $b)
-                                        <option value="{{ $b->id }}"
+                                        <option value="{{ $b->barang_id }}"
                                                 data-kode="{{ $b->kode_barang ?? '' }}"
                                                 data-nama="{{ $b->nama_barang ?? '' }}"
                                                 data-satuan="{{ $b->satuan ?? '' }}"
                                                 data-stok="{{ $b->stok ?? 0 }}"
-                                                {{ old('barang_id') == $b->id ? 'selected' : '' }}>
+                                                {{ old('barang_id') == $b->barang_id ? 'selected' : '' }}>
                                             {{ $b->kode_barang ?? '-' }}
                                         </option>
                                     @endforeach
@@ -473,26 +473,31 @@
                             </thead>
 
                             <tbody class="divide-y divide-slate-200">
-                            @forelse(($barangMasuk ?? []) as $i => $m)
-                                <tr class="row-lift hover:bg-slate-50/70 transition"
-                                    data-row-text="{{ strtolower(($m->kode_barang ?? '').' '.($m->nama_barang ?? '')) }}">
-                                    <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $m->tanggal ?? '-' }}</td>
-                                    <td class="px-5 py-4 font-semibold text-slate-900">{{ $m->kode_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-slate-700">{{ $m->nama_barang ?? '-' }}</td>
-                                    <td class="px-5 py-4 text-right font-semibold text-slate-900">{{ $m->qty_masuk ?? 0 }}</td>
-                                </tr>
-                            @empty
-                                @for($r=1;$r<=3;$r++)
-                                    <tr class="row-lift hover:bg-slate-50/70 transition">
-                                        <td class="px-5 py-5 text-slate-400">{{ $r }}</td>
-                                        <td class="px-5 py-5"><div class="h-4 w-28 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-20 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5"><div class="h-4 w-52 rounded bg-slate-100"></div></td>
-                                        <td class="px-5 py-5 text-right"><div class="h-4 w-16 ml-auto rounded bg-slate-100"></div></td>
+                                @forelse(($barangMasuk ?? []) as $i => $m)
+                                    <tr class="row-lift hover:bg-slate-50/70 transition"
+                                        data-row-text="{{ strtolower(($m->kode_barang ?? '').' '.($m->nama_barang ?? '')) }}">
+                                        <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
+                                        <td class="px-5 py-4 text-slate-700">
+                                            {{ \Carbon\Carbon::parse($m->tanggal_masuk)->format('d/m/Y') }}
+                                        </td>
+                                        <td class="px-5 py-4 font-mono text-sm font-semibold text-blue-900">{{ $m->kode_barang ?? '-' }}</td>
+                                        <td class="px-5 py-4 text-slate-700">{{ $m->nama_barang ?? '-' }}</td>
+                                        <td class="px-5 py-4 text-right font-semibold text-slate-900">
+                                            {{ $m->jumlah_masuk ?? 0 }} {{ $m->satuan ?? '' }}
+                                        </td>
                                     </tr>
-                                @endfor
-                            @endforelse
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-5 py-8 text-center text-slate-500">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <svg class="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                                </svg>
+                                                <p class="text-sm font-medium">Belum ada riwayat barang masuk</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

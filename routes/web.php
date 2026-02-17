@@ -25,29 +25,34 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 //Admin
-//Mengelola Barang
-// routes/tampilan_barang
+
+//============== Mengelola Barang =================//
+    //routes/tampilan_barang
 Route::get('/tampilan_barang', [BarangController::class, 'getBarang'])->name('mengelola_barang');
 
-//routes/tambah_barang
+    //routes/tambah_barang
 Route::get('/tambah_barang', [BarangController::class, 'getTambahBarang'])->name('tambah_barang');
 Route::post('/simpan_barang', [BarangController::class, 'simpanBarang'])->name('simpan_barang');
 Route::get('/barang/buat_kode_barang', [BarangController::class, 'buatKodeBarang'])
         ->name('buat_kode_barang');
 
-
-//routes/ubah_barang
+    //routes/ubah_barang
 Route::get('/ubah_barang/{id}', [BarangController::class, 'getUbahBarang'])->name('ubah_barang');
 Route::post('/perbarui_barang/{id}', [BarangController::class, 'perbaruiBarang'])->name('perbarui_barang');
 
-//routes/hapus_barang
+    //routes/hapus_barang
 Route::delete('/hapus_barang/{id}', [BarangController::class, 'hapusBarang'])->name('hapus_barang');
 
-//routes/barang_keluar
+
+
+//============== barang_keluar =================//
 Route::get('/barang_keluar', [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
 
-//routes/barang_masuk
+
+//============== barang_masuk =================//
 Route::get('/barang_masuk', [BarangMasukController::class, 'getBarangMasuk'])->name('barang_masuk');
+Route::post('/barang_masuk/simpan', [BarangMasukController::class, 'simpanBarangMasuk'])->name('simpan_barang_masuk');
+
 
 // routes/riwayat_perubahan_stok
 Route::get('/riwayat_perubahan_stok', [RiwayatPerubahanStokController::class, 'getRiwayatPerubahanStok'])->name('riwayat_perubahan_stok');
