@@ -2,17 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
+    /**
+     * Tampilan halaman login.
+     */
     public function validasiLogin()
     {
+        // Jika sudah login, langsung redirect ke dashboard
+        if (Auth::check()) {
+            return redirect()->route('tampilan_dashboard');
+        }
+
         return view('admin.login');
     }
 
+    /**
+     * Proses login.
+     */
     public function simpanData(Request $request)
     {
         $credentials = $request->validate([
@@ -20,14 +30,39 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Jika kamu pakai email, ganti 'username' => 'email' di attempt.
-        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], true)) {
+        // Coba autentikasi dengan username + password
+        if (Auth::attempt(
+            ['username' => $credentials['username'], 'password' => $credentials['password']],
+            $request->boolean('remember')
+        )) {
+            // Cek status akun (aktif / nonaktif)
+            if (Auth::user()->status === 'nonaktif') {
+                Auth::logout();
+                return back()
+                    ->withInput($request->only('username'))
+                    ->with('error', 'Akun Anda telah dinonaktifkan. Hubungi administrator.');
+            }
+
             $request->session()->regenerate();
-            return redirect()->route('dashboard');
+
+            return redirect()->intended(route('tampilan_dashboard'));
         }
 
         return back()
             ->withInput($request->only('username'))
             ->with('error', 'Username atau password salah.');
+    }
+
+    /**
+     * Logout.
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
     }
 }
