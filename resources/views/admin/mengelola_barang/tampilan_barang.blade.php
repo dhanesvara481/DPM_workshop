@@ -1,630 +1,402 @@
-<!doctype html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kelola Barang</title>
-    @vite('resources/js/app.js')
-</head>
+@extends('admin.layout.app')
 
-<body class="min-h-screen bg-slate-50 text-slate-900">
-<div class="min-h-screen flex">
+@section('title', 'Barang - DPM Workshop')
 
-    {{-- ================= SIDEBAR ================= --}}
-    <aside id="sidebar"
-           class="fixed inset-y-0 left-0 z-40 h-screen
-                  w-[280px] md:w-[280px]
-                  -translate-x-full md:translate-x-0
-                  bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
-                  border-r border-white/5
-                  transition-[transform,width] duration-300 ease-out
-                  overflow-y-auto">
+@section('content')
 
-        <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
-                </div>
-                <div class="leading-tight">
-                    <p class="font-semibold tracking-tight">DPM Workshop</p>
-                </div>
-            </div>
+{{-- TOPBAR --}}
+<header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
+  <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="btnSidebar" type="button"
+              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              aria-label="Buka menu">
+        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
 
-            {{-- close button (mobile) --}}
-            <button id="btnCloseSidebar"
-                    type="button"
-                    class="md:hidden h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition grid place-items-center"
-                    aria-label="Tutup menu">
-                <svg class="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+      <div class="min-w-0">
+        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
+        <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="button"
+              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              data-tip="Notifikasi"
+              aria-label="Notifikasi">
+        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+{{-- CONTENT --}}
+<section class="relative p-4 sm:p-6">
+  <div class="max-w-[1120px]">
+
+    {{-- TOOLBAR --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <a href="/tambah_barang"
+         class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+                bg-blue-950 text-white hover:bg-blue-900 transition
+                shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+        </svg>
+        Tambah
+      </a>
+
+      <div class="w-full sm:w-[380px]">
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+            </svg>
+          </span>
+
+          <input id="searchBarang"
+                 type="text"
+                 placeholder="Cari kode / nama barang..."
+                 class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
+                        text-sm placeholder:text-slate-400
+                        focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
         </div>
+      </div>
+    </div>
 
-        <div class="px-5 py-5">
-            {{-- Profile --}}
-            <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-                <div class="h-10 w-10 rounded-full bg-white/10 border border-white/15"></div>
-                <div class="min-w-0">
-                    <p class="text-sm font-medium truncate">{{ $userName ?? 'User' }}</p>
-                    <p class="text-[11px] text-white/60">{{ $role ?? 'Admin' }}</p>
+    {{-- TABLE CARD --}}
+    <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
+                shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm table-auto" id="tableBarang">
+
+          {{-- HEADER --}}
+          <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
+            <tr class="text-slate-600">
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle w-[64px]">No</th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle w-[160px]">
+                Kode Barang
+              </th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle">
+                Nama Barang
+              </th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle w-[120px]">
+                Satuan
+              </th>
+
+              {{-- STOK: dibuat lebih kecil biar ga “ngedorong” --}}
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle text-right w-[110px]">
+                Stok
+              </th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle text-right w-[150px]">
+                Harga Beli
+              </th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle text-right w-[150px]">
+                Harga Jual
+              </th>
+
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap align-middle text-right w-[120px]">
+                Aksi
+              </th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-200">
+          @forelse (($barangs ?? []) as $i => $b)
+            @php
+              $stok = (int) ($b->stok ?? 0);
+
+              $stokBadge = match(true) {
+                $stok <= 0 => 'bg-rose-50 text-rose-700 border-rose-200',
+                $stok <= 5 => 'bg-amber-50 text-amber-700 border-amber-200',
+                default    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+              };
+
+              $stokLabel = match(true) {
+                $stok <= 0 => 'Habis',
+                $stok <= 5 => 'Menipis',
+                default    => 'Aman',
+              };
+
+              $rowText = strtolower(
+                ($b->kode_barang ?? '').' '.
+                ($b->nama_barang ?? '').' '.
+                ($b->satuan ?? '').' '.
+                (string)$stok
+              );
+            @endphp
+
+            <tr class="row-lift hover:bg-slate-50/70 transition" data-row-text="{{ $rowText }}">
+              <td class="px-5 py-4 text-slate-600 tabular-nums">{{ $i + 1 }}</td>
+
+              <td class="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
+                {{ $b->kode_barang ?? '-' }}
+              </td>
+
+              <td class="px-5 py-4 text-slate-700">
+                {{ $b->nama_barang ?? '-' }}
+              </td>
+
+              <td class="px-5 py-4 text-slate-700 whitespace-nowrap">
+                {{ $b->satuan ?? '-' }}
+              </td>
+
+              {{-- STOK: angka + badge dibikin vertikal (biar ga keliatan “2 data sejajar”) --}}
+              <td class="px-5 py-4 text-right whitespace-nowrap">
+                <div class="inline-flex flex-col items-end leading-tight">
+                  <span class="font-extrabold text-slate-900 tabular-nums">{{ $stok }}</span>
+                  <span class="mt-1 inline-flex rounded-full border px-2 py-[2px] text-[10px] font-semibold {{ $stokBadge }}">
+                    {{ $stokLabel }}
+                  </span>
                 </div>
-            </div>
+              </td>
 
-            {{-- Menu --}}
-            <nav class="mt-5 space-y-1">
+              <td class="px-5 py-4 text-right text-slate-700 tabular-nums whitespace-nowrap">
+                {{ isset($b->harga_beli) ? 'Rp '.number_format($b->harga_beli,0,',','.') : '-' }}
+              </td>
 
-                <a href="#"
-                   class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                    <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                        <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
-                        </svg>
-                    </span>
-                    Dashboard
-                </a>
+              <td class="px-5 py-4 text-right text-slate-700 tabular-nums whitespace-nowrap">
+                {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual,0,',','.') : '-' }}
+              </td>
 
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
+              <td class="px-5 py-4">
+                <div class="flex flex-col items-end gap-2">
+                  <a href="{{ route('ubah_barang', $b->id ?? 0) ?? '#' }}"
+                     class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold text-center
+                            border border-slate-200 bg-white hover:bg-slate-50 transition whitespace-nowrap">
+                    Ubah
+                  </a>
 
-                    <a href="{{ route('mengelola_barang') }}"
-                       data-nav data-active="true"
-                       class="nav-item is-active group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              bg-white/12 text-white border border-white/10 relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
-                            </svg>
-                        </span>
-                        Kelola Barang
-                    </a>
+                  <form method="POST"
+                        action="{{ route('hapus_barang', $b->id ?? 0) ?? '#' }}"
+                        class="deleteForm w-[92px]">
+                    @csrf
+                    @method('DELETE')
 
-                    <a href="{{ route('barang_keluar') }}"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
-                            </svg>
-                        </span>
-                        Barang Keluar
-                    </a>
+                    <input type="hidden" name="id" value="{{ $b->id ?? 0 }}">
+                    <input type="hidden" name="kode_barang" value="{{ $b->kode_barang ?? '' }}">
+                    <input type="hidden" name="nama_barang" value="{{ $b->nama_barang ?? '' }}">
 
-                    <a href="{{ route('barang_masuk') }}"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
-                            </svg>
-                        </span>
-                        Barang Masuk
-                    </a>
-                </div>
-
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
-
-                    <a href="#"
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </span>
-                        Riwayat Perubahan Stok
-                    </a>
-
-                    <a href="#"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
-                            </svg>
-                        </span>
-                        Riwayat Transaksi
-                    </a>
-
-                    <a href="#"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17V9"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-3"/>
-                            </svg>
-                        </span>
-                        Laporan Penjualan
-                    </a>
-                </div>
-
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
-
-                    <a href="#"
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </span>
-                        Kelola Jadwal Kerja
-                    </a>
-
-                    <a href="#"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 20c0-1.7-1.4-3.1-3.3-3.7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7a2.5 2.5 0 01-1.5 2.3"/>
-                            </svg>
-                        </span>
-                        Manajemen Staf
-                    </a>
-                </div>
-
-                <div class="mt-4 pt-4 border-t border-white/10">
-                    <a href="#"
-                       class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
-                            </svg>
-                        </span>
-                        Logout
-                    </a>
-                </div>
-            </nav>
-        </div>
-    </aside>
-
-    {{-- overlay (mobile) --}}
-    <div id="overlay"
-         class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
-
-    {{-- ================= MAIN ================= --}}
-    <main id="main"
-          class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
-
-        {{-- BACKGROUND --}}
-        <div class="pointer-events-none absolute inset-0">
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-
-            <div class="absolute inset-0 opacity-[0.12]"
-                 style="background-image:
-                    linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-                    background-size: 56px 56px;">
-            </div>
-
-            {{-- animated grid highlight --}}
-            <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
-                 style="background-image:
-                    repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
-                    repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-                    background-size: 112px 112px, 112px 112px;">
-            </div>
-
-            <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                        bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-            <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
-                        bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
-        </div>
-
-        {{-- TOPBAR --}}
-        <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-            <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3 min-w-0">
-                    {{-- hamburger (mobile) --}}
-                    <button id="btnSidebar"
-                            type="button"
-                            class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                            aria-label="Buka menu">
-                        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
+                    <button type="submit"
+                            class="w-full rounded-md px-3 py-2 text-xs font-semibold
+                                   border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition whitespace-nowrap">
+                      Hapus
                     </button>
-
-                    <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Barang</h1>
-                        <p class="text-xs text-slate-500">Tambah, ubah, dan kelola stok barang.</p>
-                    </div>
+                  </form>
                 </div>
+              </td>
+            </tr>
+          @empty
+            @for($r=1;$r<=3;$r++)
+              <tr class="row-lift hover:bg-slate-50/70 transition">
+                <td class="px-5 py-5 text-slate-400 tabular-nums">{{ $r }}</td>
+                <td class="px-5 py-5"><div class="h-4 w-28 rounded bg-slate-100"></div></td>
+                <td class="px-5 py-5"><div class="h-4 w-64 rounded bg-slate-100"></div></td>
+                <td class="px-5 py-5"><div class="h-4 w-20 rounded bg-slate-100"></div></td>
 
-                <div class="flex items-center gap-2">
-                    <button type="button"
-                            class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                            data-tip="Notifikasi">
-                        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </header>
+                {{-- skeleton stok: vertikal juga --}}
+                <td class="px-5 py-5 text-right">
+                  <div class="inline-flex flex-col items-end">
+                    <div class="h-4 w-10 rounded bg-slate-100"></div>
+                    <div class="mt-2 h-5 w-14 rounded-full bg-slate-100"></div>
+                  </div>
+                </td>
 
-        {{-- CONTENT --}}
-        <section class="relative p-4 sm:p-6">
-            <div class="max-w-[1120px] mx-auto">
+                <td class="px-5 py-5 text-right"><div class="h-4 w-24 ml-auto rounded bg-slate-100"></div></td>
+                <td class="px-5 py-5 text-right"><div class="h-4 w-24 ml-auto rounded bg-slate-100"></div></td>
 
-                {{-- Flash Messages --}}
-                @if(session('success'))
-                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                        <div class="flex items-start gap-3">
-                            <svg class="h-5 w-5 text-emerald-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <p class="text-sm text-emerald-800">{{ session('success') }}</p>
-                        </div>
-                    </div>
-                @endif
+                <td class="px-5 py-5">
+                  <div class="flex flex-col items-end gap-2">
+                    <div class="h-8 w-[92px] rounded-md bg-slate-100"></div>
+                    <div class="h-8 w-[92px] rounded-md bg-slate-100"></div>
+                  </div>
+                </td>
+              </tr>
+            @endfor
+          @endforelse
+          </tbody>
 
-                @if(session('error'))
-                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                        <div class="flex items-start gap-3">
-                            <svg class="h-5 w-5 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <p class="text-sm text-red-800">{{ session('error') }}</p>
-                        </div>
-                    </div>
-                @endif
+        </table>
+      </div>
 
-                {{-- TOOLBAR --}}
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <a href="{{ route('tambah_barang') }}"
-                       class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-                              bg-blue-950 text-white hover:bg-blue-900 transition
-                              shadow-[0_12px_24px_rgba(2,6,23,0.16)]">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
-                        </svg>
-                        Tambah
-                    </a>
+      <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
+        © DPM Workshop 2025
+      </div>
+    </div>
+  </div>
+</section>
 
-                    <div class="w-full sm:w-[380px]">
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
-                                </svg>
-                            </span>
-
-                            <input id="searchBarang"
-                                   type="text"
-                                   placeholder="Cari kode / nama barang..."
-                                   class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
-                                          text-sm placeholder:text-slate-400
-                                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                        </div>
-                    </div>
-                </div>
-
-                {{-- TABLE CARD --}}
-                <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
-                            shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
-                                <tr class="text-left text-slate-600">
-                                    <th class="px-5 py-4 font-semibold w-[70px]">No</th>
-                                    <th class="px-5 py-4 font-semibold">Kode Barang</th>
-                                    <th class="px-5 py-4 font-semibold">Nama Barang</th>
-                                    <th class="px-5 py-4 font-semibold">Satuan</th>
-                                    <th class="px-5 py-4 font-semibold">Harga Beli</th>
-                                    <th class="px-5 py-4 font-semibold">Harga Jual</th>
-                                    <th class="px-5 py-4 font-semibold text-right w-[120px]">Aksi</th>
-                                </tr>
-                            </thead>
-
-                            <tbody class="divide-y divide-slate-200" id="tableBody">
-                                @forelse ($barangs as $i => $b)
-                                    <tr class="row-lift hover:bg-slate-50/70 transition" data-searchable
-                                        data-kode="{{ strtolower($b->kode_barang) }}"
-                                        data-nama="{{ strtolower($b->nama_barang) }}">
-                                        <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
-                                        <td class="px-5 py-4 font-mono text-sm font-semibold text-blue-900">{{ $b->kode_barang }}</td>
-                                        <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->nama_barang }}</td>
-                                        <td class="px-5 py-4 text-slate-700">
-                                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold">
-                                                {{ $b->satuan }}
-                                            </span>
-                                        </td>
-                                        <td class="px-5 py-4 text-slate-700">
-                                            Rp {{ number_format($b->harga_beli, 0, ',', '.') }}
-                                        </td>
-                                        <td class="px-5 py-4 text-slate-700">
-                                            Rp {{ number_format($b->harga_jual, 0, ',', '.') }}
-                                        </td>
-                                        <td class="px-5 py-4">
-                                            <div class="flex flex-col items-end gap-2">
-                                                <a href="{{ route('ubah_barang', $b->barang_id) }}"
-                                                   class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold text-center
-                                                          border border-slate-200 bg-white hover:bg-slate-50 transition">
-                                                    Ubah
-                                                </a>
-
-                                                <button type="button"
-                                                        onclick="confirmDelete({{ $b->barang_id }}, '{{ $b->nama_barang }}')"
-                                                        class="w-[88px] rounded-md px-3 py-2 text-xs font-semibold
-                                                               border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
-                                                    Hapus
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr id="emptyRow">
-                                        <td colspan="7" class="px-5 py-8 text-center text-slate-500">
-                                            <div class="flex flex-col items-center gap-3">
-                                                <svg class="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                                                </svg>
-                                                <p class="text-sm font-medium">Belum ada data barang</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {{-- No results message (hidden by default) --}}
-                    <div id="noResults" class="hidden px-5 py-8 text-center text-slate-500">
-                        <div class="flex flex-col items-center gap-3">
-                            <svg class="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3m0 0A8 8 0 1116.7 4.3a8 8 0 010 12.4z"/>
-                            </svg>
-                            <p class="text-sm font-medium">Tidak ada hasil ditemukan</p>
-                        </div>
-                    </div>
-
-                    <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                        © DPW Workshop 2025
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {{-- Hidden form for delete --}}
-        <form id="deleteForm" method="POST" style="display: none;">
-            @csrf
-            @method('DELETE')
-        </form>
-
-        <style>
-            @media (prefers-reduced-motion: reduce) {
-                .animate-grid-scan, .row-lift, .btn-shine, .nav-item::before { animation: none !important; transition: none !important; }
-            }
-
-            /* background scan */
-            @keyframes gridScan {
-                0%   { background-position: 0 0, 0 0; opacity: 0.10; }
-                40%  { opacity: 0.22; }
-                60%  { opacity: 0.18; }
-                100% { background-position: 220px 220px, -260px 260px; opacity: 0.10; }
-            }
-            .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
-
-            /* sidebar active indicator */
-            .nav-item::before{
-                content:"";
-                position:absolute;
-                left:0; top:10px; bottom:10px;
-                width:3px;
-                background: linear-gradient(to bottom, rgba(255,255,255,.0), rgba(255,255,255,.75), rgba(255,255,255,.0));
-                opacity:0;
-                transform: translateX(-6px);
-                transition: .25s ease;
-                border-radius: 999px;
-            }
-            .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
-
-            /* table lift hover */
-            .row-lift{
-                transform: translateY(0);
-                transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
-            }
-            .row-lift:hover{
-                transform: translateY(-1px);
-                box-shadow: 0 10px 26px rgba(2,6,23,0.06);
-            }
-
-            /* button shine */
-            .btn-shine{ position: relative; overflow: hidden; }
-            .btn-shine::after{
-                content:"";
-                position:absolute;
-                inset:0;
-                transform: translateX(-120%);
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
-                transition: transform .65s ease;
-            }
-            .btn-shine:hover::after{ transform: translateX(120%); }
-
-            /* search clear button */
-            .clear-btn{
-                opacity:0;
-                pointer-events:none;
-                transform: scale(.9);
-                transition: .15s ease;
-            }
-            .clear-btn.show{
-                opacity:1;
-                pointer-events:auto;
-                transform: scale(1);
-            }
-
-            /* tooltip topbar */
-            .tip{ position: relative; }
-            .tip[data-tip]::after{
-                content: attr(data-tip);
-                position:absolute;
-                right:0;
-                top: calc(100% + 10px);
-                background: rgba(15,23,42,.92);
-                color: rgba(255,255,255,.92);
-                font-size: 11px;
-                padding: 6px 10px;
-                border-radius: 10px;
-                white-space: nowrap;
-                opacity:0;
-                transform: translateY(-4px);
-                pointer-events:none;
-                transition: .15s ease;
-            }
-            .tip:hover::after{ opacity:1; transform: translateY(0); }
-
-            /* Mobile */
-            #sidebar { -webkit-overflow-scrolling: touch; }
-        </style>
-
-        <script>
-            // ===== Delete Confirmation =====
-            function confirmDelete(barangId, namaBarang) {
-                if (confirm(`Yakin ingin menghapus barang "${namaBarang}"?`)) {
-                    const form = document.getElementById('deleteForm');
-                    form.action = `/hapus_barang/${barangId}`;
-                    form.submit();
-                }
-            }
-
-            // ===== Sidebar Active Indicator =====
-            document.querySelectorAll('[data-nav]').forEach(a => {
-                if (a.dataset.active === "true") a.classList.add('is-active');
-                a.addEventListener('click', () => {
-                    document.querySelectorAll('[data-nav].is-active').forEach(x => x.classList.remove('is-active'));
-                    a.classList.add('is-active');
-                });
-            });
-
-            // ===== Search Functionality =====
-            const searchInput = document.getElementById('searchBarang');
-            const tableBody = document.getElementById('tableBody');
-            const noResults = document.getElementById('noResults');
-            const emptyRow = document.getElementById('emptyRow');
-
-            if (searchInput) {
-                const wrap = searchInput.parentElement;
-
-                // Add clear button
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
-                btn.innerHTML = `
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                `;
-                wrap.appendChild(btn);
-
-                const syncClearBtn = () => btn.classList.toggle('show', searchInput.value.trim().length > 0);
-                syncClearBtn();
-
-                // Search logic
-                searchInput.addEventListener('input', () => {
-                    syncClearBtn();
-                    const query = searchInput.value.toLowerCase().trim();
-                    const rows = document.querySelectorAll('[data-searchable]');
-                    let visibleCount = 0;
-
-                    rows.forEach(row => {
-                        const kode = row.dataset.kode || '';
-                        const nama = row.dataset.nama || '';
-                        const match = kode.includes(query) || nama.includes(query);
-                        
-                        row.style.display = match ? '' : 'none';
-                        if (match) visibleCount++;
-                    });
-
-                    // Show/hide no results message
-                    if (noResults) {
-                        noResults.classList.toggle('hidden', visibleCount > 0 || query === '');
-                    }
-                    
-                    // Hide empty row if searching
-                    if (emptyRow) {
-                        emptyRow.style.display = query === '' ? '' : 'none';
-                    }
-                });
-
-                btn.addEventListener('click', () => {
-                    searchInput.value = "";
-                    searchInput.focus();
-                    syncClearBtn();
-                    
-                    // Reset all rows
-                    document.querySelectorAll('[data-searchable]').forEach(row => {
-                        row.style.display = '';
-                    });
-                    if (noResults) noResults.classList.add('hidden');
-                    if (emptyRow) emptyRow.style.display = '';
-                });
-            }
-
-            // ===== Mobile Sidebar =====
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const btnSidebar = document.getElementById('btnSidebar');
-            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-            const openSidebar = () => {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            };
-
-            const closeSidebar = () => {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            };
-
-            if (btnSidebar) btnSidebar.addEventListener('click', openSidebar);
-            if (btnCloseSidebar) btnCloseSidebar.addEventListener('click', closeSidebar);
-            if (overlay) overlay.addEventListener('click', closeSidebar);
-
-            // Close on ESC
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeSidebar();
-            });
-
-            // Close when click menu item in mobile
-            document.querySelectorAll('#sidebar a[data-nav]').forEach(a => {
-                a.addEventListener('click', () => {
-                    if (window.innerWidth < 768) closeSidebar();
-                });
-            });
-
-            // Sync on resize
-            const syncOnResize = () => {
-                if (window.innerWidth >= 768) {
-                    overlay.classList.add('hidden');
-                    sidebar.classList.remove('-translate-x-full');
-                    document.body.classList.remove('overflow-hidden');
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            };
-            window.addEventListener('resize', syncOnResize);
-            syncOnResize();
-        </script>
-
-    </main>
+{{-- ===== Confirm Modal (1x reusable) ===== --}}
+<div id="confirmModal"
+     class="fixed inset-0 z-[999] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
+  <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
+    <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
+      <div>
+        <div id="cmTitle" class="text-lg font-semibold text-slate-900">Konfirmasi</div>
+        <div id="cmMsg" class="text-sm text-slate-600 mt-1">—</div>
+      </div>
+      <button type="button" id="cmX"
+              class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 grid place-items-center"
+              aria-label="Tutup">
+        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-5">
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700">
+        <b>Peringatan:</b> Aksi ini tidak bisa dibatalkan. Pastikan barang yang dipilih benar.
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button type="button" id="cmCancel"
+                class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">
+          Batal
+        </button>
+        <button type="button" id="cmOk"
+                class="h-10 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold">
+          Ya, Hapus
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
-</body>
-</html>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    .row-lift, .btn-shine { animation: none !important; transition: none !important; }
+  }
+
+  .row-lift{
+    transform: translateY(0);
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+  }
+  .row-lift:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(2,6,23,0.06);
+  }
+
+  .btn-shine{ position: relative; overflow: hidden; }
+  .btn-shine::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    transform: translateX(-120%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transition: transform .65s ease;
+  }
+  .btn-shine:hover::after{ transform: translateX(120%); }
+
+  .clear-btn{
+    opacity:0;
+    pointer-events:none;
+    transform: scale(.9);
+    transition: .15s ease;
+  }
+  .clear-btn.show{
+    opacity:1;
+    pointer-events:auto;
+    transform: scale(1);
+  }
+
+  .tip{ position: relative; }
+  .tip[data-tip]::after{
+    content: attr(data-tip);
+    position:absolute;
+    right:0;
+    top: calc(100% + 10px);
+    background: rgba(15,23,42,.92);
+    color: rgba(255,255,255,.92);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    white-space: nowrap;
+    opacity:0;
+    transform: translateY(-4px);
+    pointer-events:none;
+    transition: .15s ease;
+  }
+  .tip:hover::after{ opacity:1; transform: translateY(0); }
+</style>
+
+<script>
+  // search clear + filter rows
+  const input = document.getElementById('searchBarang');
+  if (input) {
+    const wrap = input.parentElement;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
+    btn.setAttribute('aria-label', 'Hapus pencarian');
+    btn.innerHTML = `
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    `;
+    wrap.appendChild(btn);
+
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      btn.classList.toggle('show', q.length > 0);
+
+      document.querySelectorAll('#tableBarang tbody tr[data-row-text]').forEach(tr => {
+        tr.classList.toggle('hidden', q && !tr.dataset.rowText.includes(q));
+      });
+    };
+
+    input.addEventListener('input', apply);
+    btn.addEventListener('click', () => { input.value=""; input.focus(); apply(); });
+    apply();
+  }
+
+  // confirm modal (hapus)
+  const modal = document.getElementById('confirmModal');
+  const cmTitle = document.getElementById('cmTitle');
+  const cmMsg = document.getElementById('cmMsg');
+  const cmOk = document.getElementById('cmOk');
+  const cmCancel = document.getElementById('cmCancel');
+  const cmX = document.getElementById('cmX');
+  let pendingForm = null;
+
+  const openModal = ({title, msg, onConfirm}) => {
+    pendingForm = onConfirm || null;
+    cmTitle.textContent = title || 'Konfirmasi';
+    cmMsg.textContent = msg || '—';
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  };
+  const closeModal = () => {
+    pendingForm = null;
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  };
+
+  modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  cmCancel?.addEventListener('click', closeModal);
+  cmX?.addEventListener('click', closeModal);
+  cmOk?.addEventListener('click', () => { pendingForm?.(); closeModal(); });
+
+  document.querySelectorAll('form.deleteForm').forEach(f => {
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const kode = f.querySelector('input[name="kode_barang"]')?.value || '-';
+      const nama = f.querySelector('input[name="nama_barang"]')?.value || '-';
+      openModal({ title: 'Hapus barang?', msg: `Yakin mau hapus ${kode} — ${nama}?`, onConfirm: () => f.submit() });
+    });
+  });
+</script>
+
+@endsection

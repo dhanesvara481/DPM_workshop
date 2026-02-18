@@ -1,449 +1,442 @@
 {{-- resources/views/admin/jadwal_kerja/hapus_jadwal_kerja.blade.php --}}
-<!doctype html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hapus Jadwal Kerja</title>
-    @vite('resources/js/app.js')
-</head>
+@extends('admin.layout.app')
 
-<body class="min-h-screen bg-slate-50 text-slate-900">
-<div class="min-h-screen flex">
+@section('title', 'Hapus Jadwal Kerja - DPM Workshop')
 
-    {{-- ================= SIDEBAR ================= --}}
-    <aside id="sidebar"
-           class="fixed inset-y-0 left-0 z-40 h-screen
-                  w-[280px] md:w-[280px]
-                  -translate-x-full md:translate-x-0
-                  bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white
-                  border-r border-white/5
-                  transition-[transform,width] duration-300 ease-out
-                  overflow-y-auto">
+@section('content')
 
-        <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-                    <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
-                </div>
-                <div class="leading-tight">
-                    <p class="font-semibold tracking-tight">DPM Workshop</p>
-                </div>
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
+  <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="btnSidebar" type="button"
+              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              aria-label="Buka menu">
+        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <div class="min-w-0">
+        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Hapus Jadwal Kerja</h1>
+        <p class="text-xs text-slate-500">Pilih item yang ingin dihapus (bisa 1, beberapa, atau semua).</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ url('/jadwal_kerja') }}"
+         class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
+                border border-slate-200 bg-white hover:bg-slate-50 transition">
+        Kembali
+      </a>
+
+      <button type="button"
+              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              data-tip="Notifikasi">
+        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="relative p-4 sm:p-6">
+  <div class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
+    <div class="absolute inset-0 opacity-[0.12]"
+         style="background-image:
+          linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
+          background-size: 56px 56px;">
+    </div>
+    <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
+         style="background-image:
+          repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
+          repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
+          background-size: 112px 112px, 112px 112px;">
+    </div>
+    <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
+                bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
+    <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
+                bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
+  </div>
+
+  <div class="max-w-[980px] mx-auto w-full">
+    @php
+      $date = request('date') ?? now()->format('Y-m-d');
+
+      $slot = $slot ?? [
+        'id' => 'slot-'.$date,
+        'left' => 3,
+        'status' => 'open',
+      ];
+
+      $items = $items ?? [
+        ['id'=>101, 'type'=>'event', 'title'=>'Shift Pagi - Asep', 'status'=>'aktif', 'time'=>'08:00 - 16:00', 'desc'=>'Servis rutin / tune up'],
+        ['id'=>102, 'type'=>'event', 'title'=>'Catatan: Sparepart datang', 'status'=>'catatan', 'time'=>'10:30', 'desc'=>'Cek gudang + follow up supplier'],
+      ];
+
+      $statusMap = [
+        'aktif'   => ['label'=>'Aktif',   'pill'=>'pill aktif'],
+        'catatan' => ['label'=>'Catatan', 'pill'=>'pill catatan'],
+        'tutup'   => ['label'=>'Tutup',   'pill'=>'pill tutup'],
+      ];
+
+      $fmtLong = function($iso){
+        try {
+          [$y,$m,$d] = array_map('intval', explode('-', $iso));
+          return \Carbon\Carbon::create($y,$m,$d)->locale('id')->translatedFormat('l, d F Y');
+        } catch(\Throwable $e) { return $iso; }
+      };
+    @endphp
+
+    <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
+      <div class="px-5 sm:px-6 py-5 border-b border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Konfirmasi Hapus</div>
+            <div class="text-xs text-slate-500 mt-1">
+              Tanggal: <span class="font-semibold text-slate-900">{{ $fmtLong($date) }}</span>
+              <span class="mx-2 text-slate-300">•</span>
+              <span class="font-semibold text-rose-700">Aksi ini tidak bisa dibatalkan</span>.
+            </div>
+          </div>
+
+          <div class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+            <span class="text-xs font-semibold text-rose-800">Peringatan!</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 sm:p-6">
+        <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900">Pilih yang mau dihapus</div>
+              <div class="text-[11px] text-slate-500">
+                Kamu bisa hapus <b>1 item</b>, <b>beberapa item</b>, atau <b>semua</b> pada tanggal ini.
+              </div>
             </div>
 
-            <button id="btnCloseSidebar"
-                    type="button"
-                    class="md:hidden h-10 w-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition grid place-items-center"
-                    aria-label="Tutup menu">
-                <svg class="h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 select-none">
+                <input id="checkAll" type="checkbox" class="h-4 w-4 rounded border-slate-300">
+                Pilih semua
+              </label>
+
+              <div class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                <span class="text-[11px] text-slate-600">Terpilih:</span>
+                <span id="selectedCount" class="text-xs font-semibold text-slate-900">0</span>
+              </div>
+            </div>
+          </div>
+
+          <form id="formDeleteSelected" method="POST" action="#" class="p-5 space-y-3">
+            @csrf
+            {{-- @method('DELETE') --}}
+            <input type="hidden" name="date" value="{{ $date }}">
+
+            @if(!empty($slot))
+              @php $isClosed = ($slot['status'] ?? '') === 'closed'; @endphp
+              <label class="block cursor-pointer">
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50/50 transition flex items-start gap-3">
+                  <input type="checkbox" class="itemCheck mt-1 h-4 w-4 rounded border-slate-300" name="targets[]" value="slot:{{ $slot['id'] }}">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="text-sm font-semibold text-slate-900">Ketersediaan</div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                          {{ $isClosed ? 'Hari ini tidak tersedia.' : 'Sisa slot: '.$slot['left'] }}
+                        </div>
+                      </div>
+                      <span class="pill {{ $isClosed ? 'tutup' : 'aktif' }}">{{ $isClosed ? 'TUTUP' : 'AKTIF' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+            @endif
+
+            @forelse($items as $it)
+              @php
+                $s = strtolower(trim($it['status'] ?? 'aktif'));
+                $ui = $statusMap[$s] ?? ['label'=>$it['status'] ?? '—', 'pill'=>'pill'];
+              @endphp
+
+              <label class="block cursor-pointer">
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50/50 transition flex items-start gap-3">
+                  <input type="checkbox" class="itemCheck mt-1 h-4 w-4 rounded border-slate-300" name="targets[]" value="event:{{ $it['id'] }}">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="text-sm font-semibold text-slate-900 truncate">{{ $it['title'] ?? 'Jadwal' }}</div>
+                        @if(!empty($it['time']))
+                          <div class="text-xs text-slate-500 mt-0.5">{{ $it['time'] }}</div>
+                        @endif
+                      </div>
+                      <span class="{{ $ui['pill'] }}">{{ strtoupper($ui['label']) }}</span>
+                    </div>
+
+                    @if(!empty($it['desc']))
+                      <div class="text-xs text-slate-600 mt-2">{{ $it['desc'] }}</div>
+                    @endif
+                  </div>
+                </div>
+              </label>
+            @empty
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                Tidak ada jadwal di tanggal ini.
+              </div>
+            @endforelse
+
+            <div class="pt-3 flex flex-col sm:flex-row gap-2 sm:justify-end">
+              {{-- ✅ kasih id biar confirm selalu kena --}}
+              <a id="btnBatal" href="{{ url('/kelola_jadwal_kerja') }}"
+                 class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
+                Batal
+              </a>
+
+              <button id="btnDeleteSelected" type="submit" disabled
+                      class="h-11 px-5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition text-sm font-semibold
+                             shadow-[0_12px_24px_rgba(244,63,94,0.25)] disabled:opacity-50 disabled:cursor-not-allowed">
+                Hapus yang dipilih
+              </button>
+
+              <button id="btnDeleteAll" type="button"
+                      class="h-11 px-5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition text-sm font-semibold">
+                Hapus semua di tanggal ini
+              </button>
+            </div>
+
+            <div class="text-[11px] text-slate-500">
+              Tips: centang item yang mau dihapus, lalu klik <b>Hapus yang dipilih</b>.
+            </div>
+          </form>
+
+          <form id="formDeleteAll" action="#" method="POST" class="hidden">
+            @csrf
+            {{-- @method('DELETE') --}}
+            <input type="hidden" name="date" value="{{ $date }}">
+            <input type="hidden" name="mode" value="all">
+          </form>
         </div>
 
-        <div class="px-5 py-5">
-            {{-- Profile --}}
-            <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-                <div class="h-10 w-10 rounded-full bg-white/10 border border-white/15"></div>
-                <div class="min-w-0">
-                    <p class="text-sm font-medium truncate">{{ $userName ?? 'User' }}</p>
-                    <p class="text-[11px] text-white/60">{{ $role ?? 'Admin' }}</p>
-                </div>
-            </div>
-
-            {{-- Menu --}}
-            <nav class="mt-5 space-y-1">
-                <a href="#"
-                   data-nav
-                   class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                    <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                        <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V21a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 21V10.5z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10"/>
-                        </svg>
-                    </span>
-                    Dashboard
-                </a>
-
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
-
-                    <a href="/tampilan_barang"
-                       data-nav
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
-                            </svg>
-                        </span>
-                        Kelola Barang
-                    </a>
-
-                    <a href="/barang_keluar"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
-                            </svg>
-                        </span>
-                        Barang Keluar
-                    </a>
-
-                    <a href="/barang_masuk"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
-                            </svg>
-                        </span>
-                        Barang Masuk
-                    </a>
-                </div>
-
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
-
-                    <a href="/riwayat_perubahan_stok"
-                       data-nav
-                       class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5l3 2"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </span>
-                        Riwayat Perubahan Stok
-                    </a>
-
-                    <a href="/riwayat_transaksi"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h10a2 2 0 012 2v16l-2-1-2 1-2-1-2 1-2-1-2 1V5a2 2 0 012-2z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 8h6M9 12h6M9 16h4"/>
-                            </svg>
-                        </span>
-                        Riwayat Transaksi
-                    </a>
-
-                    <a href="/laporan_penjualan"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 17v-6"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17V9"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-3"/>
-                            </svg>
-                        </span>
-                        Laporan Penjualan
-                    </a>
-                </div>
-
-                <div class="mt-3">
-                    <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
-
-                    <a href="/kelola_jadwal_kerja"
-                       data-nav data-active="true"
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                              bg-white/12 text-white border border-white/10
-                              hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </span>
-                        Kelola Jadwal Kerja
-                    </a>
-
-                    <a href="#"
-                       data-nav
-                       class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 20c0-1.7-1.4-3.1-3.3-3.7"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7a2.5 2.5 0 01-1.5 2.3"/>
-                            </svg>
-                        </span>
-                        Manajemen Staf
-                    </a>
-                </div>
-
-                <div class="mt-4 pt-4 border-t border-white/10">
-                    <a href="#"
-                       class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-                        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-                            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
-                            </svg>
-                        </span>
-                        Logout
-                    </a>
-                </div>
-            </nav>
+        <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:p-5">
+          <div class="text-sm font-semibold text-rose-900">Catatan</div>
+          <div class="text-[11px] text-rose-800/80 mt-1">
+            Kalau salah hapus, harus buat ulang jadwalnya. Pastikan item yang dipilih sudah benar.
+          </div>
         </div>
-    </aside>
+      </div>
 
-    <div id="overlay" class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
+      <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
+        Tips: halaman ini dibuka dari detail tanggal (modal) → tombol "Hapus".
+      </div>
+    </div>
+  </div>
+</section>
 
-    {{-- ================= MAIN ================= --}}
-    <main id="main" class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
+@endsection
 
-        {{-- BACKGROUND --}}
-        <div class="pointer-events-none absolute inset-0">
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-            <div class="absolute inset-0 opacity-[0.12]"
-                 style="background-image:
-                    linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-                    background-size: 56px 56px;">
-            </div>
-            <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
-                 style="background-image:
-                    repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
-                    repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-                    background-size: 112px 112px, 112px 112px;">
-            </div>
-            <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                        bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-            <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
-                        bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
+@push('head')
+<style>
+  @media (prefers-reduced-motion: reduce) { .animate-grid-scan { animation: none !important; transition: none !important; } }
+  @keyframes gridScan {
+    0%{ background-position:0 0,0 0; opacity:.10; }
+    40%{ opacity:.22; }
+    60%{ opacity:.18; }
+    100%{ background-position:220px 220px,-260px 260px; opacity:.10; }
+  }
+  .animate-grid-scan{ animation:gridScan 8.5s ease-in-out infinite; }
+
+  .tip{ position:relative; }
+  .tip[data-tip]::after{
+    content:attr(data-tip);
+    position:absolute;
+    right:0;
+    top:calc(100% + 10px);
+    background:rgba(15,23,42,.92);
+    color:rgba(255,255,255,.92);
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:10px;
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(-4px);
+    pointer-events:none;
+    transition:.15s ease;
+  }
+  .tip:hover::after{ opacity:1; transform:translateY(0); }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:12px;
+    border:1px solid rgba(15,23,42,0.10);
+    background:rgba(255,255,255,0.75);
+    white-space:nowrap;
+  }
+  .pill.aktif{ background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25); color:rgba(6,95,70,0.95); }
+  .pill.catatan{ background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25); color:rgba(120,53,15,0.95); }
+  .pill.tutup{ background:rgba(244,63,94,0.12); border-color:rgba(244,63,94,0.25); color:rgba(136,19,55,0.95); }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+  // ===== Confirm Modal Reusable (sama feel kayak halaman ubah) =====
+  function showConfirmModal({ tone = "neutral", title, message, note, confirmText, cancelText, onConfirm }) {
+    const toneMap = {
+      neutral: { ring: "ring-slate-200",  btn: "bg-slate-900 hover:bg-slate-800", noteBg: "bg-slate-50", noteBr: "border-slate-200", noteTx: "text-slate-600" },
+      danger:  { ring: "ring-rose-200",   btn: "bg-rose-600 hover:bg-rose-700",  noteBg: "bg-rose-50",  noteBr: "border-rose-200",  noteTx: "text-rose-700" },
+      warn:    { ring: "ring-amber-200",  btn: "bg-amber-600 hover:bg-amber-700", noteBg: "bg-amber-50", noteBr: "border-amber-200", noteTx: "text-amber-800" },
+    };
+    const t = toneMap[tone] || toneMap.neutral;
+
+    const wrap = document.createElement('div');
+    wrap.className = "fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3";
+    wrap.innerHTML = `
+      <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
+        <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
+          <div>
+            <div class="text-lg font-semibold text-slate-900">${title}</div>
+            <div class="text-sm text-slate-600 mt-1">${message}</div>
+          </div>
+          <button type="button" class="btn-x h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 grid place-items-center">
+            <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
+        <div class="p-5">
+          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">
+            ${note || 'Pastikan pilihan kamu sudah benar.'}
+          </div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button type="button" class="btn-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">${cancelText}</button>
+            <button type="button" class="btn-ok h-10 px-5 rounded-xl ${t.btn} text-white text-sm font-semibold">${confirmText}</button>
+          </div>
+        </div>
+      </div>
+    `;
 
-        {{-- TOPBAR --}}
-        <header class="relative bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
-            <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3 min-w-0">
-                    <button id="btnSidebar" type="button"
-                            class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                            aria-label="Buka menu">
-                        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
-                    </button>
+    function close(){ wrap.remove(); }
+    wrap.addEventListener('click', (e)=>{ if(e.target===wrap) close(); });
+    wrap.querySelector('.btn-x')?.addEventListener('click', close);
+    wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
+    wrap.querySelector('.btn-ok')?.addEventListener('click', ()=>{ close(); onConfirm?.(); });
 
-                    <div class="min-w-0">
-                        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Hapus Jadwal Kerja</h1>
-                        <p class="text-xs text-slate-500">Konfirmasi sebelum menghapus jadwal.</p>
-                    </div>
-                </div>
+    document.body.appendChild(wrap);
+  }
 
-                <div class="flex items-center gap-2">
-                    <button type="button"
-                            class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                            data-tip="Notifikasi">
-                        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </header>
+  // ===== Checkbox UI =====
+  const checkAll = document.getElementById('checkAll');
+  const checks = Array.from(document.querySelectorAll('.itemCheck'));
+  const selectedCount = document.getElementById('selectedCount');
+  const btnDeleteSelected = document.getElementById('btnDeleteSelected');
+  const formDeleteSelected = document.getElementById('formDeleteSelected');
 
-        {{-- CONTENT --}}
-        <section class="relative p-4 sm:p-6">
-            <div class="max-w-[980px] mx-auto w-full">
+  const btnDeleteAll = document.getElementById('btnDeleteAll');
+  const formDeleteAll = document.getElementById('formDeleteAll');
+  const btnBatal = document.getElementById('btnBatal');
 
-                @php
-                    // Prefill sementara (nanti ambil dari $jadwal)
-                    $data = $data ?? [
-                        'nama' => request('nama') ?? '—',
-                        'tanggal' => request('date') ?? '—',
-                        'jam_mulai' => request('jam_mulai') ?? '—',
-                        'jam_selesai' => request('jam_selesai') ?? '—',
-                        'waktu_shift' => request('waktu_shift') ?? '—',
-                        'status' => request('status') ?? '—',
-                        'deskripsi' => request('deskripsi') ?? '—',
-                    ];
-                @endphp
+  function refresh(){
+    const chosen = checks.filter(c => c.checked).length;
+    selectedCount.textContent = String(chosen);
+    btnDeleteSelected.disabled = chosen === 0;
 
-                <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
-                            shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
+    if (checks.length > 0) {
+      const allChecked = chosen === checks.length;
+      const noneChecked = chosen === 0;
+      checkAll.indeterminate = (!allChecked && !noneChecked);
+      checkAll.checked = allChecked;
+    } else {
+      checkAll.checked = false;
+      checkAll.indeterminate = false;
+    }
+  }
 
-                    <div class="px-5 sm:px-6 py-5 border-b border-slate-200">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div class="min-w-0">
-                                <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Konfirmasi Hapus</div>
-                                <div class="text-xs text-slate-500 mt-1">
-                                    Aksi ini <span class="font-semibold text-rose-700">tidak bisa dibatalkan</span>.
-                                </div>
-                            </div>
+  checkAll?.addEventListener('change', (e) => {
+    const v = e.target.checked;
+    checks.forEach(c => c.checked = v);
+    refresh();
+  });
 
-                            <div class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2">
-                                <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
-                                <span class="text-xs font-semibold text-rose-800">Peringatan!</span>
-                            </div>
-                        </div>
-                    </div>
+  checks.forEach(c => c.addEventListener('change', refresh));
+  refresh();
 
-                    <div class="p-5 sm:p-6">
-                        {{-- Ringkasan data yang akan dihapus --}}
-                        <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-                            <div class="px-5 py-4 border-b border-slate-200">
-                                <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
-                                <div class="text-[11px] text-slate-500">Cek sekali lagi sebelum hapus.</div>
-                            </div>
+  // ===== Confirm: Batal =====
+  btnBatal?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const go = btnBatal.getAttribute('href');
 
-                            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <div class="text-[11px] text-slate-500">Nama</div>
-                                    <div class="font-semibold text-slate-900">{{ $data['nama'] }}</div>
-                                </div>
-                                <div>
-                                    <div class="text-[11px] text-slate-500">Tanggal</div>
-                                    <div class="font-semibold text-slate-900">{{ $data['tanggal'] }}</div>
-                                </div>
-                                <div>
-                                    <div class="text-[11px] text-slate-500">Jam</div>
-                                    <div class="font-semibold text-slate-900">{{ $data['jam_mulai'] }} — {{ $data['jam_selesai'] }}</div>
-                                </div>
-                                <div>
-                                    <div class="text-[11px] text-slate-500">Shift</div>
-                                    <div class="font-semibold text-slate-900">{{ $data['waktu_shift'] }}</div>
-                                </div>
+    // kalau belum pilih apa-apa, langsung balik aja
+    const chosen = checks.filter(c => c.checked).length;
+    if (chosen === 0) {
+      window.location.href = go;
+      return;
+    }
 
-                                <div class="sm:col-span-2">
-                                    <div class="text-[11px] text-slate-500">Status</div>
-                                    <div class="inline-flex items-center gap-2 mt-1">
-                                        <span class="h-2 w-2 rounded-full
-                                            {{ $data['status'] === 'ok' ? 'bg-emerald-500' : ($data['status'] === 'warn' ? 'bg-amber-500' : 'bg-rose-500') }}"></span>
-                                        <span class="font-semibold text-slate-900">{{ $data['status'] }}</span>
-                                    </div>
-                                </div>
+    showConfirmModal({
+      tone: "neutral",
+      title: "Batalkan proses hapus?",
+      message: "Pilihan item yang sudah kamu centang akan hilang kalau kamu keluar sekarang.",
+      note: "Kalau masih ragu, klik “Tetap di sini”.",
+      confirmText: "Ya, Keluar",
+      cancelText: "Tetap di sini",
+      onConfirm: () => window.location.href = go
+    });
+  });
 
-                                <div class="sm:col-span-2">
-                                    <div class="text-[11px] text-slate-500">Deskripsi</div>
-                                    <div class="mt-1 text-slate-800">{{ $data['deskripsi'] }}</div>
-                                </div>
-                            </div>
-                        </div>
+  // ===== Confirm: Hapus yang dipilih =====
+  formDeleteSelected?.addEventListener('submit', (e) => {
+    const chosen = checks.filter(c => c.checked).length;
+    if (chosen === 0) { e.preventDefault(); return; }
 
-                        {{-- Tombol aksi --}}
-                        <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:p-5">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                <div class="min-w-0">
-                                    <div class="text-sm font-semibold text-rose-900">Yakin mau hapus jadwal ini?</div>
-                                    <div class="text-[11px] text-rose-800/80">Kalau salah hapus, harus buat ulang jadwalnya.</div>
-                                </div>
+    // biar ga dobel confirm
+    if (formDeleteSelected.dataset.confirmed === "1") return;
 
-                                <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-                                    <a href="/kelola_jadwal_kerja"
-                                       class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
-                                        Batal
-                                    </a>
+    e.preventDefault();
+    showConfirmModal({
+      tone: "danger",
+      title: `Hapus ${chosen} item yang dipilih?`,
+      message: "Item yang dihapus tidak bisa dikembalikan.",
+      note: "Cek lagi daftar yang kamu centang. Kalau sudah yakin, lanjutkan hapus.",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal",
+      onConfirm: () => {
+        formDeleteSelected.dataset.confirmed = "1";
 
-                                    {{-- NOTE:
-                                       action + method kamu sesuaikan nanti ke route destroy yang bener.
-                                       Contoh Laravel: action="{{ route('jadwal.destroy', $jadwal->id) }}" method="POST" + @method('DELETE')
-                                    --}}
-                                    <form action="#" method="POST" class="inline">
-                                        @csrf
-                                        {{-- @method('DELETE') --}}
-                                        <button type="submit"
-                                                class="h-11 px-5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition text-sm font-semibold
-                                                       shadow-[0_12px_24px_rgba(244,63,94,0.25)]">
-                                            Hapus Jadwal
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+        // ✅ kalau backend sudah siap -> submit beneran
+        // formDeleteSelected.submit();
 
-                    </div>
+        // sementara demo
+        alert('Backend belum tersedia. Payload siap: targets[] (slot/event) + date.');
+      }
+    });
+  });
 
-                    <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                        Tips: biasanya tombol "Hapus" muncul dari halaman detail / ubah jadwal.
-                    </div>
-                </div>
-            </div>
-        </section>
+  // ===== Confirm: Hapus semua =====
+  btnDeleteAll?.addEventListener('click', () => {
+    showConfirmModal({
+      tone: "danger",
+      title: "Hapus SEMUA di tanggal ini?",
+      message: "Semua jadwal & ketersediaan pada tanggal ini akan dihapus permanen.",
+      note: "Ini termasuk semua shift/catatan/tutup (kalau ada). Pastikan kamu benar-benar yakin.",
+      confirmText: "Ya, Hapus Semua",
+      cancelText: "Batal",
+      onConfirm: () => {
+        // ✅ kalau backend sudah siap -> submit beneran
+        // formDeleteAll.submit();
 
-        <style>
-            @media (prefers-reduced-motion: reduce) {
-                .animate-grid-scan, .nav-item::before { animation: none !important; transition: none !important; }
-            }
-
-            @keyframes gridScan {
-                0%   { background-position: 0 0, 0 0; opacity: 0.10; }
-                40%  { opacity: 0.22; }
-                60%  { opacity: 0.18; }
-                100% { background-position: 220px 220px, -260px 260px; opacity: 0.10; }
-            }
-            .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
-
-            .nav-item{ position: relative; overflow: hidden; }
-            .nav-item::before{
-                content:"";
-                position:absolute;
-                left:0; top:10px; bottom:10px;
-                width:3px;
-                background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.75), rgba(255,255,255,0));
-                opacity:0;
-                transform: translateX(-6px);
-                transition: .25s ease;
-                border-radius: 999px;
-            }
-            .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
-            #sidebar { -webkit-overflow-scrolling: touch; }
-        </style>
-
-        <script>
-            document.querySelectorAll('[data-nav]').forEach(a => {
-                if (a.dataset.active === "true") a.classList.add('is-active');
-            });
-
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const btnSidebar = document.getElementById('btnSidebar');
-            const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-            const openSidebar = () => {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            };
-            const closeSidebar = () => {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            };
-
-            btnSidebar?.addEventListener('click', openSidebar);
-            btnCloseSidebar?.addEventListener('click', closeSidebar);
-            overlay?.addEventListener('click', closeSidebar);
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeSidebar();
-            });
-
-            const syncOnResize = () => {
-                if (window.innerWidth >= 768) {
-                    overlay.classList.add('hidden');
-                    sidebar.classList.remove('-translate-x-full');
-                    document.body.classList.remove('overflow-hidden');
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            };
-            window.addEventListener('resize', syncOnResize);
-            syncOnResize();
-        </script>
-
-    </main>
-</div>
-</body>
-</html>
+        // sementara demo
+        alert('Backend belum tersedia. Payload siap: date + mode=all.');
+      }
+    });
+  });
+</script>
+@endpush
