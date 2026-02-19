@@ -36,7 +36,7 @@
         </svg>
       </button>
 
-      <a href="{{ route('mengelola_barang') ?? '#' }}"
+      <a href="{{ route('mengelola_barang') }}"
          id="btnBackBarang"
          class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -67,8 +67,49 @@
       </div>
 
       {{-- FORM --}}
-      <form id="formBarang" method="POST" action="#" class="px-6 py-6">
+      <form id="formBarang" method="POST" action="{{ route('simpan_barang') }}" class="px-6 py-6">
         @csrf
+
+        {{-- Session & Validation Alerts --}}
+        @if(session('success'))
+          <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-sm text-emerald-800">{{ session('success') }}</p>
+            </div>
+          </div>
+        @endif
+
+        @if(session('error'))
+          <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-red-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-sm text-red-800">{{ session('error') }}</p>
+            </div>
+          </div>
+        @endif
+
+        @if($errors->any())
+          <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-red-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-red-800">Terdapat kesalahan:</p>
+                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                  @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            </div>
+          </div>
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -83,6 +124,7 @@
               </span>
 
               <input id="kode_barang" name="kode_barang" type="text" required
+                     value="{{ old('kode_barang') }}"
                      placeholder="Contoh: BRG-001"
                      class="w-full pl-9 pr-20 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
                             placeholder:text-slate-400
@@ -93,7 +135,7 @@
                 Auto
               </button>
             </div>
-            <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode cepat.</p>
+            <p class="mt-2 text-[11px] text-slate-500">Tips: klik <b>Auto</b> untuk generate kode otomatis.</p>
           </div>
 
           {{-- Nama Barang --}}
@@ -108,6 +150,7 @@
               </span>
 
               <input id="nama_barang" name="nama_barang" type="text" required
+                     value="{{ old('nama_barang') }}"
                      placeholder="Contoh: Oli Mesin"
                      class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
                             placeholder:text-slate-400
@@ -129,12 +172,11 @@
               <select id="satuan" name="satuan" required
                       class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
                              focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-                <option value="" selected disabled>Pilih satuan</option>
-                <option value="pcs">pcs</option>
-                <option value="unit">unit</option>
-                <option value="botol">botol</option>
-                <option value="liter">liter</option>
-                <option value="set">set</option>
+                <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih satuan</option>
+                <option value="pcs"   {{ old('satuan') == 'pcs'   ? 'selected' : '' }}>pcs</option>
+                <option value="unit"  {{ old('satuan') == 'unit'  ? 'selected' : '' }}>unit</option>
+                <option value="gram"  {{ old('satuan') == 'gram'  ? 'selected' : '' }}>gram</option>
+                <option value="set"   {{ old('satuan') == 'set'   ? 'selected' : '' }}>set</option>
               </select>
             </div>
           </div>
@@ -158,6 +200,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
                     <input id="harga_beli" name="harga_beli" type="text" inputmode="numeric" required
                            placeholder="0"
+                           value="{{ old('harga_beli') }}"
                            class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
                                   placeholder:text-slate-400
                                   focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
@@ -172,6 +215,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
                     <input id="harga_jual" name="harga_jual" type="text" inputmode="numeric" required
                            placeholder="0"
+                           value="{{ old('harga_jual') }}"
                            class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
                                   placeholder:text-slate-400
                                   focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
@@ -262,40 +306,37 @@
   </div>
 </div>
 
-{{-- CSS khusus halaman --}}
+{{-- CSS --}}
 <style>
   @media (prefers-reduced-motion: reduce) {
     .btn-shine { animation: none !important; transition: none !important; }
   }
 
-  /* button shine */
-  .btn-shine{ position: relative; overflow: hidden; }
-  .btn-shine::after{
-    content:"";
-    position:absolute;
-    inset:0;
+  .btn-shine { position: relative; overflow: hidden; }
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
     transform: translateX(-120%);
     background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
     transition: transform .65s ease;
   }
-  .btn-shine:hover::after{ transform: translateX(120%); }
+  .btn-shine:hover::after { transform: translateX(120%); }
 
-  /* invalid shake */
   @keyframes shake {
-    0% { transform: translateX(0) }
-    25% { transform: translateX(-6px) }
-    50% { transform: translateX(6px) }
-    75% { transform: translateX(-4px) }
-    100% { transform: translateX(0) }
+    0%   { transform: translateX(0)  }
+    25%  { transform: translateX(-6px) }
+    50%  { transform: translateX(6px)  }
+    75%  { transform: translateX(-4px) }
+    100% { transform: translateX(0)  }
   }
   .shake { animation: shake .28s ease; }
 
-  /* tooltip topbar */
-  .tip{ position: relative; }
-  .tip[data-tip]::after{
+  .tip { position: relative; }
+  .tip[data-tip]::after {
     content: attr(data-tip);
-    position:absolute;
-    right:0;
+    position: absolute;
+    right: 0;
     top: calc(100% + 10px);
     background: rgba(15,23,42,.92);
     color: rgba(255,255,255,.92);
@@ -303,61 +344,55 @@
     padding: 6px 10px;
     border-radius: 10px;
     white-space: nowrap;
-    opacity:0;
+    opacity: 0;
     transform: translateY(-4px);
-    pointer-events:none;
+    pointer-events: none;
     transition: .15s ease;
   }
-  .tip:hover::after{ opacity:1; transform: translateY(0); }
+  .tip:hover::after { opacity: 1; transform: translateY(0); }
 </style>
 
-{{-- JS khusus halaman --}}
+{{-- JS --}}
 <script>
   // --- helpers ---
-  const rupiah = (n) => {
-    const num = Number(n || 0);
-    return 'Rp ' + num.toLocaleString('id-ID');
-  };
+  const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 
-  const parseMoney = (s) => {
-    if (!s) return 0;
-    return Number(String(s).replace(/[^\d]/g, '')) || 0;
-  };
+  const parseMoney = (s) => Number(String(s || '').replace(/[^\d]/g, '')) || 0;
 
   const formatMoneyInput = (el) => {
     const val = parseMoney(el.value);
-    el.value = val.toLocaleString('id-ID');
+    el.value = val > 0 ? val.toLocaleString('id-ID') : '';
     return val;
   };
 
-  // toast
-  const toastEl = document.getElementById('toast');
+  // --- toast ---
+  const toastEl    = document.getElementById('toast');
   const toastTitle = document.getElementById('toastTitle');
-  const toastMsg = document.getElementById('toastMsg');
-  const toastDot = document.getElementById('toastDot');
-  const toastClose = document.getElementById('toastClose');
+  const toastMsg   = document.getElementById('toastMsg');
+  const toastDot   = document.getElementById('toastDot');
+  let toastTimer   = null;
 
-  let toastTimer = null;
-  const showToast = (title, msg, type='success') => {
+  const showToast = (title, msg, type = 'success') => {
     toastTitle.textContent = title;
-    toastMsg.textContent = msg;
-    toastDot.className = "mt-1 h-2.5 w-2.5 rounded-full " + (type==='success' ? "bg-emerald-500" : "bg-red-500");
+    toastMsg.textContent   = msg;
+    toastDot.className     = 'mt-1 h-2.5 w-2.5 rounded-full ' + (type === 'success' ? 'bg-emerald-500' : 'bg-red-500');
     toastEl.classList.remove('hidden');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2600);
   };
-  toastClose?.addEventListener('click', () => toastEl.classList.add('hidden'));
 
-  // ===== Reusable confirm modal (same style kayak halaman jadwal) =====
-  function showConfirmModal({ title, message, confirmText, cancelText, note, tone = "neutral", onConfirm }) {
+  document.getElementById('toastClose')?.addEventListener('click', () => toastEl.classList.add('hidden'));
+
+  // --- confirm modal (kustom, bukan confirm()) ---
+  function showConfirmModal({ title, message, confirmText, cancelText, note, tone = 'neutral', onConfirm }) {
     const toneMap = {
-      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg:"bg-slate-50", noteBr:"border-slate-200", noteTx:"text-slate-600" },
-      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg:"bg-rose-50",  noteBr:"border-rose-200",  noteTx:"text-rose-700" },
+      neutral: { btn: 'bg-slate-900 hover:bg-slate-800', noteBg: 'bg-slate-50', noteBr: 'border-slate-200', noteTx: 'text-slate-600' },
+      danger:  { btn: 'bg-rose-600 hover:bg-rose-700',  noteBg: 'bg-rose-50',  noteBr: 'border-rose-200',  noteTx: 'text-rose-700'  },
     };
     const t = toneMap[tone] || toneMap.neutral;
 
     const wrap = document.createElement('div');
-    wrap.className = "fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3";
+    wrap.className = 'fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3';
     wrap.innerHTML = `
       <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
         <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
@@ -372,135 +407,143 @@
           </button>
         </div>
         <div class="p-5">
-          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">
-            ${note || 'Pastikan data yang kamu isi sudah benar.'}
-          </div>
+          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">${note || 'Pastikan data yang kamu isi sudah benar.'}</div>
           <div class="mt-4 flex justify-end gap-2">
             <button type="button" class="btn-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">${cancelText}</button>
             <button type="button" class="btn-ok h-10 px-5 rounded-xl ${t.btn} text-white text-sm font-semibold">${confirmText}</button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
 
-    function close(){ wrap.remove(); }
-    wrap.addEventListener('click', (e)=>{ if(e.target===wrap) close(); });
+    const close = () => wrap.remove();
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
     wrap.querySelector('.btn-x')?.addEventListener('click', close);
     wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
-    wrap.querySelector('.btn-ok')?.addEventListener('click', ()=>{ close(); onConfirm?.(); });
-
+    wrap.querySelector('.btn-ok')?.addEventListener('click', () => { close(); onConfirm?.(); });
     document.body.appendChild(wrap);
   }
 
-  // elements
-  const form = document.getElementById('formBarang');
-  const kode = document.getElementById('kode_barang');
-  const beli = document.getElementById('harga_beli');
-  const jual = document.getElementById('harga_jual');
-
-  const previewBeli = document.getElementById('previewBeli');
-  const previewJual = document.getElementById('previewJual');
+  // --- elements ---
+  const form           = document.getElementById('formBarang');
+  const kodeBarangInput = document.getElementById('kode_barang');
+  const beli           = document.getElementById('harga_beli');
+  const jual           = document.getElementById('harga_jual');
+  const previewBeli    = document.getElementById('previewBeli');
+  const previewJual    = document.getElementById('previewJual');
   const previewSelisih = document.getElementById('previewSelisih');
-  const selisihHint = document.getElementById('selisihHint');
+  const selisihHint    = document.getElementById('selisihHint');
 
-  // auto code
-  document.getElementById('btnGenerate')?.addEventListener('click', () => {
-    const rnd = Math.floor(100 + Math.random() * 900);
-    kode.value = `BRG-${rnd}`;
-    kode.focus();
-    showToast('Kode dibuat', `Kode: ${kode.value}`, 'success');
+  // --- auto generate kode (fetch backend, fallback random) ---
+  let generating = false;
+  document.getElementById('btnGenerate')?.addEventListener('click', async () => {
+    if (generating) return;
+    generating = true;
+    const btn = document.getElementById('btnGenerate');
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    try {
+      const res  = await fetch('/barang/buat_kode_barang');
+      const data = await res.json();
+      if (data.kode) {
+        kodeBarangInput.value = data.kode;
+        kodeBarangInput.focus();
+        showToast('Kode dibuat', `Kode: ${data.kode}`, 'success');
+      }
+    } catch (e) {
+      const rnd = Math.floor(1000 + Math.random() * 9000);
+      kodeBarangInput.value = `BRG-${rnd}`;
+      showToast('Kode dibuat', `Kode: ${kodeBarangInput.value}`, 'success');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Auto';
+      generating = false;
+    }
   });
 
-  // preview
+  // --- preview harga ---
   const updatePreviewHarga = () => {
     const b = parseMoney(beli.value);
     const j = parseMoney(jual.value);
     const s = j - b;
 
-    previewBeli.textContent = rupiah(b);
-    previewJual.textContent = rupiah(j);
+    previewBeli.textContent    = rupiah(b);
+    previewJual.textContent    = rupiah(j);
     previewSelisih.textContent = rupiah(Math.abs(s));
 
     if (b === 0 && j === 0) selisihHint.textContent = '—';
-    else if (s > 0) selisihHint.textContent = 'Untung';
-    else if (s < 0) selisihHint.textContent = 'Rugi';
-    else selisihHint.textContent = 'Impas';
+    else if (s > 0)          selisihHint.textContent = 'Untung';
+    else if (s < 0)          selisihHint.textContent = 'Rugi';
+    else                     selisihHint.textContent = 'Impas';
   };
 
   document.querySelectorAll('.money').forEach(el => {
     el.addEventListener('input', () => { formatMoneyInput(el); updatePreviewHarga(); });
     el.addEventListener('blur',  () => { formatMoneyInput(el); updatePreviewHarga(); });
   });
+
+  // init preview (kalau ada old() value)
   updatePreviewHarga();
 
-  // dirty guard
+  // --- dirty guard ---
   let isDirty = false;
-  const markDirty = () => { isDirty = true; };
   form?.querySelectorAll('input, select, textarea').forEach(el => {
-    el.addEventListener('input', markDirty);
-    el.addEventListener('change', markDirty);
+    el.addEventListener('input',  () => { isDirty = true; });
+    el.addEventListener('change', () => { isDirty = true; });
   });
 
-  // RESET confirm (modal)
+  // --- reset ---
   document.getElementById('btnReset')?.addEventListener('click', () => {
     if (!isDirty) {
-      form.reset();
-      updatePreviewHarga();
+      form.reset(); updatePreviewHarga();
       showToast('Reset', 'Form dikosongkan.', 'success');
       return;
     }
-
     showConfirmModal({
-      title: "Reset form?",
-      message: "Semua input yang sudah diisi akan dikosongkan.",
-      confirmText: "Ya, Reset",
-      cancelText: "Batal",
-      note: "Kalau kamu yakin mau mulai ulang, klik “Ya, Reset”.",
-      tone: "danger",
+      title: 'Reset form?',
+      message: 'Semua input yang sudah diisi akan dikosongkan.',
+      confirmText: 'Ya, Reset',
+      cancelText: 'Batal',
+      note: 'Kalau kamu yakin mau mulai ulang, klik "Ya, Reset".',
+      tone: 'danger',
       onConfirm: () => {
-        form.reset();
-        updatePreviewHarga();
+        form.reset(); updatePreviewHarga();
         isDirty = false;
         showToast('Reset', 'Form dikosongkan.', 'success');
       }
     });
   });
 
-  // KEMBALI confirm (modal)
+  // --- kembali guard ---
   document.getElementById('btnBackBarang')?.addEventListener('click', (e) => {
     if (!isDirty) return;
-
     e.preventDefault();
     const go = e.currentTarget.getAttribute('href');
-
     showConfirmModal({
-      title: "Keluar dari halaman?",
-      message: "Perubahan belum disimpan. Kalau keluar sekarang, data yang sudah diisi akan hilang.",
-      confirmText: "Ya, Keluar",
-      cancelText: "Tetap di sini",
-      note: "Klik “Tetap di sini” kalau masih mau lanjut isi form.",
-      onConfirm: () => window.location.href = go
+      title: 'Keluar dari halaman?',
+      message: 'Perubahan belum disimpan. Kalau keluar sekarang, data yang sudah diisi akan hilang.',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Tetap di sini',
+      note: 'Klik "Tetap di sini" kalau masih mau lanjut isi form.',
+      onConfirm: () => { window.location.href = go; }
     });
   });
 
-  // block close tab (biarin bawaan browser, paling aman)
+  // --- blokir tutup tab ---
   window.addEventListener('beforeunload', (e) => {
     if (!isDirty) return;
     e.preventDefault();
     e.returnValue = '';
   });
 
-  // SUBMIT confirm + validasi (modal)
+  // --- submit ---
   form?.addEventListener('submit', (e) => {
-    // biar ga dobel confirm
-    if (form.dataset.confirmed === "1") return;
-
+    if (form.dataset.confirmed === '1') return;
     e.preventDefault();
 
-    // validasi cepat sebelum munculin modal (biar ga confirm tapi ternyata kosong)
-    const requiredIds = ['kode_barang','nama_barang','satuan','harga_beli','harga_jual'];
+    // validasi client-side
+    const requiredIds = ['kode_barang', 'nama_barang', 'satuan', 'harga_beli', 'harga_jual'];
     let ok = true;
-
     requiredIds.forEach(id => {
       const el = document.getElementById(id);
       if (!el || !String(el.value).trim()) {
@@ -512,25 +555,17 @@
       }
     });
 
-    if (!ok) {
-      showToast('Gagal', 'Lengkapi field yang wajib diisi.', 'error');
-      return;
-    }
+    if (!ok) { showToast('Gagal', 'Lengkapi field yang wajib diisi.', 'error'); return; }
 
     showConfirmModal({
-      title: "Simpan barang baru?",
-      message: "Data barang akan ditambahkan ke sistem.",
-      confirmText: "Ya, Simpan",
-      cancelText: "Batal",
-      note: "Cek lagi Kode, Nama, Satuan, dan harga. Kalau sudah benar, lanjut simpan.",
+      title: 'Simpan barang baru?',
+      message: 'Data barang akan ditambahkan ke sistem.',
+      confirmText: 'Ya, Simpan',
+      cancelText: 'Batal',
+      note: 'Cek lagi Kode, Nama, Satuan, dan harga. Kalau sudah benar, lanjut simpan.',
       onConfirm: () => {
-        form.dataset.confirmed = "1";
-
-        // === UI demo (backend belum connect) ===
-        // Kalau backend sudah siap: hapus 2 baris di bawah ini, dan biarin form.submit() beneran.
-        // showToast('Berhasil', 'Data barang siap disimpan (UI demo).', 'success');
-        // isDirty = false; form.dataset.confirmed = "0"; return;
-
+        form.dataset.confirmed = '1';
+        isDirty = false;
         form.submit();
       }
     });

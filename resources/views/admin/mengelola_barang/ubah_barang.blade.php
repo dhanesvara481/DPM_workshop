@@ -9,7 +9,6 @@
   <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
 
     <div class="flex items-center gap-3 min-w-0">
-      {{-- hamburger (mobile) --}}
       <button id="btnSidebar"
               type="button"
               class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
@@ -36,7 +35,7 @@
         </svg>
       </button>
 
-      <a href="{{ route('mengelola_barang') ?? '#' }}"
+      <a href="{{ route('mengelola_barang') }}"
          id="btnBackBarang"
          class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -66,19 +65,60 @@
         </span>
       </div>
 
-      {{-- FORM (update) --}}
+      {{-- FORM --}}
       <form id="formBarang"
             method="POST"
-            action="{{ route('ubah_barang', $barang->id ?? 0) }}"
+            action="{{ route('perbarui_barang', $barang->barang_id ?? 0) }}"
             class="px-6 py-6">
         @csrf
         @method('PUT')
 
         @php
           $sat = old('satuan', $barang->satuan ?? '');
-          $hb  = (int) old('harga_beli', $barang->harga_beli ?? 0);
-          $hj  = (int) old('harga_jual', $barang->harga_jual ?? 0);
+          $hb  = (int) ($barang->harga_beli ?? 0);
+          $hj  = (int) ($barang->harga_jual ?? 0);
         @endphp
+
+        {{-- Session & Validation Alerts --}}
+        @if(session('success'))
+          <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-sm text-emerald-800">{{ session('success') }}</p>
+            </div>
+          </div>
+        @endif
+
+        @if(session('error'))
+          <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-red-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-sm text-red-800">{{ session('error') }}</p>
+            </div>
+          </div>
+        @endif
+
+        @if($errors->any())
+          <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div class="flex items-start gap-3">
+              <svg class="h-5 w-5 text-red-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-red-800">Terdapat kesalahan:</p>
+                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                  @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            </div>
+          </div>
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -91,7 +131,6 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h10"/>
                 </svg>
               </span>
-
               <input id="kode_barang" name="kode_barang" type="text" required
                      value="{{ old('kode_barang', $barang->kode_barang ?? '') }}"
                      placeholder="Contoh: BRG-001"
@@ -112,7 +151,6 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V8a2 2 0 012-2h6a2 2 0 012 2v8"/>
                 </svg>
               </span>
-
               <input id="nama_barang" name="nama_barang" type="text" required
                      value="{{ old('nama_barang', $barang->nama_barang ?? '') }}"
                      placeholder="Contoh: Oli Mesin"
@@ -132,12 +170,11 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h14v16H5z"/>
                 </svg>
               </span>
-
               <select id="satuan" name="satuan" required
                       class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
                              focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
                 <option value="" disabled {{ $sat ? '' : 'selected' }}>Pilih satuan</option>
-                @foreach (['pcs','unit','botol','liter','set'] as $opt)
+                @foreach (['pcs','unit','botol','liter','gram','set'] as $opt)
                   <option value="{{ $opt }}" {{ $sat === $opt ? 'selected' : '' }}>{{ $opt }}</option>
                 @endforeach
               </select>
@@ -157,37 +194,32 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                {{-- Harga Beli (UI + hidden raw) --}}
+                {{-- Harga Beli --}}
                 <div class="field">
                   <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA BELI</label>
                   <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
-
-                    <input id="harga_beli_ui" type="text" inputmode="numeric" required
-                           value="{{ number_format($hb, 0, ',', '.') }}"
+                    <input id="harga_beli" name="harga_beli" type="text" inputmode="numeric" required
+                           value="{{ old('harga_beli', number_format($hb, 0, ',', '.')) }}"
                            placeholder="0"
                            class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
                                   placeholder:text-slate-400
                                   focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-
-                    <input id="harga_beli" name="harga_beli" type="hidden" value="{{ $hb }}">
                   </div>
+                  <p class="mt-2 text-[11px] text-slate-500">Masukkan harga dalam format angka.</p>
                 </div>
 
-                {{-- Harga Jual (UI + hidden raw) --}}
+                {{-- Harga Jual --}}
                 <div class="field">
                   <label class="block text-xs font-semibold tracking-widest text-slate-600 mb-2">HARGA JUAL</label>
                   <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold">Rp</span>
-
-                    <input id="harga_jual_ui" type="text" inputmode="numeric" required
-                           value="{{ number_format($hj, 0, ',', '.') }}"
+                    <input id="harga_jual" name="harga_jual" type="text" inputmode="numeric" required
+                           value="{{ old('harga_jual', number_format($hj, 0, ',', '.')) }}"
                            placeholder="0"
                            class="money w-full pl-10 pr-3 py-3 rounded-xl border border-slate-200 bg-white text-sm
                                   placeholder:text-slate-400
                                   focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
-
-                    <input id="harga_jual" name="harga_jual" type="hidden" value="{{ $hj }}">
                   </div>
                   <p class="mt-2 text-[11px] text-slate-500">Disarankan ≥ harga beli.</p>
                 </div>
@@ -219,7 +251,6 @@
                         <div id="selisihHint" class="mt-1 text-[11px] text-slate-500">—</div>
                       </div>
                     </div>
-
                   </div>
                 </div>
 
@@ -273,35 +304,36 @@
   </div>
 </div>
 
-@push('head')
 <style>
-  @media (prefers-reduced-motion: reduce) { .btn-shine { animation: none !important; transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) {
+    .btn-shine { animation: none !important; transition: none !important; }
+  }
 
-  .btn-shine{ position: relative; overflow: hidden; }
-  .btn-shine::after{
-    content:"";
-    position:absolute;
-    inset:0;
+  .btn-shine { position: relative; overflow: hidden; }
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
     transform: translateX(-120%);
     background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
     transition: transform .65s ease;
   }
-  .btn-shine:hover::after{ transform: translateX(120%); }
+  .btn-shine:hover::after { transform: translateX(120%); }
 
-  .shake { animation: shake .28s ease; }
   @keyframes shake {
-    0% { transform: translateX(0) }
-    25% { transform: translateX(-6px) }
-    50% { transform: translateX(6px) }
-    75% { transform: translateX(-4px) }
-    100% { transform: translateX(0) }
+    0%   { transform: translateX(0)   }
+    25%  { transform: translateX(-6px) }
+    50%  { transform: translateX(6px)  }
+    75%  { transform: translateX(-4px) }
+    100% { transform: translateX(0)   }
   }
+  .shake { animation: shake .28s ease; }
 
-  .tip{ position: relative; }
-  .tip[data-tip]::after{
+  .tip { position: relative; }
+  .tip[data-tip]::after {
     content: attr(data-tip);
-    position:absolute;
-    right:0;
+    position: absolute;
+    right: 0;
     top: calc(100% + 10px);
     background: rgba(15,23,42,.92);
     color: rgba(255,255,255,.92);
@@ -309,61 +341,52 @@
     padding: 6px 10px;
     border-radius: 10px;
     white-space: nowrap;
-    opacity:0;
+    opacity: 0;
     transform: translateY(-4px);
-    pointer-events:none;
+    pointer-events: none;
     transition: .15s ease;
   }
-  .tip:hover::after{ opacity:1; transform: translateY(0); }
+  .tip:hover::after { opacity: 1; transform: translateY(0); }
 </style>
-@endpush
 
-@push('scripts')
 <script>
-  // =========================
-  // Helpers
-  // =========================
-  const rupiah = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+  // --- helpers ---
+  const rupiah     = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
   const parseMoney = (s) => Number(String(s || '').replace(/[^\d]/g, '')) || 0;
-  const formatMoneyUI = (el) => {
+  const formatMoneyInput = (el) => {
     const v = parseMoney(el.value);
-    el.value = v.toLocaleString('id-ID');
+    el.value = v > 0 ? v.toLocaleString('id-ID') : '';
     return v;
   };
 
-  // =========================
-  // Toast
-  // =========================
-  const toastEl = document.getElementById('toast');
+  // --- toast ---
+  const toastEl    = document.getElementById('toast');
   const toastTitle = document.getElementById('toastTitle');
-  const toastMsg = document.getElementById('toastMsg');
-  const toastDot = document.getElementById('toastDot');
-  const toastClose = document.getElementById('toastClose');
+  const toastMsg   = document.getElementById('toastMsg');
+  const toastDot   = document.getElementById('toastDot');
+  let toastTimer   = null;
 
-  let toastTimer = null;
-  const showToast = (title, msg, type='success') => {
+  const showToast = (title, msg, type = 'success') => {
     if (!toastEl) return;
     toastTitle.textContent = title;
-    toastMsg.textContent = msg;
-    toastDot.className = "mt-1 h-2.5 w-2.5 rounded-full " + (type==='success' ? "bg-emerald-500" : "bg-red-500");
+    toastMsg.textContent   = msg;
+    toastDot.className     = 'mt-1 h-2.5 w-2.5 rounded-full ' + (type === 'success' ? 'bg-emerald-500' : 'bg-red-500');
     toastEl.classList.remove('hidden');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2400);
   };
-  toastClose?.addEventListener('click', () => toastEl.classList.add('hidden'));
+  document.getElementById('toastClose')?.addEventListener('click', () => toastEl.classList.add('hidden'));
 
-  // =========================
-  // Reusable Confirm Modal (same style jadwal)
-  // =========================
-  function showConfirmModal({ title, message, confirmText, cancelText, note, tone = "neutral", onConfirm }) {
+  // --- confirm modal kustom ---
+  function showConfirmModal({ title, message, confirmText, cancelText, note, tone = 'neutral', onConfirm }) {
     const toneMap = {
-      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg:"bg-slate-50", noteBr:"border-slate-200", noteTx:"text-slate-600" },
-      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg:"bg-rose-50",  noteBr:"border-rose-200",  noteTx:"text-rose-700" },
+      neutral: { btn: 'bg-slate-900 hover:bg-slate-800', noteBg: 'bg-slate-50', noteBr: 'border-slate-200', noteTx: 'text-slate-600' },
+      danger:  { btn: 'bg-rose-600 hover:bg-rose-700',  noteBg: 'bg-rose-50',  noteBr: 'border-rose-200',  noteTx: 'text-rose-700'  },
     };
     const t = toneMap[tone] || toneMap.neutral;
 
     const wrap = document.createElement('div');
-    wrap.className = "fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3";
+    wrap.className = 'fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3';
     wrap.innerHTML = `
       <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
         <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
@@ -378,187 +401,158 @@
           </button>
         </div>
         <div class="p-5">
-          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">
-            ${note || 'Pastikan perubahan yang kamu lakukan sudah benar.'}
-          </div>
+          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">${note || 'Pastikan perubahan yang kamu lakukan sudah benar.'}</div>
           <div class="mt-4 flex justify-end gap-2">
             <button type="button" class="btn-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">${cancelText}</button>
             <button type="button" class="btn-ok h-10 px-5 rounded-xl ${t.btn} text-white text-sm font-semibold">${confirmText}</button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
 
     const close = () => wrap.remove();
-    wrap.addEventListener('click', (e)=>{ if(e.target === wrap) close(); });
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
     wrap.querySelector('.btn-x')?.addEventListener('click', close);
     wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
-    wrap.querySelector('.btn-ok')?.addEventListener('click', ()=>{ close(); onConfirm?.(); });
-
+    wrap.querySelector('.btn-ok')?.addEventListener('click', () => { close(); onConfirm?.(); });
     document.body.appendChild(wrap);
   }
 
-  // =========================
-  // Elements
-  // =========================
-  const form = document.getElementById('formBarang');
-  const btnReset = document.getElementById('btnReset');
-  const backBtn = document.getElementById('btnBackBarang');
+  // --- elements ---
+  const form    = document.getElementById('formBarang');
+  const beliEl  = document.getElementById('harga_beli');
+  const jualEl  = document.getElementById('harga_jual');
 
-  // money inputs (UI + hidden raw)
-  const beliUI = document.getElementById('harga_beli_ui');
-  const jualUI = document.getElementById('harga_jual_ui');
-  const beliRaw = document.getElementById('harga_beli');
-  const jualRaw = document.getElementById('harga_jual');
-
-  const previewBeli = document.getElementById('previewBeli');
-  const previewJual = document.getElementById('previewJual');
+  const previewBeli    = document.getElementById('previewBeli');
+  const previewJual    = document.getElementById('previewJual');
   const previewSelisih = document.getElementById('previewSelisih');
-  const selisihHint = document.getElementById('selisihHint');
+  const selisihHint    = document.getElementById('selisihHint');
 
-  // =========================
-  // Preview + Sync raw
-  // =========================
-  const syncRaw = () => {
-    if (beliRaw && beliUI) beliRaw.value = String(parseMoney(beliUI.value));
-    if (jualRaw && jualUI) jualRaw.value = String(parseMoney(jualUI.value));
-  };
-
+  // --- preview harga ---
   const updatePreview = () => {
-    const b = parseMoney(beliUI?.value);
-    const j = parseMoney(jualUI?.value);
+    const b = parseMoney(beliEl?.value);
+    const j = parseMoney(jualEl?.value);
     const s = j - b;
 
-    if (previewBeli) previewBeli.textContent = rupiah(b);
-    if (previewJual) previewJual.textContent = rupiah(j);
+    if (previewBeli)    previewBeli.textContent    = rupiah(b);
+    if (previewJual)    previewJual.textContent    = rupiah(j);
     if (previewSelisih) previewSelisih.textContent = rupiah(Math.abs(s));
 
     if (selisihHint) {
-      if (!b && !j) selisihHint.textContent = '—';
+      if (!b && !j)   selisihHint.textContent = '—';
       else if (s > 0) selisihHint.textContent = 'Untung';
       else if (s < 0) selisihHint.textContent = 'Rugi';
-      else selisihHint.textContent = 'Impas';
+      else            selisihHint.textContent = 'Impas';
     }
   };
 
-  const onMoneyChange = (el) => {
-    if (!el) return;
-    formatMoneyUI(el);
-    syncRaw();
-    updatePreview();
-    markDirty();
-  };
-
-  [beliUI, jualUI].forEach(el => {
-    if (!el) return;
-    el.addEventListener('input', () => onMoneyChange(el));
-    el.addEventListener('blur',  () => onMoneyChange(el));
+  document.querySelectorAll('.money').forEach(el => {
+    el.addEventListener('input', () => { formatMoneyInput(el); updatePreview(); });
+    el.addEventListener('blur',  () => { formatMoneyInput(el); updatePreview(); });
   });
 
-  // initial
-  if (beliUI) formatMoneyUI(beliUI);
-  if (jualUI) formatMoneyUI(jualUI);
-  syncRaw();
+  // init preview dengan data dari server
+  if (beliEl) formatMoneyInput(beliEl);
+  if (jualEl) formatMoneyInput(jualEl);
   updatePreview();
 
-  // =========================
-  // Dirty guard (no double popup)
-  // =========================
-  let isDirty = false;
+  // --- dirty guard (snapshot-based, lebih akurat) ---
   let allowUnload = false;
 
-  const markDirty = () => { isDirty = true; };
-  form?.querySelectorAll('input, select, textarea').forEach(el => {
-    if (el === beliRaw || el === jualRaw) return; // hidden raw ikut diset dari JS
-    el.addEventListener('input', markDirty);
-    el.addEventListener('change', markDirty);
-  });
+  const getSnapshot = () => {
+    if (!form) return '';
+    const fd  = new FormData(form);
+    const obj = {};
+    fd.forEach((v, k) => { obj[k] = String(v); });
+    return JSON.stringify(obj);
+  };
+  let snap0 = getSnapshot();
+
+  const isDirty = () => form && snap0 !== getSnapshot();
 
   window.addEventListener('beforeunload', (e) => {
-    if (allowUnload) return;
-    if (!isDirty) return;
+    if (allowUnload || !isDirty()) return;
     e.preventDefault();
     e.returnValue = '';
   });
 
-  // =========================
-  // Reset -> balik ke nilai awal server (bukan kosong)
-  // =========================
-  btnReset?.addEventListener('click', () => {
-    if (!isDirty) {
+  // --- reset ---
+  document.getElementById('btnReset')?.addEventListener('click', () => {
+    if (!isDirty()) {
       form.reset();
-      if (beliUI) formatMoneyUI(beliUI);
-      if (jualUI) formatMoneyUI(jualUI);
-      syncRaw();
+      if (beliEl) formatMoneyInput(beliEl);
+      if (jualEl) formatMoneyInput(jualEl);
       updatePreview();
       showToast('Reset', 'Form dikembalikan ke data awal.', 'success');
       return;
     }
 
     showConfirmModal({
-      title: "Reset perubahan?",
-      message: "Semua perubahan akan dikembalikan ke data awal.",
-      confirmText: "Ya, Reset",
-      cancelText: "Batal",
-      note: "Kalau kamu yakin, klik “Ya, Reset”.",
-      tone: "danger",
+      title: 'Reset perubahan?',
+      message: 'Semua perubahan akan dikembalikan ke data awal.',
+      confirmText: 'Ya, Reset',
+      cancelText: 'Batal',
+      note: 'Kalau kamu yakin, klik "Ya, Reset".',
+      tone: 'danger',
       onConfirm: () => {
         form.reset();
-        if (beliUI) formatMoneyUI(beliUI);
-        if (jualUI) formatMoneyUI(jualUI);
-        syncRaw();
+        if (beliEl) formatMoneyInput(beliEl);
+        if (jualEl) formatMoneyInput(jualEl);
         updatePreview();
-        isDirty = false;
+        snap0 = getSnapshot();
         showToast('Reset', 'Form dikembalikan ke data awal.', 'success');
       }
     });
   });
 
-  // =========================
-  // Back confirm (modal) - supaya gak double dengan beforeunload
-  // =========================
-  backBtn?.addEventListener('click', (e) => {
-    if (!isDirty) return;
-
+  // --- kembali guard ---
+  document.getElementById('btnBackBarang')?.addEventListener('click', (e) => {
+    if (!isDirty()) return;
     e.preventDefault();
     const go = e.currentTarget.getAttribute('href');
-
     showConfirmModal({
-      title: "Keluar dari halaman?",
-      message: "Perubahan belum disimpan. Kalau keluar sekarang, perubahan akan hilang.",
-      confirmText: "Ya, Keluar",
-      cancelText: "Tetap di sini",
-      note: "Klik “Tetap di sini” kalau masih mau lanjut edit.",
-      onConfirm: () => {
-        allowUnload = true;
-        window.location.href = go;
-      }
+      title: 'Keluar dari halaman?',
+      message: 'Perubahan belum disimpan. Kalau keluar sekarang, perubahan akan hilang.',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Tetap di sini',
+      note: 'Klik "Tetap di sini" kalau masih mau lanjut edit.',
+      onConfirm: () => { allowUnload = true; window.location.href = go; }
     });
   });
 
-  // =========================
-  // Submit confirm (modal) + submit Laravel beneran
-  // =========================
+  // --- submit ---
   form?.addEventListener('submit', (e) => {
-    if (form.dataset.confirmed === "1") return;
-
+    if (form.dataset.confirmed === '1') return;
     e.preventDefault();
-    syncRaw();
+
+    // validasi client-side
+    const requiredIds = ['kode_barang', 'nama_barang', 'satuan', 'harga_beli', 'harga_jual'];
+    let ok = true;
+    requiredIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || !String(el.value).trim()) {
+        ok = false;
+        el?.classList.add('border-red-300', 'shake');
+        setTimeout(() => el?.classList.remove('shake'), 300);
+      } else {
+        el?.classList.remove('border-red-300');
+      }
+    });
+
+    if (!ok) { showToast('Gagal', 'Lengkapi semua field yang wajib diisi.', 'error'); return; }
 
     showConfirmModal({
-      title: "Simpan perubahan?",
-      message: "Perubahan data barang akan disimpan ke sistem.",
-      confirmText: "Ya, Simpan",
-      cancelText: "Batal",
-      note: "Cek lagi Kode, Nama, Satuan, dan harga. Kalau sudah benar, lanjut simpan.",
+      title: 'Simpan perubahan?',
+      message: 'Perubahan data barang akan disimpan ke sistem.',
+      confirmText: 'Ya, Simpan',
+      cancelText: 'Batal',
+      note: 'Cek lagi Kode, Nama, Satuan, dan harga. Kalau sudah benar, lanjut simpan.',
       onConfirm: () => {
-        form.dataset.confirmed = "1";
-        allowUnload = true; // biar ga ke-trigger beforeunload kalau form submit navigasi
+        form.dataset.confirmed = '1';
+        allowUnload = true;
         form.submit();
       }
     });
   });
 </script>
-@endpush
 
 @endsection
