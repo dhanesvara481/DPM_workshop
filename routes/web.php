@@ -53,7 +53,8 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     Route::delete('/hapus_barang/{id}',   [BarangController::class, 'hapusBarang'])->name('hapus_barang');
 
     //============== Barang Keluar =================//
-    Route::get('/barang_keluar', [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
+    Route::get('/barang_keluar',         [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
+    Route::post('/barang_keluar/simpan',  [BarangKeluarController::class, 'simpanBarangKeluar'])->name('simpan_barang_keluar');
 
     //============== Barang Masuk =================//
     Route::get('/barang_masuk',         [BarangMasukController::class, 'getBarangMasuk'])->name('barang_masuk');
