@@ -59,7 +59,7 @@
       {{-- BARANG --}}
       <div class="mt-3">
         <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">BARANG</p>
-                
+
         @php
             $barangActive = request()->is('tampilan_barang*')
             || request()->is('tambah_barang*')
@@ -80,32 +80,31 @@
           Kelola Barang
         </a>
 
-        
         <a href="/barang_masuk" data-nav
-        class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-        text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
-        {{ request()->is('barang_masuk*') ? 'is-active' : '' }}">
-        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-          <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
-          </svg>
-        </span>
-        Barang Masuk
-      </a>
-      
-      <a href="/barang_keluar" data-nav
-         class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
-                {{ request()->is('barang_keluar*') ? 'is-active' : '' }}">
-        <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-          <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
-          </svg>
-        </span>
-        Barang Keluar
-      </a>
+           class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                  text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
+                  {{ request()->is('barang_masuk*') ? 'is-active' : '' }}">
+          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 7L7 17"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 10v7h7"/>
+            </svg>
+          </span>
+          Barang Masuk
+        </a>
+
+        <a href="/barang_keluar" data-nav
+           class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                  text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
+                  {{ request()->is('barang_keluar*') ? 'is-active' : '' }}">
+          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7v7"/>
+            </svg>
+          </span>
+          Barang Keluar
+        </a>
       </div>
 
       {{-- RIWAYAT & LAPORAN --}}
@@ -160,19 +159,19 @@
         <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">MANAJEMEN</p>
 
         @php
-          $jadwalActive =request()->is('kelola_jadwal_kerja*')
+          $jadwalActive = request()->is('kelola_jadwal_kerja*')
               || request()->is('tambah_jadwal_kerja*')
               || request()->is('ubah_jadwal_kerja*')
               || request()->is('hapus_jadwal_kerja*');
         @endphp
 
         <a href="/kelola_jadwal_kerja" data-nav
-          class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+           class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
-                  {{ $jadwalActive ? 'is-active bg-white/12 text-white border border-white/10' : '' }}">
+                  {{ $jadwalActive ? 'is-active' : '' }}">
           <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
             <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M8 7V3m8 4V3M5 11h14M6 21h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
@@ -181,7 +180,7 @@
         </a>
 
         @php
-          $manajemenStafActive =request()->is('tampilan_manajemen_staf*')
+          $manajemenStafActive = request()->is('tampilan_manajemen_staf*')
               || request()->is('tambah_staf*')
               || request()->is('ubah_staf*');
         @endphp
@@ -189,7 +188,7 @@
         <a href="/tampilan_manajemen_staf" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
-                  {{ $manajemenStafActive ? 'is-active bg-white/12 text-white border border-white/10' : '' }}">
+                  {{ $manajemenStafActive ? 'is-active' : '' }}">
           <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
             <svg class="h-[18px] w-[18px] text-white/80 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 20c0-2.2-2.7-4-5-4s-5 1.8-5 4"/>
@@ -218,3 +217,31 @@
     </nav>
   </div>
 </aside>
+
+<script>
+  (function () {
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    // 1. Inject style cloak ke <head> — ini override semua Tailwind class
+    var style = document.createElement('style');
+    style.id = 'sidebar-cloak';
+    style.textContent = '#sidebar { transition: none !important; }';
+    document.head.appendChild(style);
+
+    // 2. Langsung posisikan — tidak ada animasi karena cloak aktif
+    if (window.innerWidth >= 768) {
+      sidebar.classList.remove('-translate-x-full');
+    } else {
+      sidebar.classList.add('-translate-x-full');
+    }
+
+    // 3. Hapus cloak setelah 2 frame — browser sudah commit posisi final
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var el = document.getElementById('sidebar-cloak');
+        if (el) el.remove();
+      });
+    });
+  })();
+</script>

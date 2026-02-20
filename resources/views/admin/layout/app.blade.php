@@ -10,24 +10,24 @@
 
   <style>
     /* ===== NAV ACTIVE (GLOBAL) ===== */
-    .nav-item{ position: relative; overflow: hidden; }
-    .nav-item::before{
-      content:"";
-      position:absolute;
-      left:0; top:10px; bottom:10px;
-      width:3px;
+    .nav-item { position: relative; overflow: hidden; }
+    .nav-item::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 10px; bottom: 10px;
+      width: 3px;
       background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.75), rgba(255,255,255,0));
-      opacity:0;
+      opacity: 0;
       transform: translateX(-6px);
       transition: .25s ease;
       border-radius: 999px;
     }
-    .nav-item.is-active{
+    .nav-item.is-active {
       background: rgba(255,255,255,.12);
       border: 1px solid rgba(255,255,255,.10);
       color: rgba(255,255,255,.95);
     }
-    .nav-item.is-active::before{ opacity:.95; transform: translateX(0); }
+    .nav-item.is-active::before { opacity: .95; transform: translateX(0); }
 
     /* iOS scroll sidebar */
     #sidebar { -webkit-overflow-scrolling: touch; }
@@ -37,13 +37,13 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <div class="min-h-screen flex">
 
-  {{-- SIDEBAR --}}
+  {{-- SIDEBAR (sudah include cloak script di dalamnya) --}}
   @include('admin.sidebar', [
     'userName' => $userName ?? 'User',
-    'role' => $role ?? 'Admin'
+    'role'     => $role ?? 'Admin'
   ])
 
-  {{-- OVERLAY mobile (SINGLE) --}}
+  {{-- OVERLAY mobile --}}
   <div id="overlay"
        class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
@@ -70,51 +70,50 @@
     {{-- CONTENT --}}
     @yield('content')
 
-    {{-- GLOBAL SCRIPT: sidebar toggle --}}
+    {{-- GLOBAL SCRIPT: sidebar toggle (open/close interaksi user) --}}
     <script>
-      (function(){
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
+      (function () {
+        var sidebar  = document.getElementById('sidebar');
+        var overlay  = document.getElementById('overlay');
+        var btnOpen  = document.getElementById('btnSidebar');
+        var btnClose = document.getElementById('btnCloseSidebar');
 
-        const btnSidebar = document.getElementById('btnSidebar');       // tombol di TOPBAR (tiap page)
-        const btnCloseSidebar = document.getElementById('btnCloseSidebar'); // tombol X di sidebar
-
-        const openSidebar = () => {
+        var openSidebar = function () {
           sidebar?.classList.remove('-translate-x-full');
           overlay?.classList.remove('hidden');
           document.body.classList.add('overflow-hidden');
         };
 
-        const closeSidebar = () => {
-          sidebar?.classList.add('-translate-x-full');
+        var closeSidebar = function () {
+          if (window.innerWidth < 768) {
+            sidebar?.classList.add('-translate-x-full');
+          }
           overlay?.classList.add('hidden');
           document.body.classList.remove('overflow-hidden');
         };
 
-        btnSidebar?.addEventListener('click', openSidebar);
-        btnCloseSidebar?.addEventListener('click', closeSidebar);
-        overlay?.addEventListener('click', closeSidebar);
-
-        // ESC
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') closeSidebar();
-        });
-
-        // auto state on resize
-        const syncOnResize = () => {
-          if (!sidebar || !overlay) return;
-
+        var syncOnResize = function () {
+          if (!sidebar) return;
           if (window.innerWidth >= 768) {
-            overlay.classList.add('hidden');
             sidebar.classList.remove('-translate-x-full');
+            overlay?.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
           } else {
-            sidebar.classList.add('-translate-x-full');
+            if (overlay?.classList.contains('hidden')) {
+              sidebar.classList.add('-translate-x-full');
+            }
           }
         };
 
+        btnOpen?.addEventListener('click', openSidebar);
+        btnClose?.addEventListener('click', closeSidebar);
+        overlay?.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeSidebar();
+        });
+
         window.addEventListener('resize', syncOnResize);
-        syncOnResize();
       })();
     </script>
 
