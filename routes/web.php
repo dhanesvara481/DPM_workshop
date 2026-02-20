@@ -53,21 +53,22 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     Route::delete('/hapus_barang/{id}',   [BarangController::class, 'hapusBarang'])->name('hapus_barang');
 
     //============== Barang Keluar =================//
-    Route::get('/barang_keluar',         [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
+    Route::get('/barang_keluar',          [BarangKeluarController::class, 'getBarangKeluar'])->name('barang_keluar');
     Route::post('/barang_keluar/simpan',  [BarangKeluarController::class, 'simpanBarangKeluar'])->name('simpan_barang_keluar');
 
     //============== Barang Masuk =================//
-    Route::get('/barang_masuk',         [BarangMasukController::class, 'getBarangMasuk'])->name('barang_masuk');
-    Route::post('/barang_masuk/simpan', [BarangMasukController::class, 'simpanBarangMasuk'])->name('simpan_barang_masuk');
+    Route::get('/barang_masuk',           [BarangMasukController::class, 'getBarangMasuk'])->name('barang_masuk');
+    Route::post('/barang_masuk/simpan',   [BarangMasukController::class, 'simpanBarangMasuk'])->name('simpan_barang_masuk');
 
     //============== Stok =================//
     Route::get('/stok_realtime',          [StokRealtimeController::class, 'getStokRealtime'])->name('stok_realtime');
     Route::get('/riwayat_perubahan_stok', [RiwayatPerubahanStokController::class, 'getRiwayatPerubahanStok'])->name('riwayat_perubahan_stok');
 
     //============== Transaksi =================//
-    Route::get('/riwayat_transaksi',        [RiwayatTransaksiController::class, 'getRiwayatTransaksi'])->name('riwayat_transaksi');
-    Route::get('/detail_riwayat_transaksi', [RiwayatTransaksiController::class, 'getDetailRiwayatTransaksi'])->name('detail_riwayat_transaksi');
-    Route::get('/print_transaksi',          [RiwayatTransaksiController::class, 'nota'])->name('print_transaksi');
+    // ⚠️  {id} = riwayat_transaksi_id — WAJIB ada parameter
+    Route::get('/riwayat_transaksi',                  [RiwayatTransaksiController::class, 'getRiwayatTransaksi'])->name('riwayat_transaksi');
+    Route::get('/detail_riwayat_transaksi/{id}',      [RiwayatTransaksiController::class, 'getDetailRiwayatTransaksi'])->name('detail_riwayat_transaksi');
+    Route::get('/print_transaksi/{id}',               [RiwayatTransaksiController::class, 'nota'])->name('transaksi.nota');
 
     //============== Invoice =================//
     Route::get('/tampilan_invoice', [InvoiceController::class, 'getTampilanInvoice'])->name('tampilan_invoice');
