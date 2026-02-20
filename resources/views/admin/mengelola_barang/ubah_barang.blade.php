@@ -71,12 +71,13 @@
             action="{{ route('perbarui_barang', $barang->barang_id ?? 0) }}"
             class="px-6 py-6">
         @csrf
-        @method('PUT')
 
         @php
           $sat = old('satuan', $barang->satuan ?? '');
           $hb  = (int) ($barang->harga_beli ?? 0);
           $hj  = (int) ($barang->harga_jual ?? 0);
+          // Daftar satuan — sinkron dengan controller validation
+          $satuanList = ['pcs', 'unit', 'botol', 'liter', 'gram', 'set'];
         @endphp
 
         {{-- Session & Validation Alerts --}}
@@ -172,9 +173,9 @@
               </span>
               <select id="satuan" name="satuan" required
                       class="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 bg-white/95 text-sm
-                             focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                             focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition appearance-none">
                 <option value="" disabled {{ $sat ? '' : 'selected' }}>Pilih satuan</option>
-                @foreach (['pcs','unit','botol','liter','gram','set'] as $opt)
+                @foreach ($satuanList as $opt)
                   <option value="{{ $opt }}" {{ $sat === $opt ? 'selected' : '' }}>{{ $opt }}</option>
                 @endforeach
               </select>
@@ -347,6 +348,8 @@
     transition: .15s ease;
   }
   .tip:hover::after { opacity: 1; transform: translateY(0); }
+
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; }
 </style>
 
 <script>
@@ -377,7 +380,7 @@
   };
   document.getElementById('toastClose')?.addEventListener('click', () => toastEl.classList.add('hidden'));
 
-  // --- confirm modal kustom ---
+  // --- confirm modal ---
   function showConfirmModal({ title, message, confirmText, cancelText, note, tone = 'neutral', onConfirm }) {
     const toneMap = {
       neutral: { btn: 'bg-slate-900 hover:bg-slate-800', noteBg: 'bg-slate-50', noteBr: 'border-slate-200', noteTx: 'text-slate-600' },
@@ -418,9 +421,9 @@
   }
 
   // --- elements ---
-  const form    = document.getElementById('formBarang');
-  const beliEl  = document.getElementById('harga_beli');
-  const jualEl  = document.getElementById('harga_jual');
+  const form   = document.getElementById('formBarang');
+  const beliEl = document.getElementById('harga_beli');
+  const jualEl = document.getElementById('harga_jual');
 
   const previewBeli    = document.getElementById('previewBeli');
   const previewJual    = document.getElementById('previewJual');
@@ -439,9 +442,9 @@
 
     if (selisihHint) {
       if (!b && !j)   selisihHint.textContent = '—';
-      else if (s > 0) selisihHint.textContent = 'Untung';
-      else if (s < 0) selisihHint.textContent = 'Rugi';
-      else            selisihHint.textContent = 'Impas';
+      else if (s > 0) { selisihHint.textContent = 'Untung'; selisihHint.className = 'mt-1 text-[11px] text-emerald-600'; }
+      else if (s < 0) { selisihHint.textContent = 'Rugi';   selisihHint.className = 'mt-1 text-[11px] text-red-500'; }
+      else            { selisihHint.textContent = 'Impas';  selisihHint.className = 'mt-1 text-[11px] text-slate-500'; }
     }
   };
 
@@ -455,7 +458,7 @@
   if (jualEl) formatMoneyInput(jualEl);
   updatePreview();
 
-  // --- dirty guard (snapshot-based, lebih akurat) ---
+  // --- dirty guard ---
   let allowUnload = false;
 
   const getSnapshot = () => {
@@ -524,7 +527,6 @@
     if (form.dataset.confirmed === '1') return;
     e.preventDefault();
 
-    // validasi client-side
     const requiredIds = ['kode_barang', 'nama_barang', 'satuan', 'harga_beli', 'harga_jual'];
     let ok = true;
     requiredIds.forEach(id => {
@@ -553,6 +555,14 @@
       }
     });
   });
+
+  // Auto-dismiss session toast from server
+  @if(session('success'))
+    showToast('Berhasil', '{{ session('success') }}', 'success');
+  @endif
+  @if(session('error'))
+    showToast('Error', '{{ session('error') }}', 'error');
+  @endif
 </script>
 
 @endsection
