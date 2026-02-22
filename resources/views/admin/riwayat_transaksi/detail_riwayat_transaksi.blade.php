@@ -134,7 +134,7 @@
             </div>
           </div>
 
-          <a href="{{ route('transaksi.nota', $trx->id ?? 0) }}"
+          <a href="{{ route('transaksi.nota', $trx->id ?? 0) }}" target="_blank"
              class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
                     bg-slate-900 text-white hover:bg-slate-800 transition
                     shadow-[0_12px_24px_rgba(2,6,23,0.18)]">

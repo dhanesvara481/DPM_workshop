@@ -12,6 +12,8 @@ class RiwayatStok extends Model
     protected $table      = 'riwayat_stok';
     protected $primaryKey = 'riwayat_stok_id';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'barang_id',
         'user_id',
@@ -26,6 +28,7 @@ class RiwayatStok extends Model
         'tanggal_riwayat_stok' => 'date',
     ];
 
+    // ── Relasi ──────────────────────────────────────────────────────────────
 
     public function barang()
     {
@@ -47,14 +50,15 @@ class RiwayatStok extends Model
         return $this->belongsTo(BarangKeluar::class, 'barang_keluar_id', 'barang_keluar_id');
     }
 
+    // ── Accessor: tipe masuk / keluar ────────────────────────────────────────
 
-    // tipe: 'masuk' atau 'keluar'
     public function getTipeAttribute(): string
     {
         return $this->barang_masuk_id ? 'masuk' : 'keluar';
     }
 
-    // qty: jumlah dari relasi yang aktif
+    // ── Accessor: qty dari relasi yang aktif ─────────────────────────────────
+
     public function getQtyAttribute(): int
     {
         if ($this->barang_masuk_id) {
@@ -66,15 +70,27 @@ class RiwayatStok extends Model
         return 0;
     }
 
-    // keterangan: masuk → 'Barang Masuk', keluar → dari tabel barang_keluar
+    // ── Accessor: keterangan — dibuat langsung, TIDAK disimpan ke DB ─────────
+    // Jika dari invoice  → "Invoice INV-{id}"
+    // Jika barang keluar biasa → keterangan dari tabel barang_keluar (jika ada)
+    // Jika barang masuk  → "Barang Masuk"
+
     public function getKeteranganAttribute(): string
     {
         if ($this->barang_masuk_id) {
             return 'Barang Masuk';
         }
+
         if ($this->barang_keluar_id) {
-            return $this->barangKeluar?->keterangan ?? '-';
+            $keluar = $this->barangKeluar;
+
+            if (!empty($keluar?->ref_invoice)) {
+                return 'Invoice INV-' . $keluar->ref_invoice;
+            }
+
+            return $keluar?->keterangan ?? 'Barang Keluar';
         }
+
         return '-';
     }
 }

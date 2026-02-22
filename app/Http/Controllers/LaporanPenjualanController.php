@@ -3,62 +3,88 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\RiwayatTransaksi;
+use Carbon\Carbon;
 
 class LaporanPenjualanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function getLaporanPenjualan()   
+    private function buildQuery(Request $request)
     {
-        return view('admin.laporan_penjualan');
+        $mode   = $request->input('mode', 'custom');
+        $dari   = $request->input('dari');
+        $sampai = $request->input('sampai');
+        $week   = $request->input('week');
+        $month  = $request->input('month');
+        $year   = $request->input('year');
+
+        $query = RiwayatTransaksi::query()
+            ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
+            ->join('user',    'invoice.user_id',              '=', 'user.user_id')
+            ->selectRaw("
+                riwayat_transaksi.riwayat_transaksi_id       AS id,
+                riwayat_transaksi.tanggal_riwayat_transaksi  AS created_at,
+                CONCAT('INV-', invoice.invoice_id)           AS kode_transaksi,
+                invoice.subtotal                             AS total,
+                COALESCE(user.username, 'User')              AS nama_pengguna
+            ")
+            ->orderByDesc('riwayat_transaksi.tanggal_riwayat_transaksi');
+
+        if ($mode === 'custom' && $dari && $sampai) {
+            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari)
+                  ->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
+
+        } elseif ($mode === 'week' && $week) {
+            [$yr, $wk] = explode('-W', $week);
+            $start = Carbon::now()->setISODate((int)$yr, (int)$wk)->startOfWeek()->toDateString();
+            $end   = Carbon::now()->setISODate((int)$yr, (int)$wk)->endOfWeek()->toDateString();
+            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $start)
+                  ->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $end);
+
+        } elseif ($mode === 'month' && $month) {
+            $start = Carbon::parse($month . '-01')->startOfMonth()->toDateString();
+            $end   = Carbon::parse($month . '-01')->endOfMonth()->toDateString();
+            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $start)
+                  ->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $end);
+
+        } elseif ($mode === 'year' && $year) {
+            $query->whereYear('riwayat_transaksi.tanggal_riwayat_transaksi', $year);
+        }
+
+        return $query;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    private function filterParams(Request $request): array
     {
-        //
+        return [
+            'mode'   => $request->input('mode', 'custom'),
+            'dari'   => $request->input('dari'),
+            'sampai' => $request->input('sampai'),
+            'week'   => $request->input('week'),
+            'month'  => $request->input('month'),
+            'year'   => $request->input('year'),
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+
+    public function getLaporanPenjualan(Request $request)
     {
-        //
+        $rows = $this->buildQuery($request)->get();
+
+        extract($this->filterParams($request));
+
+        return view('admin.laporan_penjualan', compact(
+            'rows', 'mode', 'dari', 'sampai', 'week', 'month', 'year'
+        ));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function print(Request $request)
     {
-        //
-    }
+        $rows = $this->buildQuery($request)->get();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        extract($this->filterParams($request));
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return view('admin.print.laporan_keuangan', compact(
+            'rows', 'mode', 'dari', 'sampai', 'week', 'month', 'year'
+        ));
     }
 }

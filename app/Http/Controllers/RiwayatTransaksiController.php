@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InvoiceItem;
 use App\Models\RiwayatTransaksi;
 use Illuminate\Http\Request;
 
@@ -15,70 +16,63 @@ class RiwayatTransaksiController extends Controller
 
         $query = RiwayatTransaksi::query()
             ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
-            ->join('user', 'invoice.user_id', '=', 'user.user_id')
+            ->join('detail_invoice', 'invoice.invoice_id', '=', 'detail_invoice.invoice_id')
             ->selectRaw("
-                riwayat_transaksi.riwayat_transaksi_id  AS id,
-                riwayat_transaksi.tanggal_riwayat_transaksi AS created_at,
+                riwayat_transaksi.riwayat_transaksi_id       AS id,
+                riwayat_transaksi.tanggal_riwayat_transaksi  AS created_at,
                 riwayat_transaksi.invoice_id,
-                invoice.subtotal                         AS total,
+                invoice.subtotal                             AS total,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
                 invoice.tanggal_invoice,
-                CONCAT('INV-', invoice.invoice_id)       AS kode_transaksi,
-                COALESCE(user.username, 'User')   AS nama_pengguna,
-                'paid'                                   AS status
+                CONCAT('INV-', invoice.invoice_id)           AS kode_transaksi,
+                COALESCE(detail_invoice.nama_pelanggan, 'User') AS nama_pengguna,
+                'paid'                                       AS status
             ")
-            ->orderByDesc('riwayat_transaksi.tanggal_riwayat_transaksi')
-            ->orderByDesc('riwayat_transaksi.created_at');
+            ->orderByDesc('riwayat_transaksi.tanggal_riwayat_transaksi');
 
-        // Filter: pencarian teks (nama user atau kode invoice)
         if ($q) {
             $query->where(function ($sub) use ($q) {
-                $sub->where('user.username',  'like', "%{$q}%")
+                $sub->where('detail_invoice.nama_pelanggan', 'like', "%{$q}%")
                     ->orWhereRaw("CONCAT('INV-', invoice.invoice_id) LIKE ?", ["%{$q}%"]);
             });
         }
 
-        // Filter: tanggal dari
         if ($dari) {
-            $query->where('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
+            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
         }
 
-        // Filter: tanggal sampai
         if ($sampai) {
-            $query->where('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
+            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
         }
 
         $rows = $query->get();
 
         return view('admin.riwayat_transaksi.riwayat_transaksi', compact(
-            'rows',
-            'q',
-            'dari',
-            'sampai',
+            'rows', 'q', 'dari', 'sampai'
         ));
     }
 
     public function getDetailRiwayatTransaksi(int $id)
     {
-        // Eager load: invoice → items (detail_invoice) → barang
-        $riwayat = RiwayatTransaksi::with(['invoice.items.barang', 'invoice.user'])
+        $riwayat = RiwayatTransaksi::with(['invoice.items.barang', 'invoice.detailInvoice'])
             ->findOrFail($id);
 
-        $invoice = $riwayat->invoice;
-        $user    = $invoice->user;
+        $invoice      = $riwayat->invoice;
+        // Ambil nama_pelanggan dari detail_invoice (ambil first karena bisa banyak row)
+        $detailInvoice = $invoice->detailInvoice->first();
 
         $trx = (object) [
             'id'                => $riwayat->riwayat_transaksi_id,
             'created_at'        => $riwayat->tanggal_riwayat_transaksi,
             'kode_transaksi'    => 'INV-' . $invoice->invoice_id,
-            'nama_pengguna'     => $user?->username ?? 'User',
+            'nama_pengguna'     => $detailInvoice?->nama_pelanggan ?? 'User',
             'total'             => (float) $invoice->subtotal,
             'subtotal_barang'   => (float) $invoice->subtotal_barang,
             'biaya_jasa'        => (float) $invoice->biaya_jasa,
-            'status'            => 'paid',           // belum ada di tabel
-            'metode_pembayaran' => '-',              // belum ada di tabel
-            'catatan'           => '-',              // belum ada di tabel
+            'status'            => 'paid',
+            'metode_pembayaran' => '-',
+            'catatan'           => '-',
             'tipe'              => 'masuk',
         ];
 
@@ -89,17 +83,17 @@ class RiwayatTransaksiController extends Controller
 
     public function nota(int $id)
     {
-        $riwayat = RiwayatTransaksi::with(['invoice.items.barang', 'invoice.user'])
+        $riwayat = RiwayatTransaksi::with(['invoice.items.barang', 'invoice.detailInvoice']) // <-- fix di sini
             ->findOrFail($id);
 
-        $invoice = $riwayat->invoice;
-        $user    = $invoice->user;
+        $invoice       = $riwayat->invoice;
+        $detailInvoice = $invoice->detailInvoice->first();
 
         $trx = (object) [
             'id'                => $riwayat->riwayat_transaksi_id,
             'created_at'        => $riwayat->tanggal_riwayat_transaksi,
             'kode_transaksi'    => 'INV-' . $invoice->invoice_id,
-            'nama_pengguna'     => $user?->username ?? 'User',
+            'nama_pengguna'     => $detailInvoice?->nama_pelanggan ?? 'User',
             'total'             => (float) $invoice->subtotal,
             'subtotal_barang'   => (float) $invoice->subtotal_barang,
             'biaya_jasa'        => (float) $invoice->biaya_jasa,
@@ -110,6 +104,6 @@ class RiwayatTransaksiController extends Controller
 
         $items = $invoice->items ?? collect();
 
-        return view('admin.riwayat_transaksi.print_transaksi', compact('trx', 'items'));
+        return view('admin.print.nota', compact('trx', 'items'));
     }
 }

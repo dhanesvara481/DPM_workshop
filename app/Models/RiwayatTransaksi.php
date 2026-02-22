@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class RiwayatTransaksi extends Model
 {
-    protected $table = 'riwayat_transaksi';
+    protected $table      = 'riwayat_transaksi';
     protected $primaryKey = 'riwayat_transaksi_id';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'invoice_id',
@@ -16,20 +18,19 @@ class RiwayatTransaksi extends Model
     ];
 
     protected $casts = [
-        'tanggal_riwayat_transaksi' => 'date',
+        'tanggal_riwayat_transaksi' => 'datetime',
     ];
 
-    /*------------------------------------------------------------
-    | Relasi ke Invoice
-    ------------------------------------------------------------*/
+    public function getCreatedAtAttribute()
+    {
+        return $this->tanggal_riwayat_transaksi;
+    }
+
     public function invoice()
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
 
-    /*------------------------------------------------------------
-    | Relasi ke User
-    ------------------------------------------------------------*/
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

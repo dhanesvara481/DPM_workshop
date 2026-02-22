@@ -229,6 +229,8 @@
     }
 
     // print
-    document.getElementById('btnPrint')?.addEventListener('click', () => window.print());
+    document.getElementById('btnPrint')?.addEventListener('click', () => {
+        window.open("{{ route('stok_realtime.print') }}", '_blank');
+    });
 </script>
 @endpush

@@ -2,66 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barang;
 use Illuminate\Http\Request;
 
 class StokRealtimeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-     public function getStokRealtime()
+    public function getStokRealtime(Request $request)
     {
-        //View dashboard
-        return view('admin.stok_realtime', [
-        'barangs' => [],
-    ]);
+        $q = $request->input('q');
+
+        $query = Barang::query()->orderBy('barang_id', 'asc');
+
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
+                $like = "%{$q}%";
+                $sub->where('kode_barang', 'like', $like)
+                    ->orWhere('nama_barang', 'like', $like);
+            });
+        }
+
+        $barangs = $query->get();
+
+        return view('admin.stok_realtime', compact('barangs', 'q'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function print(Request $request)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $barangs = Barang::orderBy('barang_id', 'asc')->get();
+        return view('admin.print.stokrealtime', compact('barangs'));
     }
 }

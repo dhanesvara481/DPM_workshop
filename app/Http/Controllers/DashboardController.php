@@ -2,64 +2,165 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function getTampilanDashboard()
     {
-        //View dashboard
-        return view('admin.dashboard.tampilan_dashboard', [
-        'barangs' => [],
-    ]);
-    }
-    
+        $chartMasuk  = $this->buildChartMasuk();
+        $chartKeluar = $this->buildChartKeluar();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        $events = $this->buildEvents();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        $MAX_EVENTS_PER_DAY = 4;
+
+        return view('admin.dashboard.tampilan_dashboard', compact(
+            'chartMasuk',
+            'chartKeluar',
+            'events',
+            'MAX_EVENTS_PER_DAY',
+        ));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    private function buildChartMasuk(): array
     {
-        //
+        return [
+            '6m'   => $this->queryMasuk(6),
+            '12m'  => $this->queryMasuk(12),
+            'year' => $this->queryMasukKuartal(),
+        ];
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    private function queryMasuk(int $months): array
     {
-        //
+        $rows = DB::table('barang_masuk')
+            ->selectRaw("DATE_FORMAT(tanggal_masuk, '%b') AS label,
+                         DATE_FORMAT(tanggal_masuk, '%Y-%m') AS ym,
+                         SUM(jumlah_masuk) AS total")
+            ->where('tanggal_masuk', '>=', now()->subMonths($months)->startOfMonth())
+            ->groupByRaw("DATE_FORMAT(tanggal_masuk, '%Y-%m'), DATE_FORMAT(tanggal_masuk, '%b')")
+            ->orderBy('ym')
+            ->get();
+
+        return [
+            'label'  => "{$months} bulan terakhir",
+            'labels' => $rows->pluck('label')->toArray(),
+            'masuk'  => $rows->pluck('total')->map(fn($v) => (int)$v)->toArray(),
+        ];
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    private function queryMasukKuartal(): array
     {
-        //
+        $year = now()->year;
+        $rows = DB::table('barang_masuk')
+            ->selectRaw("CONCAT('Q', QUARTER(tanggal_masuk)) AS label,
+                         QUARTER(tanggal_masuk) AS q,
+                         SUM(jumlah_masuk) AS total")
+            ->whereYear('tanggal_masuk', $year)
+            ->groupByRaw("QUARTER(tanggal_masuk), CONCAT('Q', QUARTER(tanggal_masuk))")
+            ->orderBy('q')
+            ->get();
+
+        $map    = $rows->keyBy('label');
+        $labels = ['Q1','Q2','Q3','Q4'];
+        $data   = array_map(fn($l) => (int)($map[$l]->total ?? 0), $labels);
+
+        return [
+            'label'  => "Tahun ini (per kuartal)",
+            'labels' => $labels,
+            'masuk'  => $data,
+        ];
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    private function buildChartKeluar(): array
     {
-        //
+        return [
+            '6m'   => $this->queryKeluar(6),
+            '12m'  => $this->queryKeluar(12),
+            'year' => $this->queryKeluarKuartal(),
+        ];
+    }
+
+    private function queryKeluar(int $months): array
+    {
+        $rows = DB::table('barang_keluar')
+            ->selectRaw("DATE_FORMAT(tanggal_keluar, '%b') AS label,
+                         DATE_FORMAT(tanggal_keluar, '%Y-%m') AS ym,
+                         SUM(jumlah_keluar) AS total")
+            ->where('tanggal_keluar', '>=', now()->subMonths($months)->startOfMonth())
+            ->groupByRaw("DATE_FORMAT(tanggal_keluar, '%Y-%m'), DATE_FORMAT(tanggal_keluar, '%b')")
+            ->orderBy('ym')
+            ->get();
+
+        return [
+            'label'  => "{$months} bulan terakhir",
+            'labels' => $rows->pluck('label')->toArray(),
+            'keluar' => $rows->pluck('total')->map(fn($v) => (int)$v)->toArray(),
+        ];
+    }
+
+    private function queryKeluarKuartal(): array
+    {
+        $year = now()->year;
+        $rows = DB::table('barang_keluar')
+            ->selectRaw("CONCAT('Q', QUARTER(tanggal_keluar)) AS label,
+                         QUARTER(tanggal_keluar) AS q,
+                         SUM(jumlah_keluar) AS total")
+            ->whereYear('tanggal_keluar', $year)
+            ->groupByRaw("QUARTER(tanggal_keluar), CONCAT('Q', QUARTER(tanggal_keluar))")
+            ->orderBy('q')
+            ->get();
+
+        $map    = $rows->keyBy('label');
+        $labels = ['Q1','Q2','Q3','Q4'];
+        $data   = array_map(fn($l) => (int)($map[$l]->total ?? 0), $labels);
+
+        return [
+            'label'  => "Tahun ini (per kuartal)",
+            'labels' => $labels,
+            'keluar' => $data,
+        ];
+    }
+
+    private function buildEvents(): array
+    {
+        try {
+            $rows = DB::table('jadwal_kerja')
+                ->whereBetween('tanggal', [
+                    now()->subDays(30)->toDateString(),
+                    now()->addDays(60)->toDateString(),
+                ])
+                ->orderBy('tanggal')
+                ->orderBy('jam_mulai')
+                ->get();
+
+            $events = [];
+
+            foreach ($rows as $row) {
+                $key = Carbon::parse($row->tanggal)->toDateString();
+
+                $time = '';
+                if (!empty($row->jam_mulai) && !empty($row->jam_selesai)) {
+                    $time = substr($row->jam_mulai, 0, 5) . ' - ' . substr($row->jam_selesai, 0, 5);
+                } elseif (!empty($row->jam_mulai)) {
+                    $time = substr($row->jam_mulai, 0, 5);
+                }
+
+                $events[$key][] = [
+                    'id'     => $row->jadwal_kerja_id,
+                    'title'  => $row->judul    ?? $row->title   ?? 'Jadwal',
+                    'status' => $row->status   ?? 'aktif',
+                    'time'   => $time,
+                    'desc'   => $row->deskripsi ?? $row->catatan ?? '',
+                ];
+            }
+
+            return $events;
+
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 }
