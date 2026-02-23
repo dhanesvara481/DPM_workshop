@@ -3,92 +3,126 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class ManajemenStafController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Tampilan daftar semua staf (role = staff).
+     * Kirim Eloquent collection langsung — view akses via $staf->status, $staf->role, dst.
      */
     public function getTampilanManajemenStaf()
     {
-        //View manajemen_staf
-        return view('admin.manajemen_staf.tampilan_manajemen_staf', [
-        'manajemenStafs' => [],
-    ]);
+        $stafs = User::where('role', 'staff')
+                     ->orderBy('created_at', 'desc')
+                     ->get();
+
+        return view('admin.manajemen_staf.tampilan_manajemen_staf', compact('stafs'));
     }
 
-    // tambah staf
+    /**
+     * Form tambah staf.
+     */
     public function getTambahStaf()
     {
-        //View tambah_staf
-        return view('admin.manajemen_staf.tambah_staf', [
-        'manajemenStafs' => [],
-    ]);
-    }
-    // tambah staf end
-    
-    // ubah staf
-    public function getUbahStaf()
-    {
-        //View ubah_staf
-        return view('admin.manajemen_staf.ubah_staf', [
-        'manajemenStafs' => [],
-    ]);
-    }
-    // ubah staf end
-
-    // detail staf
-    public function getDetailStaf()
-    {
-        //View detail_staf
-        return view('admin.manajemen_staf.detail_staf', [
-        'manajemenStafs' => [],
-    ]);
+        return view('admin.manajemen_staf.tambah_staf');
     }
 
-    public function detail($id) {
-        $staf = User::findOrFail($id); // atau model Staf
+    /**
+     * Simpan staf baru ke DB.
+     */
+    public function simpanStaf(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:20|unique:user,username',
+            'email'    => 'required|email|max:100|unique:user,email',
+            'kontak'   => 'required|digits_between:6,12',
+            'password' => 'required|min:6',
+            'catatan'  => 'nullable|string|max:255',
+        ]);
+
+        User::create([
+            'username' => $request->username,
+            'email'    => $request->email,
+            'kontak'   => $request->kontak,
+            'password' => Hash::make($request->password),
+            'role'     => 'staff',
+            'status'   => 'aktif',
+            'catatan'  => $request->catatan,
+        ]);
+
+        return redirect()->route('tampilan_manajemen_staf')
+                         ->with('success', "Staf {$request->username} berhasil ditambahkan.");
+    }
+
+    /**
+     * Form ubah staf — kirim object Eloquent $staf ke view.
+     */
+    public function getUbahStaf($id)
+    {
+        $staf = User::findOrFail($id);
+
+        return view('admin.manajemen_staf.ubah_staf', compact('staf'));
+    }
+
+    /**
+     * Update data staf.
+     */
+    public function updateStaf(Request $request, $id)
+    {
+        $staf = User::findOrFail($id);
+
+        $request->validate([
+            'username' => "required|string|max:20|unique:user,username,{$id},user_id",
+            'email'    => "required|email|max:100|unique:user,email,{$id},user_id",
+            'kontak'   => 'required|digits_between:6,12',
+            'password' => 'nullable|min:6',
+            'catatan'  => 'nullable|string|max:255',
+        ]);
+
+        $data = [
+            'username' => $request->username,
+            'email'    => $request->email,
+            'kontak'   => $request->kontak,
+            'catatan'  => $request->catatan,
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $staf->update($data);
+
+        return redirect()->route('tampilan_manajemen_staf')
+                         ->with('success', "Data staf {$staf->username} berhasil diperbarui.");
+    }
+
+    /**
+     * Detail staf (opsional — saat ini detail ditampilkan via modal di tampilan utama).
+     */
+    public function getDetailStaf($id)
+    {
+        $staf = User::findOrFail($id);
+
         return view('admin.manajemen_staf.detail_staf', compact('staf'));
     }
-    // detail staf end
 
     /**
-     * Store a newly created resource in storage.
+     * Toggle status aktif <-> nonaktif.
+     * Membaca & menulis kolom status (enum 'aktif'|'nonaktif') di tabel user.
      */
-    public function store(Request $request)
+    public function toggleStatus($id)
     {
-        //
-    }
+        $staf = User::findOrFail($id);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        // Flip status sesuai nilai enum di DB
+        $staf->status = $staf->status === 'aktif' ? 'nonaktif' : 'aktif';
+        $staf->save();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        $label = $staf->status === 'aktif' ? 'diaktifkan' : 'dinonaktifkan';
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->route('tampilan_manajemen_staf')
+                         ->with('success', "Staf {$staf->username} berhasil {$label}.");
     }
 }

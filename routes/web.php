@@ -79,15 +79,23 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     //============== Jadwal Kerja =================//
     Route::get('/kelola_jadwal_kerja',           [JadwalKerjaController::class, 'getKelolaJadwalKerja'])->name('kelola_jadwal_kerja');
     Route::get('/tambah_jadwal_kerja',           [JadwalKerjaController::class, 'getTambahJadwalKerja'])->name('tambah_jadwal_kerja');
+    Route::post('/tambah_jadwal_kerja',          [JadwalKerjaController::class, 'simpanJadwalKerja'])->name('simpan_jadwal_kerja');
     Route::get('/ubah_jadwal_kerja',             [JadwalKerjaController::class, 'getUbahJadwalKerja'])->name('ubah_jadwal_kerja');
+    Route::put('/ubah_jadwal_kerja/{id}',        [JadwalKerjaController::class, 'perbaruiJadwalKerja'])->name('perbarui_jadwal_kerja');
     Route::get('/hapus_jadwal_kerja',            [JadwalKerjaController::class, 'getHapusJadwalKerja'])->name('hapus_jadwal_kerja');
+    Route::delete('/hapus_jadwal_kerja/{id}',    [JadwalKerjaController::class, 'hapusJadwalKerja'])->name('delete_jadwal_kerja');
+    Route::delete('/hapus_jadwal_kerja_batch',   [JadwalKerjaController::class, 'hapusBatch'])->name('hapus_jadwal_kerja_batch');   // ✅ TAMBAH
+    Route::delete('/hapus_jadwal_kerja_all',     [JadwalKerjaController::class, 'hapusSemuaTanggal'])->name('hapus_jadwal_kerja_all'); // ✅ TAMBAH
     Route::get('/tampilan_jadwal_kerja',         [JadwalKerjaController::class, 'getTampilanJadwalKerja'])->name('tampilan_jadwal_kerja');
 
     //============== Manajemen Staf =================//
     Route::get('/tampilan_manajemen_staf',       [ManajemenStafController::class, 'getTampilanManajemenStaf'])->name('tampilan_manajemen_staf');
     Route::get('/tambah_staf',                   [ManajemenStafController::class, 'getTambahStaf'])->name('tambah_staf');
-    Route::get('/ubah_staf',                     [ManajemenStafController::class, 'getUbahStaf'])->name('ubah_staf');
-    Route::get('/detail_staf',                   [ManajemenStafController::class, 'getDetailStaf'])->name('detail_staf');
+    Route::post('/tambah_staf',                  [ManajemenStafController::class, 'simpanStaf'])->name('simpan_staf');
+    Route::get('/ubah_staf/{id}',                [ManajemenStafController::class, 'getUbahStaf'])->name('ubah_staf');
+    Route::put('/ubah_staf/{id}',               [ManajemenStafController::class, 'updateStaf'])->name('update_staf');
+    Route::get('/detail_staf/{id}',              [ManajemenStafController::class, 'getDetailStaf'])->name('detail_staf');
+    Route::patch('/toggle_status_staf/{id}',     [ManajemenStafController::class, 'toggleStatus'])->name('toggle_status_staf');
 
     //============== Dashboard =================//
     Route::get('/tampilan_dashboard',            [DashboardController::class, 'getTampilanDashboard'])->name('tampilan_dashboard');

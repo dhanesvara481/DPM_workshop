@@ -473,8 +473,8 @@
     // ✅ hasData pakai data asli (biar ubah/hapus masih bisa kalau ada apa pun, termasuk tutup)
     const hasData = (getEvents(dateStr).length > 0);
 
-    modalUbah.href  = hasData ? `/ubah_jadwal_kerja?date=${encodeURIComponent(dateStr)}` : '#';
-    modalHapus.href = hasData ? `/hapus_jadwal_kerja?date=${encodeURIComponent(dateStr)}` : '#';
+    modalUbah.href  = hasData ? "{{ route('ubah_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr) : '#';
+    modalHapus.href = hasData ? "{{ route('hapus_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr) : '#';
 
     modalUbah.classList.toggle('opacity-50', !hasData);
     modalUbah.classList.toggle('pointer-events-none', !hasData);
@@ -483,7 +483,7 @@
 
     // ✅ Tambah: kalau tutup -> disable + button jadi "TUTUP"
     if (!closed && !isFull(dateStr)) {
-      modalTambah.href = `/tambah_jadwal_kerja?date=${encodeURIComponent(dateStr)}`;
+      modalTambah.href = "{{ route('tambah_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr);
       modalTambah.classList.remove('btn-disabled');
       modalTambah.textContent = `Tambah Jadwal (sisa ${left})`;
       modalHint.textContent = `Masih bisa tambah ${left} jadwal lagi di tanggal ini.`;

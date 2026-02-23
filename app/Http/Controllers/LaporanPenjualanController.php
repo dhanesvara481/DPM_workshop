@@ -18,14 +18,14 @@ class LaporanPenjualanController extends Controller
         $year   = $request->input('year');
 
         $query = RiwayatTransaksi::query()
-            ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
-            ->join('user',    'invoice.user_id',              '=', 'user.user_id')
+            ->join('invoice',        'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
+            ->leftJoin('detail_invoice', 'invoice.invoice_id',       '=', 'detail_invoice.invoice_id')
             ->selectRaw("
-                riwayat_transaksi.riwayat_transaksi_id       AS id,
-                riwayat_transaksi.tanggal_riwayat_transaksi  AS created_at,
-                CONCAT('INV-', invoice.invoice_id)           AS kode_transaksi,
-                invoice.subtotal                             AS total,
-                COALESCE(user.username, 'User')              AS nama_pengguna
+                riwayat_transaksi.riwayat_transaksi_id                  AS id,
+                riwayat_transaksi.tanggal_riwayat_transaksi             AS created_at,
+                CONCAT('INV-', invoice.invoice_id)                      AS kode_transaksi,
+                invoice.subtotal                                         AS total,
+                COALESCE(detail_invoice.nama_pelanggan, 'Umum')         AS nama_pengguna
             ")
             ->orderByDesc('riwayat_transaksi.tanggal_riwayat_transaksi');
 

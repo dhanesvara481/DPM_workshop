@@ -16,13 +16,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
-
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Ubah Jadwal Kerja</h1>
         <p class="text-xs text-slate-500">Pilih jadwal yang ada, lalu edit datanya.</p>
       </div>
     </div>
-
     <div class="flex items-center gap-2">
       <button type="button"
               class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
@@ -40,21 +38,18 @@
   {{-- BACKGROUND --}}
   <div class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-
     <div class="absolute inset-0 opacity-[0.12]"
          style="background-image:
             linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
             background-size: 56px 56px;">
     </div>
-
     <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
          style="background-image:
             repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
             repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
             background-size: 112px 112px, 112px 112px;">
     </div>
-
     <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
                 bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
     <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
@@ -64,22 +59,21 @@
   <div class="max-w-[980px] mx-auto w-full">
 
     @php
-      // ====== INPUT ======
-      $date = request('date') ?? old('tanggal') ?? now()->format('Y-m-d');
+      $date       = $date ?? request('date') ?? now()->format('Y-m-d');
       $selectedId = request('jadwal_id') ?? old('jadwal_id');
 
-      // ====== DUMMY (hapus kalau backend sudah siap) ======
-      $dummyAll = [
-        now()->format('Y-m-d') => [
-          ['id'=>101,'tanggal'=>now()->format('Y-m-d'),'user_id'=>1,'title'=>'Shift Pagi - Asep','status'=>'aktif','jam_mulai'=>'08:00','jam_selesai'=>'16:00','waktu_shift'=>'Pagi','deskripsi'=>'Servis rutin / tune up'],
-          ['id'=>102,'tanggal'=>now()->format('Y-m-d'),'user_id'=>null,'title'=>'Catatan: Sparepart datang','status'=>'catatan','jam_mulai'=>'10:30','jam_selesai'=>null,'waktu_shift'=>null,'deskripsi'=>'Cek gudang + follow up supplier'],
-        ],
-        now()->addDay()->format('Y-m-d') => [
-          ['id'=>103,'tanggal'=>now()->addDay()->format('Y-m-d'),'user_id'=>null,'title'=>'Tutup (Libur)','status'=>'tutup','jam_mulai'=>null,'jam_selesai'=>null,'waktu_shift'=>null,'deskripsi'=>'Hari libur operasional'],
-        ],
-      ];
-
-      $jadwals = $jadwals ?? ($dummyAll[$date] ?? []);
+      // ✅ FIX: gunakan ->username (bukan ->name) sesuai migration & controller
+      $jadwals = collect($jadwalKerjas ?? [])->map(fn($j) => [
+        'id'          => $j->jadwal_id,
+        'tanggal'     => $j->tanggal_kerja->format('Y-m-d'),
+        'user_id'     => $j->user_id,
+        'title'       => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
+        'status'      => strtolower($j->status),
+        'jam_mulai'   => substr($j->jam_mulai, 0, 5),
+        'jam_selesai' => substr($j->jam_selesai, 0, 5),
+        'waktu_shift' => $j->waktu_shift,
+        'deskripsi'   => $j->deskripsi,
+      ])->toArray();
 
       if (!$selectedId && count($jadwals) > 0) $selectedId = $jadwals[0]['id'];
 
@@ -89,14 +83,13 @@
       }
       if (!$selected && count($jadwals) > 0) $selected = $jadwals[0];
 
-      // ====== PREFILL FORM ======
-      $prefillDate    = $selected['tanggal'] ?? $date;
-      $prefillUser    = $selected['user_id'] ?? (request('user_id') ?? old('user_id'));
-      $prefillMulai   = $selected['jam_mulai'] ?? (request('jam_mulai') ?? old('jam_mulai'));
-      $prefillSelesai = $selected['jam_selesai'] ?? (request('jam_selesai') ?? old('jam_selesai'));
-      $prefillShift   = $selected['waktu_shift'] ?? (request('waktu_shift') ?? old('waktu_shift'));
-      $prefillStatus  = $selected['status'] ?? (request('status') ?? old('status', 'aktif'));
-      $prefillDesc    = $selected['deskripsi'] ?? (request('deskripsi') ?? old('deskripsi'));
+      $prefillDate    = $selected['tanggal']     ?? $date;
+      $prefillUser    = $selected['user_id']     ?? old('user_id');
+      $prefillMulai   = $selected['jam_mulai']   ?? old('jam_mulai');
+      $prefillSelesai = $selected['jam_selesai'] ?? old('jam_selesai');
+      $prefillShift   = $selected['waktu_shift'] ?? old('waktu_shift');
+      $prefillStatus  = $selected['status']      ?? old('status', 'aktif');
+      $prefillDesc    = $selected['deskripsi']   ?? old('deskripsi');
     @endphp
 
     <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
@@ -110,7 +103,6 @@
               Step 1: pilih jadwal yang mau diubah. Step 2: edit form lalu simpan.
             </div>
           </div>
-
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center gap-2 text-xs text-slate-600">
               <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Aktif
@@ -127,7 +119,7 @@
 
       <div class="p-5 sm:p-6 space-y-5">
 
-        {{-- ===== STEP 1: PILIH JADWAL EXISTING ===== --}}
+        {{-- STEP 1: PILIH JADWAL --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div class="min-w-0">
@@ -137,7 +129,7 @@
               </div>
             </div>
 
-            <form id="pickForm" method="GET" action="{{ url('/ubah_jadwal_kerja') }}" class="w-full sm:w-[420px]">
+            <form id="pickForm" method="GET" action="{{ route('ubah_jadwal_kerja') }}" class="w-full sm:w-[420px]">
               <input type="hidden" name="date" value="{{ $date }}">
               <label class="block text-[11px] font-semibold text-slate-600 mb-1">Jadwal di tanggal ini</label>
 
@@ -150,17 +142,14 @@
                   @else
                     @foreach($jadwals as $j)
                       @php
-                        $st = strtolower($j['status'] ?? 'aktif');
-                        $badge = strtoupper($st);
-                        $title = $j['title'] ?? 'Jadwal';
-                        $range = trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . ($j['jam_selesai'] ?? '') : ''));
+                        $st      = strtolower($j['status'] ?? 'aktif');
+                        $badge   = strtoupper($st);
+                        $title   = $j['title'] ?? 'Jadwal';
+                        $range   = trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . $j['jam_selesai'] : ''));
                         $rangeTxt = $range ? " • {$range}" : '';
                       @endphp
-
                       <option value="{{ $j['id'] }}"
                               @selected((string)$selectedId === (string)$j['id'])
-
-                              {{-- DATA UNTUK AUTO SYNC PREVIEW + PREFILL --}}
                               data-id="{{ $j['id'] }}"
                               data-title="{{ $title }}"
                               data-status="{{ $st }}"
@@ -195,11 +184,13 @@
             </div>
           @else
             @php
-              $st = strtolower($selected['status'] ?? 'aktif');
+              $st      = strtolower($selected['status'] ?? 'aktif');
               $stLabel = strtoupper($st);
-              $stClass = $st === 'tutup' ? 'bg-rose-50 border-rose-200 text-rose-700'
-                        : ($st === 'catatan' ? 'bg-amber-50 border-amber-200 text-amber-700'
-                        : 'bg-emerald-50 border-emerald-200 text-emerald-700');
+              $stClass = $st === 'tutup'
+                ? 'bg-rose-50 border-rose-200 text-rose-700'
+                : ($st === 'catatan'
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700');
             @endphp
 
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -207,12 +198,10 @@
                 <div class="text-[11px] text-slate-500">ID</div>
                 <div id="pvId" class="font-semibold text-slate-900">#{{ $selected['id'] ?? '-' }}</div>
               </div>
-
               <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div class="text-[11px] text-slate-500">Judul</div>
                 <div id="pvTitle" class="font-semibold text-slate-900 truncate">{{ $selected['title'] ?? 'Jadwal' }}</div>
               </div>
-
               <div id="pvStatusCard" class="rounded-xl border {{ $stClass }} p-3">
                 <div class="text-[11px] opacity-70">Status</div>
                 <div id="pvStatus" class="font-extrabold">{{ $stLabel }}</div>
@@ -221,37 +210,40 @@
           @endif
         </div>
 
-        {{-- ===== STEP 2: FORM EDIT ===== --}}
+        {{-- STEP 2: FORM EDIT --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-          <form id="editForm" action="#" method="POST" class="space-y-5"
-                @if(count($jadwals)===0) style="opacity:.55; pointer-events:none;" @endif>
+          <form id="editForm"
+                action="{{ $selectedId ? route('perbarui_jadwal_kerja', $selectedId) : '#' }}"
+                method="POST" class="space-y-5"
+                @if(count($jadwals) === 0) style="opacity:.55; pointer-events:none;" @endif>
             @csrf
-            {{-- @method('PUT') --}}
+            @method('PUT')
 
             <input type="hidden" name="jadwal_id" id="jadwalIdHidden" value="{{ $selectedId }}">
             <input type="hidden" name="date" value="{{ $date }}">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
               {{-- Nama --}}
               <div>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Nama</label>
+                {{-- ✅ FIX: gunakan ->username (bukan ->name) --}}
                 <select name="user_id" id="userSelect"
                         class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                                focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
                   <option value="">Pilih user</option>
                   @foreach(($users ?? []) as $u)
-                    <option value="{{ $u->id }}" @selected((string)$prefillUser === (string)$u->id)>
-                      {{ $u->name ?? $u->username ?? 'User' }}
+                    <option value="{{ $u->user_id }}" @selected((string)$prefillUser === (string)$u->user_id)>
+                      {{ $u->username ?? 'User' }}
                     </option>
                   @endforeach
                 </select>
-                <p class="text-[11px] text-slate-500 mt-1">Pilih admin/staff yang dijadwalkan.</p>
               </div>
 
               {{-- Tanggal --}}
               <div>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Tanggal Kerja</label>
-                <input type="date" name="tanggal" id="tanggalInput" value="{{ $prefillDate }}"
+                <input type="date" name="tanggal_kerja" id="tanggalInput" value="{{ $prefillDate }}"
                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
                 <p class="text-[11px] text-slate-500 mt-1">Bisa diubah bila jadwal pindah hari.</p>
@@ -279,24 +271,23 @@
                 <select name="waktu_shift" id="shiftSelect"
                         class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                                focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                  <option value="">Pilih shift (opsional)</option>
-                  <option value="Pagi"   @selected($prefillShift === 'Pagi')>Pagi</option>
-                  <option value="Siang"  @selected($prefillShift === 'Siang')>Siang</option>
-                  <option value="Malam"  @selected($prefillShift === 'Malam')>Malam</option>
-                  <option value="Custom" @selected($prefillShift === 'Custom')>Custom</option>
+                  <option value="">Pilih shift</option>
+                  <option value="Pagi"  @selected($prefillShift === 'Pagi')>Pagi</option>
+                  <option value="Siang" @selected($prefillShift === 'Siang')>Siang</option>
+                  <option value="Sore"  @selected($prefillShift === 'Sore')>Sore</option>
+                  <option value="Malam" @selected($prefillShift === 'Malam')>Malam</option>
                 </select>
-                <p class="text-[11px] text-slate-500 mt-1">Kalau custom, tulis detailnya di deskripsi.</p>
               </div>
 
               {{-- Status --}}
               <div class="md:col-span-2">
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Status</label>
-
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
                   {{-- AKTIF --}}
                   <label class="group cursor-pointer">
-                    <input type="radio" name="status" value="aktif" class="peer sr-only"
-                           @checked($prefillStatus === 'aktif')>
+                    <input type="radio" name="status" value="Aktif" class="peer sr-only"
+                           @checked(strtolower($prefillStatus) === 'aktif')>
                     <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100 transition
                                 peer-checked:ring-2 peer-checked:ring-emerald-400 peer-checked:border-emerald-400
                                 peer-checked:[&_.radio-dot]:bg-emerald-500">
@@ -312,8 +303,8 @@
 
                   {{-- CATATAN --}}
                   <label class="group cursor-pointer">
-                    <input type="radio" name="status" value="catatan" class="peer sr-only"
-                           @checked($prefillStatus === 'catatan')>
+                    <input type="radio" name="status" value="Catatan" class="peer sr-only"
+                           @checked(strtolower($prefillStatus) === 'catatan')>
                     <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 hover:bg-amber-100 transition
                                 peer-checked:ring-2 peer-checked:ring-amber-400 peer-checked:border-amber-400
                                 peer-checked:[&_.radio-dot]:bg-amber-500">
@@ -329,8 +320,8 @@
 
                   {{-- TUTUP --}}
                   <label class="group cursor-pointer">
-                    <input type="radio" name="status" value="tutup" class="peer sr-only"
-                           @checked($prefillStatus === 'tutup')>
+                    <input type="radio" name="status" value="Tutup" class="peer sr-only"
+                           @checked(strtolower($prefillStatus) === 'tutup')>
                     <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 hover:bg-rose-100 transition
                                 peer-checked:ring-2 peer-checked:ring-rose-400 peer-checked:border-rose-400
                                 peer-checked:[&_.radio-dot]:bg-rose-500">
@@ -357,7 +348,7 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
-              <a id="btnBatal" href="{{ url('/kelola_jadwal_kerja') }}"
+              <a id="btnBatal" href="{{ route('kelola_jadwal_kerja') }}"
                  class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
                 Batal
               </a>
@@ -373,7 +364,7 @@
       </div>
 
       <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-        Backend ideal: route ubah ini terima <span class="font-semibold">date</span> + <span class="font-semibold">jadwal_id</span> untuk prefill data asli.
+        Route ubah menerima <span class="font-semibold">?date=</span> + <span class="font-semibold">?jadwal_id=</span> untuk prefill data.
       </div>
     </div>
 
@@ -396,19 +387,11 @@
   .tip{ position: relative; }
   .tip[data-tip]::after{
     content: attr(data-tip);
-    position:absolute;
-    right:0;
-    top: calc(100% + 10px);
-    background: rgba(15,23,42,.92);
-    color: rgba(255,255,255,.92);
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 10px;
-    white-space: nowrap;
-    opacity:0;
-    transform: translateY(-4px);
-    pointer-events:none;
-    transition: .15s ease;
+    position:absolute; right:0; top: calc(100% + 10px);
+    background: rgba(15,23,42,.92); color: rgba(255,255,255,.92);
+    font-size: 11px; padding: 6px 10px; border-radius: 10px;
+    white-space: nowrap; opacity:0; transform: translateY(-4px);
+    pointer-events:none; transition: .15s ease;
   }
   .tip:hover::after{ opacity:1; transform: translateY(0); }
 </style>
@@ -416,39 +399,39 @@
 
 @push('scripts')
 <script>
-  // ========= LIVE SYNC: dropdown -> preview + form prefill =========
-  const sel = document.getElementById('jadwalSelect');
-
-  const pvId = document.getElementById('pvId');
-  const pvTitle = document.getElementById('pvTitle');
-  const pvStatus = document.getElementById('pvStatus');
-  const pvStatusCard = document.getElementById('pvStatusCard');
-
-  const jadwalIdHidden = document.getElementById('jadwalIdHidden');
-  const userSelect = document.getElementById('userSelect');
-  const tanggalInput = document.getElementById('tanggalInput');
-  const jamMulaiInput = document.getElementById('jamMulaiInput');
+  const sel             = document.getElementById('jadwalSelect');
+  const pvId            = document.getElementById('pvId');
+  const pvTitle         = document.getElementById('pvTitle');
+  const pvStatus        = document.getElementById('pvStatus');
+  const pvStatusCard    = document.getElementById('pvStatusCard');
+  const jadwalIdHidden  = document.getElementById('jadwalIdHidden');
+  const userSelect      = document.getElementById('userSelect');
+  const tanggalInput    = document.getElementById('tanggalInput');
+  const jamMulaiInput   = document.getElementById('jamMulaiInput');
   const jamSelesaiInput = document.getElementById('jamSelesaiInput');
-  const shiftSelect = document.getElementById('shiftSelect');
-  const descArea = document.getElementById('descArea');
+  const shiftSelect     = document.getElementById('shiftSelect');
+  const descArea        = document.getElementById('descArea');
+  const editForm        = document.getElementById('editForm');
+
+  // ✅ FIX: base URL yang robust menggunakan Blade helper
+  const routeBase = "{{ rtrim(url(route('perbarui_jadwal_kerja', 0, false)), '/0') }}/";
+
+  const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
   const setStatusPreview = (stRaw) => {
     const st = (stRaw || 'aktif').toLowerCase();
     if (pvStatus) pvStatus.textContent = st.toUpperCase();
-
     if (!pvStatusCard) return;
     pvStatusCard.className = "rounded-xl border p-3 " + (
-      st === 'tutup'
-        ? 'bg-rose-50 border-rose-200 text-rose-700'
-        : (st === 'catatan'
-          ? 'bg-amber-50 border-amber-200 text-amber-700'
-          : 'bg-emerald-50 border-emerald-200 text-emerald-700')
+      st === 'tutup'    ? 'bg-rose-50 border-rose-200 text-rose-700'
+      : st === 'catatan' ? 'bg-amber-50 border-amber-200 text-amber-700'
+      : 'bg-emerald-50 border-emerald-200 text-emerald-700'
     );
   };
 
   const setRadioStatus = (stRaw) => {
-    const st = (stRaw || 'aktif').toLowerCase();
-    const radio = document.querySelector(`input[name="status"][value="${st}"]`);
+    const value = capitalize(stRaw || 'aktif');
+    const radio = document.querySelector(`input[name="status"][value="${value}"]`);
     if (radio) radio.checked = true;
   };
 
@@ -457,33 +440,43 @@
     const opt = sel.options[sel.selectedIndex];
     if (!opt) return;
 
-    // --- preview cards ---
-    if (pvId) pvId.textContent = '#' + (opt.dataset.id || opt.value || '-');
+    if (pvId)    pvId.textContent    = '#' + (opt.dataset.id || opt.value || '-');
     if (pvTitle) pvTitle.textContent = opt.dataset.title || '-';
     setStatusPreview(opt.dataset.status);
 
-    // --- hidden jadwal_id ---
     if (jadwalIdHidden) jadwalIdHidden.value = opt.value || '';
 
-    // --- form prefill ---
-    if (tanggalInput) tanggalInput.value = opt.dataset.tanggal || tanggalInput.value || '';
-    if (jamMulaiInput) jamMulaiInput.value = opt.dataset.jam_mulai || '';
+    // ✅ FIX: update form action dengan base URL yang sudah benar
+    if (editForm && opt.value) {
+      editForm.setAttribute('action', routeBase + opt.value);
+    }
+
+    if (tanggalInput)    tanggalInput.value    = opt.dataset.tanggal     || tanggalInput.value || '';
+    if (jamMulaiInput)   jamMulaiInput.value   = opt.dataset.jam_mulai   || '';
     if (jamSelesaiInput) jamSelesaiInput.value = opt.dataset.jam_selesai || '';
-    if (shiftSelect) shiftSelect.value = opt.dataset.waktu_shift || '';
-    if (descArea) descArea.value = opt.dataset.deskripsi || '';
+    if (shiftSelect)     shiftSelect.value     = opt.dataset.waktu_shift || '';
+    if (descArea)        descArea.value        = opt.dataset.deskripsi   || '';
+    if (userSelect)      userSelect.value      = opt.dataset.user_id     || '';
 
-    // user_id (boleh kosong kalau catatan/tutup)
-    if (userSelect) userSelect.value = opt.dataset.user_id || '';
-
-    // status radio
     setRadioStatus(opt.dataset.status);
   };
 
   sel?.addEventListener('change', syncFromOption);
-  syncFromOption(); // init biar selalu match saat load
+  syncFromOption();
 
-  // ========= Confirm Modal untuk submit edit =========
-  function showConfirmModal({ title, message, confirmText, cancelText, onConfirm }) {
+  // Auto submit saat dropdown berubah
+  sel?.addEventListener('change', () => {
+    document.getElementById('pickForm')?.submit();
+  });
+
+  // ===== Confirm Modal =====
+  function showConfirmModal({ title, message, confirmText, cancelText, tone = "neutral", onConfirm }) {
+    const toneMap = {
+      neutral: { btn: "bg-slate-900 hover:bg-slate-800" },
+      danger:  { btn: "bg-rose-600 hover:bg-rose-700" },
+    };
+    const t = toneMap[tone] || toneMap.neutral;
+
     const wrap = document.createElement('div');
     wrap.className = "fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3";
     wrap.innerHTML = `
@@ -502,7 +495,7 @@
         <div class="p-5">
           <div class="mt-4 flex justify-end gap-2">
             <button type="button" class="btn-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">${cancelText}</button>
-            <button type="button" class="btn-ok h-10 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-sm font-semibold">${confirmText}</button>
+            <button type="button" class="btn-ok h-10 px-5 rounded-xl ${t.btn} text-white text-sm font-semibold">${confirmText}</button>
           </div>
         </div>
       </div>
@@ -517,11 +510,9 @@
     document.body.appendChild(wrap);
   }
 
-  const editForm = document.getElementById('editForm');
   editForm?.addEventListener('submit', (e) => {
     if (editForm.dataset.confirmed === "1") return;
     e.preventDefault();
-
     showConfirmModal({
       title: "Simpan perubahan?",
       message: "Perubahan jadwal akan disimpan ke sistem.",
@@ -545,13 +536,6 @@
       cancelText: "Tetap di sini",
       onConfirm: () => window.location.href = go
     });
-  });
-
-  const select = document.getElementById('jadwalSelect');
-  const pickForm = document.getElementById('pickForm');
-
-  select?.addEventListener('change', () => {
-      pickForm.submit();
   });
 </script>
 @endpush

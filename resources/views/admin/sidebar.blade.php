@@ -203,16 +203,20 @@
 
       {{-- LOGOUT --}}
       <div class="mt-4 pt-4 border-t border-white/10">
-        <a href="#" class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
-          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
-            </svg>
-          </span>
-          Logout
-        </a>
+        <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <button type="submit"
+                  class="w-full group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
+            <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+              <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21V3a2 2 0 00-2-2h-6"/>
+              </svg>
+            </span>
+            Logout
+          </button>
+        </form>
       </div>
     </nav>
   </div>

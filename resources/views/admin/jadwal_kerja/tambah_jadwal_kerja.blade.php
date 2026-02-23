@@ -40,21 +40,18 @@
   {{-- BACKGROUND --}}
   <div class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-
     <div class="absolute inset-0 opacity-[0.12]"
          style="background-image:
             linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
             background-size: 56px 56px;">
     </div>
-
     <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
          style="background-image:
             repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
             repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
             background-size: 112px 112px, 112px 112px;">
     </div>
-
     <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
                 bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
     <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
@@ -63,9 +60,7 @@
 
   <div class="max-w-[980px] mx-auto w-full">
 
-    @php
-      $prefillDate = request('date') ?? null;
-    @endphp
+    @php $prefillDate = $selectedDate ?? request('date') ?? null; @endphp
 
     <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                 shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
@@ -94,9 +89,11 @@
       </div>
 
       <div class="p-5 sm:p-6">
-        {{-- TODO: ganti action ke route store jadwal --}}
-        <form id="createForm" action="#" method="POST" class="space-y-5">
+        <form id="createForm" action="{{ route('simpan_jadwal_kerja') }}" method="POST" class="space-y-5">
           @csrf
+
+          {{-- ✅ Tandai field mana yang merupakan default (bukan input user) --}}
+          <input type="hidden" id="defaultStatus" value="Aktif">
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -108,8 +105,8 @@
                              focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
                 <option value="">Pilih user</option>
                 @foreach(($users ?? []) as $u)
-                  <option value="{{ $u->id }}" @selected(old('user_id') == $u->id)>
-                    {{ $u->name ?? $u->username ?? 'User' }}
+                  <option value="{{ $u->user_id }}" @selected(old('user_id') == $u->user_id)>
+                    {{ $u->username ?? 'User' }}
                   </option>
                 @endforeach
               </select>
@@ -119,8 +116,8 @@
             {{-- Tanggal --}}
             <div>
               <label class="block text-sm font-semibold text-slate-800 mb-1">Tanggal Kerja</label>
-              <input type="date" name="tanggal"
-                     value="{{ old('tanggal', $prefillDate) }}"
+              <input type="date" name="tanggal_kerja"
+                     value="{{ old('tanggal_kerja', $prefillDate) }}"
                      class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                             focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
               <p class="text-[11px] text-slate-500 mt-1">Otomatis terisi jika datang dari kalender.</p>
@@ -148,13 +145,13 @@
               <select name="waktu_shift"
                       class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                              focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                <option value="">Pilih shift (opsional)</option>
-                <option value="Pagi"   @selected(old('waktu_shift')==='Pagi')>Pagi</option>
-                <option value="Siang"  @selected(old('waktu_shift')==='Siang')>Siang</option>
-                <option value="Malam"  @selected(old('waktu_shift')==='Malam')>Malam</option>
-                <option value="Custom" @selected(old('waktu_shift')==='Custom')>Custom</option>
+                <option value="">Pilih shift</option>
+                <option value="Pagi"  @selected(old('waktu_shift') === 'Pagi')>Pagi</option>
+                <option value="Siang" @selected(old('waktu_shift') === 'Siang')>Siang</option>
+                <option value="Sore"  @selected(old('waktu_shift') === 'Sore')>Sore</option>
+                <option value="Malam" @selected(old('waktu_shift') === 'Malam')>Malam</option>
               </select>
-              <p class="text-[11px] text-slate-500 mt-1">Kalau custom, tulis detailnya di deskripsi.</p>
+              <p class="text-[11px] text-slate-500 mt-1">Pilih sesuai jam kerja yang diinput.</p>
             </div>
 
             {{-- Status --}}
@@ -162,11 +159,10 @@
               <label class="block text-sm font-semibold text-slate-800 mb-1">Status</label>
 
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
                 {{-- AKTIF --}}
                 <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="aktif" class="peer sr-only"
-                         @checked(old('status', 'aktif') === 'aktif')>
+                  <input type="radio" name="status" value="Aktif" class="peer sr-only"
+                         @checked(old('status', 'Aktif') === 'Aktif')>
                   <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100 transition
                               peer-checked:ring-2 peer-checked:ring-emerald-400 peer-checked:border-emerald-400
                               peer-checked:[&_.radio-dot]:bg-emerald-500">
@@ -182,8 +178,8 @@
 
                 {{-- CATATAN --}}
                 <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="catatan" class="peer sr-only"
-                         @checked(old('status') === 'catatan')>
+                  <input type="radio" name="status" value="Catatan" class="peer sr-only"
+                         @checked(old('status') === 'Catatan')>
                   <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 hover:bg-amber-100 transition
                               peer-checked:ring-2 peer-checked:ring-amber-400 peer-checked:border-amber-400
                               peer-checked:[&_.radio-dot]:bg-amber-500">
@@ -199,8 +195,8 @@
 
                 {{-- TUTUP --}}
                 <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="tutup" class="peer sr-only"
-                         @checked(old('status') === 'tutup')>
+                  <input type="radio" name="status" value="Tutup" class="peer sr-only"
+                         @checked(old('status') === 'Tutup')>
                   <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 hover:bg-rose-100 transition
                               peer-checked:ring-2 peer-checked:ring-rose-400 peer-checked:border-rose-400
                               peer-checked:[&_.radio-dot]:bg-rose-500">
@@ -213,7 +209,6 @@
                     </div>
                   </div>
                 </label>
-
               </div>
             </div>
 
@@ -229,7 +224,7 @@
           </div>
 
           <div class="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
-            <a id="btnBatal" href="{{ url('/kelola_jadwal_kerja') }}"
+            <a id="btnBatal" href="{{ route('kelola_jadwal_kerja') }}"
                class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
               Batal
             </a>
@@ -268,19 +263,11 @@
   .tip{ position: relative; }
   .tip[data-tip]::after{
     content: attr(data-tip);
-    position:absolute;
-    right:0;
-    top: calc(100% + 10px);
-    background: rgba(15,23,42,.92);
-    color: rgba(255,255,255,.92);
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 10px;
-    white-space: nowrap;
-    opacity:0;
-    transform: translateY(-4px);
-    pointer-events:none;
-    transition: .15s ease;
+    position:absolute; right:0; top: calc(100% + 10px);
+    background: rgba(15,23,42,.92); color: rgba(255,255,255,.92);
+    font-size: 11px; padding: 6px 10px; border-radius: 10px;
+    white-space: nowrap; opacity:0; transform: translateY(-4px);
+    pointer-events:none; transition: .15s ease;
   }
   .tip:hover::after{ opacity:1; transform: translateY(0); }
 </style>
@@ -288,7 +275,6 @@
 
 @push('scripts')
 <script>
-  // ===== Reusable confirm modal (simple, konsisten) =====
   function showConfirmModal({ title, message, confirmText, cancelText, note, tone = "neutral", onConfirm }) {
     const toneMap = {
       neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg:"bg-slate-50", noteBr:"border-slate-200", noteTx:"text-slate-600" },
@@ -332,11 +318,9 @@
     document.body.appendChild(wrap);
   }
 
-  // ===== Confirm saat Simpan (submit) =====
   const createForm = document.getElementById('createForm');
   createForm?.addEventListener('submit', (e) => {
     if (createForm.dataset.confirmed === "1") return;
-
     e.preventDefault();
     showConfirmModal({
       title: "Simpan jadwal baru?",
@@ -351,32 +335,38 @@
     });
   });
 
-  // ===== Confirm saat Batal (klik link) =====
-  const btnBatal = document.getElementById('btnBatal');
+  const btnBatal   = document.getElementById('btnBatal');
+  // ✅ FIX: prefillDate dari Blade agar bisa dibandingkan di JS
+  const prefillDate   = "{{ $prefillDate ?? '' }}";
+  const defaultStatus = document.getElementById('defaultStatus')?.value ?? 'Aktif';
+
   btnBatal?.addEventListener('click', (e) => {
     e.preventDefault();
     const go = btnBatal.getAttribute('href');
 
-    // Deteksi sederhana apakah form sudah “terisi”
     const hasAnyValue = Array.from(createForm.querySelectorAll('input, select, textarea'))
       .some(el => {
-        if (!el.name) return false;
-        if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
-        if (el.type === 'radio' || el.type === 'checkbox') return el.checked;
+        if (!el.name || el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
+
+        // ✅ FIX: radio status "Aktif" adalah default — jangan dianggap input user
+        if (el.type === 'radio') {
+          return el.checked && el.value !== defaultStatus;
+        }
+
+        // ✅ FIX: tanggal yang ter-prefill dari kalender bukan input user
+        if (el.name === 'tanggal_kerja' && prefillDate && el.value === prefillDate) return false;
+
         return String(el.value || '').trim().length > 0;
       });
 
-    if (!hasAnyValue) {
-      window.location.href = go;
-      return;
-    }
+    if (!hasAnyValue) { window.location.href = go; return; }
 
     showConfirmModal({
       title: "Batalkan pembuatan jadwal?",
       message: "Kalau kamu keluar sekarang, data yang sudah diisi akan hilang.",
       confirmText: "Ya, Keluar",
       cancelText: "Tetap di sini",
-      note: "Kalau mau lanjut isi, klik “Tetap di sini”.",
+      note: "Kalau mau lanjut isi, klik \"Tetap di sini\".",
       onConfirm: () => window.location.href = go
     });
   });

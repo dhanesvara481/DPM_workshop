@@ -23,7 +23,7 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="{{ url('/jadwal_kerja') }}"
+      <a href="{{ route('kelola_jadwal_kerja') }}"
          class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
                 border border-slate-200 bg-white hover:bg-slate-50 transition">
         Kembali
@@ -63,30 +63,29 @@
   </div>
 
   <div class="max-w-[980px] mx-auto w-full">
+
     @php
-      $date = request('date') ?? now()->format('Y-m-d');
-
-      $slot = $slot ?? [
-        'id' => 'slot-'.$date,
-        'left' => 3,
-        'status' => 'open',
-      ];
-
-      $items = $items ?? [
-        ['id'=>101, 'type'=>'event', 'title'=>'Shift Pagi - Asep', 'status'=>'aktif', 'time'=>'08:00 - 16:00', 'desc'=>'Servis rutin / tune up'],
-        ['id'=>102, 'type'=>'event', 'title'=>'Catatan: Sparepart datang', 'status'=>'catatan', 'time'=>'10:30', 'desc'=>'Cek gudang + follow up supplier'],
-      ];
+      $date = $date ?? request('date') ?? now()->format('Y-m-d');
 
       $statusMap = [
-        'aktif'   => ['label'=>'Aktif',   'pill'=>'pill aktif'],
-        'catatan' => ['label'=>'Catatan', 'pill'=>'pill catatan'],
-        'tutup'   => ['label'=>'Tutup',   'pill'=>'pill tutup'],
+        'aktif'   => ['label' => 'Aktif',   'pill' => 'pill aktif'],
+        'catatan' => ['label' => 'Catatan', 'pill' => 'pill catatan'],
+        'tutup'   => ['label' => 'Tutup',   'pill' => 'pill tutup'],
       ];
 
-      $fmtLong = function($iso){
+      // Normalisasi dari controller
+      $items = collect($jadwalKerjas ?? [])->map(fn($j) => [
+        'id'     => $j->jadwal_id,
+        'type'   => 'event',
+        'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
+        'status' => strtolower($j->status),
+        'time'   => substr($j->jam_mulai, 0, 5) . ' - ' . substr($j->jam_selesai, 0, 5),
+        'desc'   => $j->deskripsi,
+      ])->toArray();
+
+      $fmtLong = function($iso) {
         try {
-          [$y,$m,$d] = array_map('intval', explode('-', $iso));
-          return \Carbon\Carbon::create($y,$m,$d)->locale('id')->translatedFormat('l, d F Y');
+          return \Carbon\Carbon::parse($iso)->locale('id')->translatedFormat('l, d F Y');
         } catch(\Throwable $e) { return $iso; }
       };
     @endphp
@@ -133,40 +132,24 @@
             </div>
           </div>
 
-          <form id="formDeleteSelected" method="POST" action="#" class="p-5 space-y-3">
+          <form id="formDeleteSelected"
+                method="POST"
+                action="{{ route('hapus_jadwal_kerja_batch') }}"
+                class="p-5 space-y-3">
             @csrf
-            {{-- @method('DELETE') --}}
+            @method('DELETE')
             <input type="hidden" name="date" value="{{ $date }}">
-
-            @if(!empty($slot))
-              @php $isClosed = ($slot['status'] ?? '') === 'closed'; @endphp
-              <label class="block cursor-pointer">
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50/50 transition flex items-start gap-3">
-                  <input type="checkbox" class="itemCheck mt-1 h-4 w-4 rounded border-slate-300" name="targets[]" value="slot:{{ $slot['id'] }}">
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-start justify-between gap-3">
-                      <div class="min-w-0">
-                        <div class="text-sm font-semibold text-slate-900">Ketersediaan</div>
-                        <div class="text-xs text-slate-500 mt-0.5">
-                          {{ $isClosed ? 'Hari ini tidak tersedia.' : 'Sisa slot: '.$slot['left'] }}
-                        </div>
-                      </div>
-                      <span class="pill {{ $isClosed ? 'tutup' : 'aktif' }}">{{ $isClosed ? 'TUTUP' : 'AKTIF' }}</span>
-                    </div>
-                  </div>
-                </div>
-              </label>
-            @endif
 
             @forelse($items as $it)
               @php
-                $s = strtolower(trim($it['status'] ?? 'aktif'));
-                $ui = $statusMap[$s] ?? ['label'=>$it['status'] ?? '—', 'pill'=>'pill'];
+                $s  = strtolower(trim($it['status'] ?? 'aktif'));
+                $ui = $statusMap[$s] ?? ['label' => $it['status'] ?? '—', 'pill' => 'pill'];
               @endphp
 
               <label class="block cursor-pointer">
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 hover:bg-slate-50/50 transition flex items-start gap-3">
-                  <input type="checkbox" class="itemCheck mt-1 h-4 w-4 rounded border-slate-300" name="targets[]" value="event:{{ $it['id'] }}">
+                  <input type="checkbox" class="itemCheck mt-1 h-4 w-4 rounded border-slate-300"
+                         name="targets[]" value="event:{{ $it['id'] }}">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-start justify-between gap-3">
                       <div class="min-w-0">
@@ -191,8 +174,7 @@
             @endforelse
 
             <div class="pt-3 flex flex-col sm:flex-row gap-2 sm:justify-end">
-              {{-- ✅ kasih id biar confirm selalu kena --}}
-              <a id="btnBatal" href="{{ url('/kelola_jadwal_kerja') }}"
+              <a id="btnBatal" href="{{ route('kelola_jadwal_kerja') }}"
                  class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
                 Batal
               </a>
@@ -214,11 +196,10 @@
             </div>
           </form>
 
-          <form id="formDeleteAll" action="#" method="POST" class="hidden">
+          <form id="formDeleteAll" action="{{ route('hapus_jadwal_kerja_all') }}" method="POST" class="hidden">
             @csrf
-            {{-- @method('DELETE') --}}
+            @method('DELETE')
             <input type="hidden" name="date" value="{{ $date }}">
-            <input type="hidden" name="mode" value="all">
           </form>
         </div>
 
@@ -253,47 +234,32 @@
   .tip{ position:relative; }
   .tip[data-tip]::after{
     content:attr(data-tip);
-    position:absolute;
-    right:0;
-    top:calc(100% + 10px);
-    background:rgba(15,23,42,.92);
-    color:rgba(255,255,255,.92);
-    font-size:11px;
-    padding:6px 10px;
-    border-radius:10px;
-    white-space:nowrap;
-    opacity:0;
-    transform:translateY(-4px);
-    pointer-events:none;
-    transition:.15s ease;
+    position:absolute; right:0; top:calc(100% + 10px);
+    background:rgba(15,23,42,.92); color:rgba(255,255,255,.92);
+    font-size:11px; padding:6px 10px; border-radius:10px;
+    white-space:nowrap; opacity:0; transform:translateY(-4px);
+    pointer-events:none; transition:.15s ease;
   }
   .tip:hover::after{ opacity:1; transform:translateY(0); }
 
   .pill{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    font-size:11px;
-    padding:6px 10px;
-    border-radius:12px;
-    border:1px solid rgba(15,23,42,0.10);
-    background:rgba(255,255,255,0.75);
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; padding:6px 10px; border-radius:12px;
+    border:1px solid rgba(15,23,42,0.10); background:rgba(255,255,255,0.75);
     white-space:nowrap;
   }
-  .pill.aktif{ background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25); color:rgba(6,95,70,0.95); }
+  .pill.aktif  { background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.25); color:rgba(6,95,70,0.95); }
   .pill.catatan{ background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25); color:rgba(120,53,15,0.95); }
-  .pill.tutup{ background:rgba(244,63,94,0.12); border-color:rgba(244,63,94,0.25); color:rgba(136,19,55,0.95); }
+  .pill.tutup  { background:rgba(244,63,94,0.12);  border-color:rgba(244,63,94,0.25);  color:rgba(136,19,55,0.95); }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-  // ===== Confirm Modal Reusable (sama feel kayak halaman ubah) =====
   function showConfirmModal({ tone = "neutral", title, message, note, confirmText, cancelText, onConfirm }) {
     const toneMap = {
-      neutral: { ring: "ring-slate-200",  btn: "bg-slate-900 hover:bg-slate-800", noteBg: "bg-slate-50", noteBr: "border-slate-200", noteTx: "text-slate-600" },
-      danger:  { ring: "ring-rose-200",   btn: "bg-rose-600 hover:bg-rose-700",  noteBg: "bg-rose-50",  noteBr: "border-rose-200",  noteTx: "text-rose-700" },
-      warn:    { ring: "ring-amber-200",  btn: "bg-amber-600 hover:bg-amber-700", noteBg: "bg-amber-50", noteBr: "border-amber-200", noteTx: "text-amber-800" },
+      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg: "bg-slate-50", noteBr: "border-slate-200", noteTx: "text-slate-600" },
+      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg: "bg-rose-50",  noteBr: "border-rose-200",  noteTx: "text-rose-700" },
     };
     const t = toneMap[tone] || toneMap.neutral;
 
@@ -333,16 +299,14 @@
     document.body.appendChild(wrap);
   }
 
-  // ===== Checkbox UI =====
-  const checkAll = document.getElementById('checkAll');
-  const checks = Array.from(document.querySelectorAll('.itemCheck'));
-  const selectedCount = document.getElementById('selectedCount');
+  const checkAll          = document.getElementById('checkAll');
+  const checks            = Array.from(document.querySelectorAll('.itemCheck'));
+  const selectedCount     = document.getElementById('selectedCount');
   const btnDeleteSelected = document.getElementById('btnDeleteSelected');
-  const formDeleteSelected = document.getElementById('formDeleteSelected');
-
-  const btnDeleteAll = document.getElementById('btnDeleteAll');
-  const formDeleteAll = document.getElementById('formDeleteAll');
-  const btnBatal = document.getElementById('btnBatal');
+  const formDeleteSelected= document.getElementById('formDeleteSelected');
+  const btnDeleteAll      = document.getElementById('btnDeleteAll');
+  const formDeleteAll     = document.getElementById('formDeleteAll');
+  const btnBatal          = document.getElementById('btnBatal');
 
   function refresh(){
     const chosen = checks.filter(c => c.checked).length;
@@ -350,7 +314,7 @@
     btnDeleteSelected.disabled = chosen === 0;
 
     if (checks.length > 0) {
-      const allChecked = chosen === checks.length;
+      const allChecked  = chosen === checks.length;
       const noneChecked = chosen === 0;
       checkAll.indeterminate = (!allChecked && !noneChecked);
       checkAll.checked = allChecked;
@@ -361,43 +325,36 @@
   }
 
   checkAll?.addEventListener('change', (e) => {
-    const v = e.target.checked;
-    checks.forEach(c => c.checked = v);
+    checks.forEach(c => c.checked = e.target.checked);
     refresh();
   });
 
   checks.forEach(c => c.addEventListener('change', refresh));
   refresh();
 
-  // ===== Confirm: Batal =====
+  // ===== Batal =====
   btnBatal?.addEventListener('click', (e) => {
     e.preventDefault();
     const go = btnBatal.getAttribute('href');
-
-    // kalau belum pilih apa-apa, langsung balik aja
     const chosen = checks.filter(c => c.checked).length;
-    if (chosen === 0) {
-      window.location.href = go;
-      return;
-    }
+
+    if (chosen === 0) { window.location.href = go; return; }
 
     showConfirmModal({
       tone: "neutral",
       title: "Batalkan proses hapus?",
       message: "Pilihan item yang sudah kamu centang akan hilang kalau kamu keluar sekarang.",
-      note: "Kalau masih ragu, klik “Tetap di sini”.",
+      note: "Kalau masih ragu, klik \"Tetap di sini\".",
       confirmText: "Ya, Keluar",
       cancelText: "Tetap di sini",
       onConfirm: () => window.location.href = go
     });
   });
 
-  // ===== Confirm: Hapus yang dipilih =====
+  // ===== Hapus yang dipilih =====
   formDeleteSelected?.addEventListener('submit', (e) => {
     const chosen = checks.filter(c => c.checked).length;
     if (chosen === 0) { e.preventDefault(); return; }
-
-    // biar ga dobel confirm
     if (formDeleteSelected.dataset.confirmed === "1") return;
 
     e.preventDefault();
@@ -410,32 +367,21 @@
       cancelText: "Batal",
       onConfirm: () => {
         formDeleteSelected.dataset.confirmed = "1";
-
-        // ✅ kalau backend sudah siap -> submit beneran
-        // formDeleteSelected.submit();
-
-        // sementara demo
-        alert('Backend belum tersedia. Payload siap: targets[] (slot/event) + date.');
+        formDeleteSelected.submit();
       }
     });
   });
 
-  // ===== Confirm: Hapus semua =====
+  // ===== Hapus semua =====
   btnDeleteAll?.addEventListener('click', () => {
     showConfirmModal({
       tone: "danger",
       title: "Hapus SEMUA di tanggal ini?",
-      message: "Semua jadwal & ketersediaan pada tanggal ini akan dihapus permanen.",
+      message: "Semua jadwal pada tanggal ini akan dihapus permanen.",
       note: "Ini termasuk semua shift/catatan/tutup (kalau ada). Pastikan kamu benar-benar yakin.",
       confirmText: "Ya, Hapus Semua",
       cancelText: "Batal",
-      onConfirm: () => {
-        // ✅ kalau backend sudah siap -> submit beneran
-        // formDeleteAll.submit();
-
-        // sementara demo
-        alert('Backend belum tersedia. Payload siap: date + mode=all.');
-      }
+      onConfirm: () => formDeleteAll.submit()
     });
   });
 </script>

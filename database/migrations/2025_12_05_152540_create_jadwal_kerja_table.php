@@ -18,8 +18,8 @@ return new class extends Migration
             $table->enum('waktu_shift', ['Pagi', 'Siang', 'Sore', 'Malam']);
             $table->time('jam_mulai');
             $table->time('jam_selesai');
-            $table->string('deskripsi', 100);
-            $table->enum('status', ['Aktif', 'Catatan', 'Tutup']);
+            $table->string('deskripsi', 100)->nullable(); // ← tambah nullable()
+            $table->enum('status', ['Aktif', 'Catatan', 'Tutup'])->default('Aktif'); // ← tambah default
             $table->timestamps();
         });
     }

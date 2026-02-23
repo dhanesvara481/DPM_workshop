@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JadwalKerja;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -11,8 +12,7 @@ class DashboardController extends Controller
     {
         $chartMasuk  = $this->buildChartMasuk();
         $chartKeluar = $this->buildChartKeluar();
-
-        $events = $this->buildEvents();
+        $events      = $this->buildEvents();
 
         $MAX_EVENTS_PER_DAY = 4;
 
@@ -23,6 +23,8 @@ class DashboardController extends Controller
             'MAX_EVENTS_PER_DAY',
         ));
     }
+
+    // ─── Chart Masuk ─────────────────────────────────────────────────────────
 
     private function buildChartMasuk(): array
     {
@@ -74,6 +76,8 @@ class DashboardController extends Controller
         ];
     }
 
+    // ─── Chart Keluar ─────────────────────────────────────────────────────────
+
     private function buildChartKeluar(): array
     {
         return [
@@ -124,36 +128,40 @@ class DashboardController extends Controller
         ];
     }
 
+    // ─── Events Jadwal ───────────────────────────────────────────────────────
+
     private function buildEvents(): array
     {
         try {
-            $rows = DB::table('jadwal_kerja')
-                ->whereBetween('tanggal', [
+            $rows = JadwalKerja::with('user')
+                ->whereBetween('tanggal_kerja', [
                     now()->subDays(30)->toDateString(),
                     now()->addDays(60)->toDateString(),
                 ])
-                ->orderBy('tanggal')
+                ->orderBy('tanggal_kerja')
                 ->orderBy('jam_mulai')
                 ->get();
 
             $events = [];
 
             foreach ($rows as $row) {
-                $key = Carbon::parse($row->tanggal)->toDateString();
+                $key = $row->tanggal_kerja->toDateString();
 
                 $time = '';
-                if (!empty($row->jam_mulai) && !empty($row->jam_selesai)) {
+                if ($row->jam_mulai && $row->jam_selesai) {
                     $time = substr($row->jam_mulai, 0, 5) . ' - ' . substr($row->jam_selesai, 0, 5);
-                } elseif (!empty($row->jam_mulai)) {
+                } elseif ($row->jam_mulai) {
                     $time = substr($row->jam_mulai, 0, 5);
                 }
 
                 $events[$key][] = [
-                    'id'     => $row->jadwal_kerja_id,
-                    'title'  => $row->judul    ?? $row->title   ?? 'Jadwal',
-                    'status' => $row->status   ?? 'aktif',
+                    'id'     => $row->jadwal_id,                          
+                    'title'  => ($row->waktu_shift ?? 'Jadwal')           
+                                . ' - '
+                                . ($row->user->username ?? 'Staf'),       
+                    'status' => strtolower($row->status ?? 'aktif'),
                     'time'   => $time,
-                    'desc'   => $row->deskripsi ?? $row->catatan ?? '',
+                    'desc'   => $row->deskripsi ?? '',
                 ];
             }
 
