@@ -1,6 +1,6 @@
 @extends('admin.layout.app')
 
-@section('title', 'Barang - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 

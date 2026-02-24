@@ -69,6 +69,15 @@ class JadwalKerjaController extends Controller
         'jadwalKerjas' => [],
     ]);
     }
+
+    // STAFF CONTROLLER
+     public function getJadwalKerjaStaff()
+    {
+        //View barang_masuk
+        return view('staff.jadwal_kerja.jadwal_kerja_staff', [
+        'jadwalKerjas' => [],
+    ]);
+    }   
     /**
      * Remove the specified resource from storage.
      */

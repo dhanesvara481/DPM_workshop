@@ -1,54 +1,67 @@
-{{-- resources/views/admin/stok/stok_realtime.blade.php --}}
-@extends('admin.layout.app')
+@extends('staff.layout.app')
 
-@section('title', 'DPM Workshop - Admin')
+@section('topbar')
+<header class="relative bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
+  <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
+
+    {{-- LEFT --}}
+    <div class="flex items-center gap-3 min-w-0">
+
+      {{-- Sidebar Toggle --}}
+      <button id="btnSidebar" type="button"
+              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              aria-label="Buka menu">
+        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      {{-- Title --}}
+      <div class="min-w-0">
+        <h1 class="text-sm font-semibold tracking-tight text-slate-900">
+          Stok Real-time
+        </h1>
+        <p class="text-xs text-slate-500">
+         Staff
+        </p>
+      </div>
+    </div>
+
+    {{-- RIGHT --}}
+    <div class="flex items-center gap-2">
+
+      <a href="/staff/notifikasi"
+         class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         aria-label="Notifikasi">
+        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 17a3 3 0 006 0"/>
+        </svg>
+      </a>
+
+      <button type="button"
+              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+        {{ now()->format('d M Y') }}
+      </button>
+
+      {{-- Tombol Kembali (kanan) --}}
+      <a href="/tampilan_dashboard_staff"
+         class="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold text-slate-700">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span class="hidden sm:inline">Kembali</span>
+      </a>
+
+    </div>
+
+  </div>
+</header>
+@endsection
 
 @section('content')
-
-{{-- TOPBAR --}}
-<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
-    <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-            <button id="btnSidebar" type="button"
-                    class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                    aria-label="Buka menu">
-                <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
-
-            <div class="min-w-0">
-                <h1 class="text-sm font-semibold tracking-tight text-slate-900">Stok Real-time</h1>
-                <p class="text-xs text-slate-500">Tampilan stok terkini dari data barang (view-only untuk staf).</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <a href="/tampilan_notifikasi"
-               class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-               data-tip="Notifikasi"
-               aria-label="Notifikasi">
-                <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
-                </svg>
-            </a>
-
-            <button type="button"
-                    class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-                {{ now()->format('d M Y') }}
-            </button>
-
-            <a href="{{ route('tampilan_dashboard') ?? '/tampilan_dashboard' }}"
-               class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
-                <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Kembali
-            </a>
-        </div>
-    </div>
-</header>
 
 <section class="relative p-4 sm:p-6">
     {{-- BACKGROUND --}}
@@ -125,7 +138,6 @@
         {{-- TABLE --}}
         <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                     shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
-
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm" id="stokTable">
                     <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
@@ -214,7 +226,6 @@
 
 @push('scripts')
 <script>
-    // search filter (client-side)
     const input = document.getElementById('searchStok');
     const tbody = document.getElementById('stokTbody');
 
@@ -228,7 +239,6 @@
         });
     }
 
-    // print
     document.getElementById('btnPrint')?.addEventListener('click', () => window.print());
 </script>
 @endpush

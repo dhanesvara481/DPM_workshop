@@ -99,3 +99,23 @@ Route::get('/tampilan_notifikasi', [NotifikasiController::class, 'getTampilanNot
 
 // routes/detail_notifikasi
 Route::get('/detail_notifikasi', [NotifikasiController::class, 'getDetailNotifikasi'])->name('detail_notifikasi');
+
+
+// ROUTES STAFFF
+// routes/tampilan_dashboard_staff
+Route::get('/tampilan_dashboard_staff', [DashboardController::class, 'getTampilanDashboardStaff'])->name('tampilan_dashboard_staff');
+
+// routes/tampilan_invoice_staff
+Route::get('/tampilan_invoice_staff', [InvoiceController::class, 'getTampilanInvoiceStaff'])->name('tampilan_invoice_staff');
+
+// routes/stok_realtime_staff
+Route::get('/stok_realtime_staff', [StokRealtimeController::class, 'getStokRealtimeStaff']) ->name('stok_realtime_staff');
+
+// routes/riwayat_transaksi_staff
+Route::get('/riwayat_transaksi_staff', [RiwayatTransaksiController::class, 'getRiwayatTransaksiStaff']) ->name('riwayat_transaksi_staff');
+
+// routes/detail_riwayat_transaksi_staff
+Route::get('/detail_riwayat_transaksi_staff', [RiwayatTransaksiController::class, 'getDetailRiwayatTransaksiStaff']) ->name('detail_riwayat_transaksi_staff');
+
+// routes/jadwal_kerja_staff
+Route::get('/jadwal_kerja_staff', [JadwalKerjaController::class, 'getJadwalKerjaStaff']) ->name('jadwal_kerja_staff');

@@ -11,12 +11,20 @@ class StokRealtimeController extends Controller
      */
      public function getStokRealtime()
     {
-        //View dashboard
+        //View stok realtime
         return view('admin.stok_realtime', [
         'barangs' => [],
     ]);
     }
 
+    // STAFF CONTROLLER
+     public function getStokRealtimeStaff()
+    {
+        //View stok realtime staff
+        return view('staff.stok_realtime.stok_realtime_staff', [
+        'barangs' => [],
+    ]);
+    }
     /**
      * Show the form for creating a new resource.
      */

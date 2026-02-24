@@ -1,7 +1,7 @@
 {{-- resources/views/admin/manajemen_staf/ubah_staf.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Ubah Staf - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 

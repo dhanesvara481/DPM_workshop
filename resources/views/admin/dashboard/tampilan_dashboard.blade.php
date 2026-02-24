@@ -1,6 +1,6 @@
 @extends('admin.layout.app')
 
-@section('title', 'Dashboard - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @push('head')
   {{-- Chart.js --}}
@@ -8,6 +8,25 @@
 @endpush
 
 @section('content')
+
+@php
+  /**
+   * =========================
+   * DUMMY DATA (VIEW ONLY)
+   * =========================
+   * Nanti kalau sudah pakai controller/DB:
+   * - ganti isi variabel ini dari controller
+   */
+
+  // Ringkasan stok
+  $stockTotalItem = $stockTotalItem ?? 128;  // Total item (total row barang / total SKU)
+  $stockLow       = $stockLow       ?? 4;    // Stok menipis
+  $stockOut       = $stockOut       ?? 2;    // Barang habis
+
+  // Ringkasan transaksi (ADMIN lihat semua transaksi sistem)
+  $txTodayAll     = $txTodayAll     ?? 1;    // Total transaksi HARI INI (semua staff + admin)
+  $txTotalAll     = $txTotalAll     ?? 12;   // Total transaksi keseluruhan sistem
+@endphp
 
 {{-- TOPBAR --}}
 <header class="relative bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20" data-animate>
@@ -66,7 +85,11 @@
             <p class="text-xs text-slate-400 mt-1">Klik untuk menampilkan stok saat ini</p>
           </div>
           <div class="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center border border-emerald-200">
-            <span class="text-xl">📦</span>
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 4-8-4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10l8 4 8-4V7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
+            </svg>
           </div>
         </div>
         <div class="mt-4 text-sm text-emerald-700 font-semibold group-hover:underline">
@@ -86,13 +109,119 @@
             <p class="text-xs text-slate-400 mt-1">Mulai transaksi penjualan</p>
           </div>
           <div class="h-12 w-12 rounded-2xl bg-white/10 grid place-items-center border border-white/10">
-            <span class="text-xl">🧾</span>
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 14h6m-6-4h6m-7 10l-2 1V4l2 1 2-1 2 1 2-1 2 1v17l-2-1-2 1-2-1-2 1z"/>
+            </svg>
           </div>
         </div>
         <div class="mt-4 text-sm text-slate-200 font-semibold group-hover:underline">
           Buat sekarang →
         </div>
       </a>
+    </div>
+
+    {{-- =========================
+         RINGKASAN (STOK + TRANSAKSI)
+         ========================= --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" data-animate-group>
+
+      {{-- RINGKASAN STOK --}}
+      <div data-animate
+           class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
+                  shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-6">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xl font-semibold text-slate-900">Ringkasan Stok</p>
+            <p class="text-sm text-slate-500 mt-1">Gambaran cepat kondisi barang</p>
+          </div>
+
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white grid place-items-center border border-slate-900 shrink-0">
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M20 13V7a2 2 0 00-1-1.732l-6-3.464a2 2 0 00-2 0L5 5.268A2 2 0 004 7v6a2 2 0 001 1.732l6 3.464a2 2 0 002 0l6-3.464A2 2 0 0020 13z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 22V12"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8 5-8-5"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Total Item</div>
+            <div class="text-4xl font-extrabold text-slate-900 mt-2 leading-none">
+              {{ $stockTotalItem }}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Stok Menipis</div>
+            <div class="text-4xl font-extrabold text-amber-700 mt-2 leading-none">
+              {{ $stockLow }}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Barang Habis</div>
+            <div class="text-4xl font-extrabold text-rose-700 mt-2 leading-none">
+              {{ $stockOut }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 text-sm text-slate-500">
+          Tips: Harap beritahu admin jika ada stok yang menipis atau habis!
+        </div>
+      </div>
+
+      {{-- RINGKASAN TRANSAKSI (ADMIN: semua transaksi sistem) --}}
+      <div data-animate
+           class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
+                  shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-6">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xl font-semibold text-slate-900">Ringkasan Transaksi</p>
+            <p class="text-sm text-slate-500 mt-1">Statistik transaksi yang terjadi di sistem</p>
+          </div>
+
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white grid place-items-center border border-slate-900 shrink-0">
+            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 5-6"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Transaksi Terjadi Hari Ini</div>
+            <div class="text-4xl font-extrabold text-slate-900 mt-2 leading-none">
+              {{ $txTodayAll }}
+            </div>
+            <div class="text-sm text-slate-500 mt-3">
+              {{ now()->format('d M Y') }}
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Total Transaksi</div>
+            <div class="text-4xl font-extrabold text-slate-900 mt-2 leading-none">
+              {{ $txTotalAll }}
+            </div>
+            <div class="text-sm text-slate-500 mt-3">
+              Sejak sistem dibuat
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <a href="/riwayat_transaksi"
+             class="inline-flex items-center justify-center h-11 px-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+            Lihat riwayat →
+          </a>
+        </div>
+      </div>
+
     </div>
 
     {{-- CHARTS --}}
@@ -164,7 +293,6 @@
     @php
       $MAX_EVENTS_PER_DAY = $MAX_EVENTS_PER_DAY ?? 4;
 
-      // dummy event (sementara) -> nanti diganti dari DB/controller
       $events = $events ?? [
         now()->format('Y-m-d') => [
           ['id'=>101,'title'=>'Shift Pagi - Asep','status'=>'aktif','time'=>'08:00 - 16:00','desc'=>'Servis rutin / tune up'],
@@ -175,7 +303,6 @@
         ],
       ];
 
-      // status label preview 7 hari (ngikut rule kelola)
       $statusFor = function($date) use ($events) {
         $ev = $events[$date] ?? [];
 
@@ -244,7 +371,7 @@
       <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
         <div class="min-w-0">
           <div class="text-sm font-semibold text-slate-900">Jadwal Kerja (View Only)</div>
-          <div class="text-xs text-slate-500 mt-0.5">Klik tanggal untuk detail. Tidak ada edit.</div>
+          <div class="text-xs text-slate-500 mt-0.5">Klik tanggal untuk detail.</div>
         </div>
         <button id="btnCloseJadwalPopup"
                 type="button"
@@ -260,7 +387,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
           <div class="min-w-0">
             <div id="dashMonthTitle" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">—</div>
-            <div class="text-xs text-slate-500 mt-1">Jadwal tampil sesuai input admin (read-only).</div>
+            <div class="text-xs text-slate-500 mt-1">Berikut jadwal yang ada di DPM Workshop.</div>
           </div>
 
           <div class="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -703,11 +830,6 @@
   const remainingQuota = (dateStr) => {
     if (isClosedDay(dateStr)) return 0;
     return Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
-  };
-
-  const isFull = (dateStr) => {
-    if (isClosedDay(dateStr)) return true;
-    return remainingQuota(dateStr) <= 0;
   };
 
   let current = new Date();

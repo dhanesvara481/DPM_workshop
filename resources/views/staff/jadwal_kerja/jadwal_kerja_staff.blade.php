@@ -1,71 +1,17 @@
-@extends('admin.layout.app')
+{{-- resources/views/staff/jadwal/jadwal_kerja.blade.php --}}
+@extends('staff.layout.app')
 
-@section('title', 'DPM Workshop - Admin')
+@section('page_title', 'Jadwal Kerja')
+@section('page_subtitle', 'Kalender bulanan (view-only)')
 
 @section('content')
 
-{{-- TOPBAR --}}
-<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
-  <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-3 min-w-0">
-      <button id="btnSidebar" type="button"
-              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              aria-label="Buka menu">
-        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
-
-      <div class="min-w-0">
-        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Kelola Jadwal Kerja</h1>
-        <p class="text-xs text-slate-500">Kalender bulanan untuk mengatur jadwal.</p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <button type="button"
-              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              data-tip="Notifikasi">
-        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
-
-<section class="relative p-4 sm:p-6">
-  {{-- BACKGROUND --}}
-  <div class="pointer-events-none absolute inset-0 -z-10">
-    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-
-    <div class="absolute inset-0 opacity-[0.12]"
-         style="background-image:
-          linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-          background-size: 56px 56px;">
-    </div>
-
-    <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
-         style="background-image:
-          repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
-          repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-          background-size: 112px 112px, 112px 112px;">
-    </div>
-
-    <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-    <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
-                bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
-  </div>
-
+<section class="relative p-0 sm:p-0">
   <div class="max-w-[1280px] mx-auto w-full">
 
     @php
       $MAX_EVENTS_PER_DAY = $MAX_EVENTS_PER_DAY ?? 4;
 
-      // ===== DUMMY DATA (hapus kalau backend sudah siap) =====
       $events = $events ?? [
         now()->format('Y-m-d') => [
           ['id'=>101, 'title'=>'Shift Pagi - Asep', 'status'=>'aktif', 'time'=>'08:00 - 16:00', 'desc'=>'Servis rutin / tune up'],
@@ -73,9 +19,6 @@
         ],
         now()->addDay()->format('Y-m-d') => [
           ['id'=>103, 'title'=>'Tutup (Libur)', 'status'=>'tutup', 'time'=>'-', 'desc'=>'Hari libur operasional'],
-        //   // kalau ada data lain di tanggal ini, UI akan "anggap" tutup dan hanya tampilkan event tutup saja
-        //   ['id'=>104, 'title'=>'Shift Siang - Budi', 'status'=>'aktif', 'time'=>'12:00 - 16:00', 'desc'=>'—'],
-        //   ['id'=>105, 'title'=>'Shift Sore - Ujang', 'status'=>'aktif', 'time'=>'16:00 - 20:00', 'desc'=>'—'],
         ],
       ];
     @endphp
@@ -89,7 +32,7 @@
           <div class="min-w-0">
             <div id="monthTitle" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">—</div>
             <div class="text-xs text-slate-500 mt-1">
-              Klik tanggal untuk lihat detail. Tambah jadwal nonaktif kalau sudah penuh.
+              Klik tanggal untuk lihat detail jadwal.
             </div>
           </div>
 
@@ -156,78 +99,6 @@
 
       <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
         © DPM Workshop 2025
-      </div>
-    </div>
-
-    {{-- ✅ MODAL DETAIL --}}
-    <div id="detailModal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
-      <div id="detailOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-
-      <div class="relative min-h-full w-full flex items-center justify-center p-3 sm:p-6">
-        <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)]
-                    overflow-hidden flex flex-col h-[92vh] sm:h-[86vh]">
-
-          {{-- header --}}
-          <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3 bg-white shrink-0">
-            <div class="min-w-0">
-              <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
-              <div id="modalDate" class="text-xs text-slate-500 mt-0.5">—</div>
-            </div>
-            <button id="btnCloseModal" type="button"
-                    class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                    aria-label="Tutup">
-              <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-
-          {{-- body --}}
-          <div class="p-5 flex-1 min-h-0 overflow-hidden flex flex-col gap-4">
-            {{-- meta --}}
-            <div id="modalMeta" class="shrink-0"></div>
-
-            {{-- list --}}
-            <div class="rounded-xl border border-slate-200 bg-slate-50 flex flex-col min-h-0 flex-1">
-              <div class="px-4 py-3 border-b border-slate-200 bg-white rounded-t-xl shrink-0">
-                <div class="text-sm font-semibold text-slate-900">Daftar Jadwal</div>
-                <div class="text-xs text-slate-500">Scroll kalau jadwalnya panjang.</div>
-              </div>
-
-              <div id="modalListScroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4">
-                <div id="modalEvents" class="space-y-2"></div>
-
-                <div id="modalEmpty" class="hidden rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                  Belum ada jadwal di tanggal ini.
-                </div>
-              </div>
-            </div>
-
-            {{-- footer --}}
-            <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row gap-2 sm:justify-end shrink-0">
-              <a id="modalTambah"
-                 href="#"
-                 class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
-                        bg-slate-900 text-white hover:bg-slate-800 transition">
-                Tambah Jadwal
-              </a>
-              <a id="modalUbah"
-                 href="#"
-                 class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
-                        border border-slate-200 bg-white hover:bg-slate-50 transition">
-                Ubah
-              </a>
-              <a id="modalHapus"
-                 href="#"
-                 class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
-                        border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition">
-                Hapus
-              </a>
-            </div>
-
-            <div id="modalHint" class="text-[11px] text-slate-500 shrink-0"></div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -317,33 +188,14 @@
     white-space: nowrap;
   }
 
-  .tip{ position: relative; }
-  .tip[data-tip]::after{
-    content: attr(data-tip);
-    position:absolute;
-    right:0;
-    top: calc(100% + 10px);
-    background: rgba(15,23,42,.92);
-    color: rgba(255,255,255,.92);
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 10px;
-    white-space: nowrap;
-    opacity:0;
-    transform: translateY(-4px);
-    pointer-events:none;
-    transition: .15s ease;
-  }
-  .tip:hover::after{ opacity:1; transform: translateY(0); }
-
-  .btn-disabled{ opacity:.5 !important; pointer-events:none !important; }
-
   #modalListScroll { scrollbar-gutter: stable; }
 </style>
 @endpush
 
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+
   const MAX_EVENTS_PER_DAY = @json($MAX_EVENTS_PER_DAY);
 
   const monthTitle = document.getElementById('monthTitle');
@@ -360,11 +212,6 @@
   const modalMeta = document.getElementById('modalMeta');
   const modalEvents = document.getElementById('modalEvents');
   const modalEmpty = document.getElementById('modalEmpty');
-  const modalHint = document.getElementById('modalHint');
-
-  const modalTambah = document.getElementById('modalTambah');
-  const modalUbah = document.getElementById('modalUbah');
-  const modalHapus = document.getElementById('modalHapus');
 
   const EVENTS = @json($events);
 
@@ -383,13 +230,11 @@
 
   const getEvents = (dateStr) => (EVENTS?.[dateStr] || []);
 
-  // ✅ RULE: kalau ada status 'tutup' di tanggal tsb, hari dianggap TUTUP
   const isClosedDay = (dateStr) => {
     const list = getEvents(dateStr);
     return list.some(e => String(e?.status || '').toLowerCase() === 'tutup');
   };
 
-  // ✅ kalau TUTUP, UI cuma tampilkan event tutup saja (yang lain diabaikan)
   const getVisibleEvents = (dateStr) => {
     const all = getEvents(dateStr);
     if (!isClosedDay(dateStr)) return all;
@@ -397,7 +242,7 @@
   };
 
   const usedCount = (dateStr) => {
-    if (isClosedDay(dateStr)) return 0; // dianggap N/A
+    if (isClosedDay(dateStr)) return 0;
     return getVisibleEvents(dateStr).length;
   };
 
@@ -406,46 +251,35 @@
     return Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
   };
 
-  // ✅ FULL hanya berlaku kalau tidak tutup
-  const isFull = (dateStr) => {
-    if (isClosedDay(dateStr)) return true; // tutup = tidak bisa tambah
-    return remainingQuota(dateStr) <= 0;
-  };
-
   let current = new Date();
   current.setDate(1);
 
   function showModal(dateStr){
+    if (!detailModal) return; // guard
+
     const closed = isClosedDay(dateStr);
     const ev = getVisibleEvents(dateStr);
-
     const used = usedCount(dateStr);
-    const left = remainingQuota(dateStr);
 
     modalDate.textContent = fmtLong(dateStr);
 
-    // ✅ META: kalau tutup => jadwal terpakai "- / -" + label "Tutup"
     modalMeta.innerHTML = `
       <div class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="flex items-center justify-between gap-3">
-          <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
+          <div class="text-sm font-semibold text-slate-900">Info Hari</div>
           <span class="text-[11px] ${closed ? 'text-rose-600' : 'text-slate-500'}">
             ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
           </span>
         </div>
-
-        <div class="mt-3">
-          <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-            <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
-            <div class="font-semibold text-slate-900">
-              ${closed ? '- / -' : `${used} / ${MAX_EVENTS_PER_DAY}`}
-            </div>
+        <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+          <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
+          <div class="font-semibold text-slate-900">
+            ${closed ? '- / -' : `${used} / ${MAX_EVENTS_PER_DAY}`}
           </div>
         </div>
       </div>
     `;
 
-    // LIST events (kalau tutup -> cuma tampil tutup)
     modalEvents.innerHTML = '';
     if (ev.length > 0) {
       ev.forEach((e) => {
@@ -470,37 +304,12 @@
       modalEmpty.classList.remove('hidden');
     }
 
-    // ✅ hasData pakai data asli (biar ubah/hapus masih bisa kalau ada apa pun, termasuk tutup)
-    const hasData = (getEvents(dateStr).length > 0);
-
-    modalUbah.href  = hasData ? `/ubah_jadwal_kerja?date=${encodeURIComponent(dateStr)}` : '#';
-    modalHapus.href = hasData ? `/hapus_jadwal_kerja?date=${encodeURIComponent(dateStr)}` : '#';
-
-    modalUbah.classList.toggle('opacity-50', !hasData);
-    modalUbah.classList.toggle('pointer-events-none', !hasData);
-    modalHapus.classList.toggle('opacity-50', !hasData);
-    modalHapus.classList.toggle('pointer-events-none', !hasData);
-
-    // ✅ Tambah: kalau tutup -> disable + button jadi "TUTUP"
-    if (!closed && !isFull(dateStr)) {
-      modalTambah.href = `/tambah_jadwal_kerja?date=${encodeURIComponent(dateStr)}`;
-      modalTambah.classList.remove('btn-disabled');
-      modalTambah.textContent = `Tambah Jadwal (sisa ${left})`;
-      modalHint.textContent = `Masih bisa tambah ${left} jadwal lagi di tanggal ini.`;
-    } else {
-      modalTambah.href = '#';
-      modalTambah.classList.add('btn-disabled');
-      modalTambah.textContent = closed ? `TUTUP` : `Sudah FULL (${MAX_EVENTS_PER_DAY}/${MAX_EVENTS_PER_DAY})`;
-      modalHint.textContent = closed
-        ? `Hari ini TUTUP. Tidak bisa menambah jadwal.`
-        : `Tidak bisa tambah jadwal karena sudah mencapai batas ${MAX_EVENTS_PER_DAY} jadwal per hari.`;
-    }
-
     detailModal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
   }
 
   function hideModal(){
+    if (!detailModal) return;
     detailModal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
   }
@@ -521,7 +330,6 @@
     const startDay = first.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // kosong awal
     for (let i = 0; i < startDay; i++) {
       const empty = document.createElement('div');
       empty.className = 'day-card day-muted';
@@ -535,13 +343,9 @@
       const isToday = sameDay(dateObj, today);
 
       const closed = isClosedDay(key);
-
-      // ✅ kalender card: kalau tutup, tampilkan cuma pill tutup
       const ev = getVisibleEvents(key);
       const hasData = (getEvents(key).length > 0);
-
       const left = remainingQuota(key);
-      const full = (!closed && (left <= 0) && hasData); // FULL badge cuma buat hari normal
 
       const card = document.createElement('button');
       card.type = 'button';
@@ -555,18 +359,8 @@
       num.className = `day-num ${isToday ? 'today' : ''}`;
       num.textContent = String(day);
 
-      const right = document.createElement('div');
-      right.className = 'flex items-center gap-2';
-
-      if (full) {
-        const badge = document.createElement('div');
-        badge.className = 'badge-full';
-        badge.textContent = 'FULL';
-        right.appendChild(badge);
-      }
-
       top.appendChild(num);
-      top.appendChild(right);
+      top.appendChild(document.createElement('div'));
 
       const body = document.createElement('div');
       body.className = 'day-body';
@@ -596,7 +390,7 @@
       } else {
         const info = document.createElement('div');
         info.className = 'text-[11px] text-slate-600';
-        info.textContent = closed ? `TUTUP` : `Sisa tambah: ${left}`;
+        info.textContent = closed ? `TUTUP` : `Sisa: ${left}`;
         body.appendChild(info);
       }
 
@@ -607,7 +401,6 @@
       grid.appendChild(card);
     }
 
-    // kosong akhir
     const totalCells = startDay + daysInMonth;
     const remaining = (7 - (totalCells % 7)) % 7;
     for (let i = 0; i < remaining; i++) {
@@ -635,5 +428,57 @@
   });
 
   render();
+});
 </script>
+@endpush
+
+{{-- ✅ PINDAHIN MODAL KE STACK MODALS (DI LUAR SIDEBAR/TOPBAR) --}}
+@push('modals')
+  <div id="detailModal" class="fixed inset-0 z-[9999] hidden">
+    <div id="detailOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+
+    <div class="relative min-h-full w-full flex items-center justify-center p-3 sm:p-6">
+      <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)]
+                  overflow-hidden flex flex-col h-[92vh] sm:h-[86vh]">
+
+        <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3 bg-white shrink-0">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
+            <div id="modalDate" class="text-xs text-slate-500 mt-0.5">—</div>
+          </div>
+          <button id="btnCloseModal" type="button"
+                  class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                  aria-label="Tutup">
+            <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-5 flex-1 min-h-0 overflow-hidden flex flex-col gap-4">
+          <div id="modalMeta" class="shrink-0"></div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 flex flex-col min-h-0 flex-1">
+            <div class="px-4 py-3 border-b border-slate-200 bg-white rounded-t-xl shrink-0">
+              <div class="text-sm font-semibold text-slate-900">Daftar Jadwal</div>
+              <div class="text-xs text-slate-500">Scroll kalau jadwalnya panjang.</div>
+            </div>
+
+            <div id="modalListScroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              <div id="modalEvents" class="space-y-2"></div>
+
+              <div id="modalEmpty" class="hidden rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                Belum ada jadwal di tanggal ini.
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 text-[11px] text-slate-500 shrink-0">
+            Mode: <span class="font-semibold text-slate-700">View-only</span> (staf tidak bisa menambah/ubah/hapus jadwal).
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 @endpush

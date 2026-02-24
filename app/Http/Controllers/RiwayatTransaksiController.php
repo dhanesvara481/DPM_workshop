@@ -48,12 +48,19 @@ class RiwayatTransaksiController extends Controller
     //     return view('admin.riwayat_transaksi.print_transaksi', compact('trx', 'items'));
     // }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    // STAFF CONTROLLER
+    public function getRiwayatTransaksiStaff()
     {
-        //
+        return view('staff.riwayat_transaksi.riwayat_transaksi_staff', [
+        'riwayatTransaksis' => [],
+        ]);
+    }
+
+     public function getDetailRiwayatTransaksiStaff()
+    {
+        return view('staff.riwayat_transaksi.detail_riwayat_transaksi_staff', [
+        'detailRiwayatTransaksis' => [],
+        ]);
     }
 
     /**

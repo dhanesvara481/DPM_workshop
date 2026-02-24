@@ -15,20 +15,14 @@ class DashboardController extends Controller
     }
     
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    // Staff controller
+    // Tampilan Dashboard Staff
+    public function getTampilanDashboardStaff()
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        //View dashboard staff
+        return view('staff.dashboard.tampilan_dashboard_staff', [
+            'barangs' => [],
+    ]);
     }
 
     /**

@@ -14,12 +14,15 @@ class InvoiceController extends Controller
     ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+
+
+    // STAFF CONTROLLER
+     public function getTampilanInvoiceStaff()
     {
-        //
+        //View tampilan invoice staff
+        return view('staff.invoice.tampilan_invoice_staff', [
+        'invoices' => [],
+    ]);
     }
 
     /**
