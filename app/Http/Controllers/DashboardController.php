@@ -8,6 +8,16 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * Threshold status stok (harus sinkron dengan StokRealtimeController).
+     *  - stok = 0          → Habis
+     *  - stok > 0 && < 25  → Menipis
+     *  - stok >= 25        → Aman
+     */
+    private const STOK_MIN = 25;
+
+    // ── Tampilan Dashboard Admin ────────────────────────────────────────────
+
     public function getTampilanDashboard()
     {
         $chartMasuk  = $this->buildChartMasuk();
@@ -16,15 +26,83 @@ class DashboardController extends Controller
 
         $MAX_EVENTS_PER_DAY = 4;
 
+        // ── Ringkasan Stok ──────────────────────────────────────────────────
+        // Tabel: barang | kolom stok: VARCHAR — di-CAST ke UNSIGNED agar aman
+
+        $stockTotalItem = DB::table('barang')->count();
+
+        // Stok Menipis: stok > 0 dan < 25
+        $stockLow = DB::table('barang')
+            ->whereRaw('CAST(stok AS UNSIGNED) > 0')
+            ->whereRaw('CAST(stok AS UNSIGNED) < ?', [self::STOK_MIN])
+            ->count();
+
+        // Barang Habis: stok = 0
+        $stockOut = DB::table('barang')
+            ->whereRaw('CAST(stok AS UNSIGNED) = 0')
+            ->count();
+
+        // ── Ringkasan Transaksi ─────────────────────────────────────────────
+        $txTodayAll = DB::table('invoice')
+            ->whereDate('created_at', today())
+            ->count();
+
+        $txTotalAll = DB::table('invoice')->count();
+
         return view('admin.dashboard.tampilan_dashboard', compact(
             'chartMasuk',
             'chartKeluar',
             'events',
             'MAX_EVENTS_PER_DAY',
+            'stockTotalItem',
+            'stockLow',
+            'stockOut',
+            'txTodayAll',
+            'txTotalAll',
         ));
     }
 
-    // ─── Chart Masuk ─────────────────────────────────────────────────────────
+    // ── Tampilan Dashboard Staff ────────────────────────────────────────────
+
+    public function getTampilanDashboardStaff()
+    {
+        // ── Ringkasan Stok (threshold sama dengan admin) ────────────────────
+        $stockTotalItem = DB::table('barang')->count();
+
+        // Stok Menipis: stok > 0 dan < 25
+        $stockLow = DB::table('barang')
+            ->whereRaw('CAST(stok AS UNSIGNED) > 0')
+            ->whereRaw('CAST(stok AS UNSIGNED) < ?', [self::STOK_MIN])
+            ->count();
+
+        // Barang Habis: stok = 0
+        $stockOut = DB::table('barang')
+            ->whereRaw('CAST(stok AS UNSIGNED) = 0')
+            ->count();
+
+        // ── Ringkasan Transaksi ─────────────────────────────────────────────
+        $txTodayAll = DB::table('invoice')
+            ->whereDate('created_at', today())
+            ->count();
+
+        $txTotalAll = DB::table('invoice')->count();
+
+        // ── Events Jadwal ───────────────────────────────────────────────────
+        $events             = $this->buildEvents();
+        $MAX_EVENTS_PER_DAY = 4;
+
+        return view('staff.dashboard.tampilan_dashboard_staff', compact(
+            'stockTotalItem',
+            'stockLow',
+            'stockOut',
+            'txTodayAll',
+            'txTotalAll',
+            'events',
+            'MAX_EVENTS_PER_DAY',
+        ));
+    }
+
+    // ── Chart Masuk ─────────────────────────────────────────────────────────
 
     private function buildChartMasuk(): array
     {
@@ -49,7 +127,7 @@ class DashboardController extends Controller
         return [
             'label'  => "{$months} bulan terakhir",
             'labels' => $rows->pluck('label')->toArray(),
-            'masuk'  => $rows->pluck('total')->map(fn($v) => (int)$v)->toArray(),
+            'masuk'  => $rows->pluck('total')->map(fn ($v) => (int) $v)->toArray(),
         ];
     }
 
@@ -66,17 +144,17 @@ class DashboardController extends Controller
             ->get();
 
         $map    = $rows->keyBy('label');
-        $labels = ['Q1','Q2','Q3','Q4'];
-        $data   = array_map(fn($l) => (int)($map[$l]->total ?? 0), $labels);
+        $labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+        $data   = array_map(fn ($l) => (int) ($map[$l]->total ?? 0), $labels);
 
         return [
-            'label'  => "Tahun ini (per kuartal)",
+            'label'  => 'Tahun ini (per kuartal)',
             'labels' => $labels,
             'masuk'  => $data,
         ];
     }
 
-    // ─── Chart Keluar ─────────────────────────────────────────────────────────
+    // ── Chart Keluar ────────────────────────────────────────────────────────
 
     private function buildChartKeluar(): array
     {
@@ -101,7 +179,7 @@ class DashboardController extends Controller
         return [
             'label'  => "{$months} bulan terakhir",
             'labels' => $rows->pluck('label')->toArray(),
-            'keluar' => $rows->pluck('total')->map(fn($v) => (int)$v)->toArray(),
+            'keluar' => $rows->pluck('total')->map(fn ($v) => (int) $v)->toArray(),
         ];
     }
 
@@ -118,17 +196,17 @@ class DashboardController extends Controller
             ->get();
 
         $map    = $rows->keyBy('label');
-        $labels = ['Q1','Q2','Q3','Q4'];
-        $data   = array_map(fn($l) => (int)($map[$l]->total ?? 0), $labels);
+        $labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+        $data   = array_map(fn ($l) => (int) ($map[$l]->total ?? 0), $labels);
 
         return [
-            'label'  => "Tahun ini (per kuartal)",
+            'label'  => 'Tahun ini (per kuartal)',
             'labels' => $labels,
             'keluar' => $data,
         ];
     }
 
-    // ─── Events Jadwal ───────────────────────────────────────────────────────
+    // ── Events Jadwal (dipakai admin & staff) ───────────────────────────────
 
     private function buildEvents(): array
     {
@@ -155,10 +233,8 @@ class DashboardController extends Controller
                 }
 
                 $events[$key][] = [
-                    'id'     => $row->jadwal_id,                          
-                    'title'  => ($row->waktu_shift ?? 'Jadwal')           
-                                . ' - '
-                                . ($row->user->username ?? 'Staf'),       
+                    'id'     => $row->jadwal_id,
+                    'title'  => ($row->waktu_shift ?? 'Jadwal') . ' - ' . ($row->user->username ?? 'Staf'),
                     'status' => strtolower($row->status ?? 'aktif'),
                     'time'   => $time,
                     'desc'   => $row->deskripsi ?? '',

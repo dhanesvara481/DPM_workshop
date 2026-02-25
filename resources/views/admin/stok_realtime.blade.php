@@ -1,7 +1,7 @@
 {{-- resources/views/admin/stok/stok_realtime.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Stok Real-time - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 
@@ -68,13 +68,16 @@
 
         @php
             $totalItem = collect($barangs ?? [])->count();
-            $sumStok = collect($barangs ?? [])->sum(function($b){
+            $sumStok   = collect($barangs ?? [])->sum(function ($b) {
                 return (int) ($b->stok ?? $b->stok_akhir ?? 0);
             });
+            $STOK_MIN  = 25;
+            $stokLow   = collect($barangs ?? [])->filter(fn($b) => (int)($b->stok ?? $b->stok_akhir ?? 0) > 0 && (int)($b->stok ?? $b->stok_akhir ?? 0) < $STOK_MIN)->count();
+            $stokOut   = collect($barangs ?? [])->filter(fn($b) => (int)($b->stok ?? $b->stok_akhir ?? 0) <= 0)->count();
         @endphp
 
         {{-- SUMMARY --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
             <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
                 <p class="text-xs text-slate-500">Total Item</p>
                 <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalItem }}</p>
@@ -88,10 +91,30 @@
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
-                <p class="text-xs text-slate-500">Mode</p>
-                <p class="text-2xl font-bold text-slate-900 mt-1">View-only</p>
-                <p class="text-xs text-slate-400 mt-1">Tidak bisa edit stok</p>
+                <p class="text-xs text-slate-500">Stok Menipis</p>
+                <p class="text-2xl font-bold text-amber-700 mt-1">{{ $stokLow }}</p>
+                <p class="text-xs text-slate-400 mt-1">Stok 1 – 24 unit</p>
             </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
+                <p class="text-xs text-slate-500">Barang Habis</p>
+                <p class="text-2xl font-bold text-rose-700 mt-1">{{ $stokOut }}</p>
+                <p class="text-xs text-slate-400 mt-1">Stok = 0 unit</p>
+            </div>
+        </div>
+
+        {{-- KETERANGAN STATUS --}}
+        <div class="flex flex-wrap items-center gap-3 mb-4 text-xs text-slate-600">
+            <span class="font-semibold text-slate-500">Keterangan:</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 text-emerald-700 px-3 py-1 font-semibold">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Aman (≥ 25)
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 text-amber-800 px-3 py-1 font-semibold">
+                <span class="h-2 w-2 rounded-full bg-amber-500"></span> Menipis (1 – 24)
+            </span>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-100 text-rose-700 px-3 py-1 font-semibold">
+                <span class="h-2 w-2 rounded-full bg-rose-500"></span> Habis (= 0)
+            </span>
         </div>
 
         {{-- TOOLBAR --}}
@@ -104,7 +127,6 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
                         </svg>
                     </span>
-
                     <input id="searchStok"
                            type="text"
                            placeholder="Cari kode / nama barang..."
@@ -115,6 +137,16 @@
             </div>
 
             <div class="flex items-center gap-2">
+                {{-- Filter Status --}}
+                <select id="filterStatus"
+                        class="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm
+                               focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+                    <option value="">Semua Status</option>
+                    <option value="Aman">Aman</option>
+                    <option value="Menipis">Menipis</option>
+                    <option value="Habis">Habis</option>
+                </select>
+
                 <button id="btnPrint" type="button"
                         class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                     Print
@@ -135,7 +167,7 @@
                             <th class="px-5 py-4 font-semibold">Nama Barang</th>
                             <th class="px-5 py-4 font-semibold">Satuan</th>
                             <th class="px-5 py-4 font-semibold text-right w-[120px]">Stok</th>
-                            <th class="px-5 py-4 font-semibold w-[160px]">Status</th>
+                            <th class="px-5 py-4 font-semibold w-[140px]">Status</th>
                             <th class="px-5 py-4 font-semibold text-right w-[160px]">Harga Jual</th>
                         </tr>
                     </thead>
@@ -144,31 +176,39 @@
                         @forelse (($barangs ?? []) as $i => $b)
                             @php
                                 $stok = (int) ($b->stok ?? $b->stok_akhir ?? 0);
-                                $min  = (int) ($b->stok_min ?? 5);
 
-                                if ($stok <= 0) { $label='Habis'; $cls='bg-rose-100 text-rose-700 border-rose-200'; }
-                                elseif ($stok <= $min) { $label='Menipis'; $cls='bg-amber-100 text-amber-800 border-amber-200'; }
-                                else { $label='Aman'; $cls='bg-emerald-100 text-emerald-700 border-emerald-200'; }
+                                if ($stok <= 0) {
+                                    $label = 'Habis';
+                                    $cls   = 'bg-rose-100 text-rose-700 border-rose-200';
+                                } elseif ($stok < 25) {
+                                    $label = 'Menipis';
+                                    $cls   = 'bg-amber-100 text-amber-800 border-amber-200';
+                                } else {
+                                    $label = 'Aman';
+                                    $cls   = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                                }
                             @endphp
 
-                            <tr class="row-lift hover:bg-slate-50/70 transition">
+                            <tr class="row-lift hover:bg-slate-50/70 transition" data-status="{{ $label }}">
                                 <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
                                 <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang ?? '-' }}</td>
                                 <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang ?? '-' }}</td>
                                 <td class="px-5 py-4 text-slate-700">{{ $b->satuan ?? '-' }}</td>
-                                <td class="px-5 py-4 text-right font-bold text-slate-900">{{ $stok }}</td>
+                                <td class="px-5 py-4 text-right font-bold
+                                    {{ $stok <= 0 ? 'text-rose-700' : ($stok < 25 ? 'text-amber-700' : 'text-slate-900') }}">
+                                    {{ $stok }}
+                                </td>
                                 <td class="px-5 py-4">
-                                    <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border {{ $cls }}">
+                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border {{ $cls }}">
                                         {{ $label }}
-                                        <span class="text-[10px] opacity-70">(min {{ $min }})</span>
                                     </span>
                                 </td>
                                 <td class="px-5 py-4 text-right text-slate-700">
-                                    {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual,0,',','.') : '-' }}
+                                    {{ isset($b->harga_jual) ? 'Rp '.number_format($b->harga_jual, 0, ',', '.') : '-' }}
                                 </td>
                             </tr>
                         @empty
-                            @for($r=1;$r<=4;$r++)
+                            @for ($r = 1; $r <= 4; $r++)
                                 <tr class="row-lift hover:bg-slate-50/70 transition">
                                     <td class="px-5 py-5 text-slate-400">{{ $r }}</td>
                                     <td class="px-5 py-5"><div class="h-4 w-24 rounded bg-slate-100"></div></td>
@@ -184,6 +224,11 @@
                 </table>
             </div>
 
+            {{-- Empty state setelah filter --}}
+            <div id="emptyFilter" class="hidden px-6 py-10 text-center text-sm text-slate-400">
+                Tidak ada barang yang cocok dengan pencarian / filter.
+            </div>
+
             <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
                 © DPM Workshop 2025
             </div>
@@ -195,17 +240,17 @@
 
 @push('head')
 <style>
-    .row-lift{
+    .row-lift {
         transform: translateY(0);
         transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
     }
-    .row-lift:hover{
+    .row-lift:hover {
         transform: translateY(-1px);
         box-shadow: 0 10px 26px rgba(2,6,23,0.06);
     }
 
     @media print {
-        #sidebar, #overlay, #btnSidebar, #btnCloseSidebar, #btnPrint { display:none !important; }
+        #sidebar, #overlay, #btnSidebar, #btnCloseSidebar, #btnPrint, #filterStatus { display: none !important; }
         #main { margin-left: 0 !important; }
         body { background: #fff !important; }
     }
@@ -214,21 +259,38 @@
 
 @push('scripts')
 <script>
-    // search filter (client-side)
-    const input = document.getElementById('searchStok');
-    const tbody = document.getElementById('stokTbody');
+    const searchInput  = document.getElementById('searchStok');
+    const filterSelect = document.getElementById('filterStatus');
+    const tbody        = document.getElementById('stokTbody');
+    const emptyFilter  = document.getElementById('emptyFilter');
 
-    if (input && tbody) {
-        input.addEventListener('input', () => {
-            const q = input.value.trim().toLowerCase();
-            Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-                const text = (tr.innerText || '').toLowerCase();
-                tr.style.display = text.includes(q) ? '' : 'none';
-            });
+    function applyFilter() {
+        const q      = (searchInput?.value ?? '').trim().toLowerCase();
+        const status = (filterSelect?.value ?? '').toLowerCase();
+
+        let visible = 0;
+
+        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+            const text       = (tr.innerText || '').toLowerCase();
+            const rowStatus  = (tr.dataset.status || '').toLowerCase();
+
+            const matchQ      = !q      || text.includes(q);
+            const matchStatus = !status || rowStatus === status;
+
+            const show = matchQ && matchStatus;
+            tr.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
+
+        if (emptyFilter) {
+            emptyFilter.classList.toggle('hidden', visible > 0);
+        }
     }
 
-    // print
+    searchInput?.addEventListener('input',  applyFilter);
+    filterSelect?.addEventListener('change', applyFilter);
+
+    // Print
     document.getElementById('btnPrint')?.addEventListener('click', () => {
         window.open("{{ route('stok_realtime.print') }}", '_blank');
     });

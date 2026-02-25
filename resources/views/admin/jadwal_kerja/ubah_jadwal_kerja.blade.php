@@ -1,7 +1,7 @@
 {{-- resources/views/admin/jadwal_kerja/ubah_jadwal_kerja.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Ubah Jadwal Kerja - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 

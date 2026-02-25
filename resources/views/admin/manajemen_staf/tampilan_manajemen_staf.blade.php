@@ -1,7 +1,7 @@
 {{-- resources/views/admin/manajemen_staf/tampilan_manajemen_staf.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Manajemen Staf - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 

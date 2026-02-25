@@ -156,6 +156,34 @@ class JadwalKerjaController extends Controller
         return view('admin.jadwal_kerja.tampilan_jadwal_kerja', compact('jadwalKerjas'));
     }
 
+    // STAFF CONTROLLER
+     public function getJadwalKerjaStaff()
+    {
+        $rawEvents = JadwalKerja::with('user')
+            ->orderBy('tanggal_kerja')
+            ->orderBy('jam_mulai')
+            ->get();
+    
+        $events = [];
+        foreach ($rawEvents as $j) {
+            $key = $j->tanggal_kerja->format('Y-m-d');
+            $events[$key][] = [
+                'id'     => $j->jadwal_id,
+                'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
+                'status' => strtolower($j->status),
+                'time'   => substr($j->jam_mulai, 0, 5) . ' - ' . substr($j->jam_selesai, 0, 5),
+                'desc'   => $j->deskripsi,
+            ];
+        }
+    
+        return view('staff.jadwal_kerja.jadwal_kerja_staff', [
+            'events'             => $events,
+            'MAX_EVENTS_PER_DAY' => 4,
+        ]);
+    }
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(string $id)
     {
         JadwalKerja::findOrFail($id)->delete();

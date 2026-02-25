@@ -13,11 +13,15 @@ use App\Models\RiwayatStok;
 
 class InvoiceController extends Controller
 {
+    // ── Admin ────────────────────────────────────────────────────────────────
+
     public function getTampilanInvoice()
     {
-        $barangs = Barang::where('stok', '>', 0)->get([
-            'barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok'
-        ]);
+        // Tabel: barang | kolom stok: VARCHAR(10) → CAST untuk filter > 0
+        $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
+            ->orderBy('barang_id')
+            ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
+
         return view('admin.invoice.tampilan_invoice', compact('barangs'));
     }
 
@@ -36,7 +40,7 @@ class InvoiceController extends Controller
                 $errors[] = "Barang dengan ID {$barangId} tidak ditemukan.";
                 continue;
             }
-            if ($barang->stok < $qty) {
+            if ((int) $barang->stok < $qty) {
                 $errors[] = "Stok <strong>{$barang->nama_barang}</strong> tidak cukup "
                           . "(diminta: {$qty}, tersedia: {$barang->stok}).";
             }
@@ -44,6 +48,20 @@ class InvoiceController extends Controller
 
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
+
+    // ── Staff ────────────────────────────────────────────────────────────────
+
+    public function getTampilanInvoiceStaff()
+    {
+        // Sama persis dengan admin — staff juga butuh daftar barang untuk dropdown
+        $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
+            ->orderBy('barang_id')
+            ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
+
+        return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
+    }
+
+    // ── Store (dipakai admin & staff, redirect sesuai role) ──────────────────
 
     public function store(Request $request)
     {
@@ -98,7 +116,6 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Catat ke riwayat_transaksi
             RiwayatTransaksi::create([
                 'invoice_id'                => $invoice->invoice_id,
                 'user_id'                   => $userId,
@@ -106,6 +123,14 @@ class InvoiceController extends Controller
             ]);
 
             DB::commit();
+
+            // Redirect ke halaman invoice sesuai role
+            $role = auth()->user()->role;
+
+            if ($role === 'staff') {
+                return redirect()->route('tampilan_invoice_staff')
+                    ->with('success', 'Invoice berhasil disimpan.');
+            }
 
             return redirect()->route('tampilan_invoice')
                 ->with('success', 'Invoice berhasil disimpan.');
@@ -115,6 +140,8 @@ class InvoiceController extends Controller
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
 
     private function simpanItemBarang(
         int     $invoiceId,
@@ -126,20 +153,21 @@ class InvoiceController extends Controller
         ?string $tanggal = null
     ): void {
         $tanggalHari = $tanggal ?? now()->toDateString();
-    
+
         foreach ($items as $item) {
             if (empty($item['barang_id'])) continue;
-    
+
             $barang = Barang::findOrFail($item['barang_id']);
             $qty    = (int) ($item['qty'] ?? 0);
             if ($qty <= 0) continue;
-    
-            if ($barang->stok < $qty) {
+
+            // Stok VARCHAR — cast untuk perbandingan
+            if ((int) $barang->stok < $qty) {
                 throw new \Exception(
                     "Stok {$barang->nama_barang} tidak cukup (tersedia: {$barang->stok})."
                 );
             }
-    
+
             InvoiceItem::create([
                 'invoice_id'     => $invoiceId,
                 'barang_id'      => $barang->barang_id,
@@ -150,20 +178,18 @@ class InvoiceController extends Controller
                 'total'          => (float) ($item['total'] ?? 0),
                 'tipe_transaksi' => $tipe,
             ]);
-    
-            // ✅ Cek apakah sudah ada riwayat stok hari ini untuk barang ini
-            // Jika sudah ada → pakai stok_awal dari record pertama hari ini
-            // Jika belum ada → stok saat ini adalah stok_awal hari ini
+
+            // Riwayat stok: gunakan stok_awal dari record pertama hari ini kalau sudah ada
             $riwayatHariIni = RiwayatStok::where('barang_id', $barang->barang_id)
                 ->whereDate('tanggal_riwayat_stok', $tanggalHari)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
-    
-            $stokAwal  = $riwayatHariIni ? (int) $riwayatHariIni->stok_awal : $barang->stok;
+
+            $stokAwal = $riwayatHariIni ? (int) $riwayatHariIni->stok_awal : (int) $barang->stok;
+
             $barang->decrement('stok', $qty);
-            $stokAkhir = $barang->fresh()->stok; // ambil nilai terbaru setelah decrement
-    
-            // Catat ke barang_keluar
+            $stokAkhir = (int) $barang->fresh()->stok;
+
             $barangKeluar = BarangKeluar::create([
                 'user_id'        => $userId,
                 'barang_id'      => $barang->barang_id,
@@ -171,19 +197,20 @@ class InvoiceController extends Controller
                 'tanggal_keluar' => $tanggalHari,
                 'ref_invoice'    => $invoiceId,
             ]);
-    
-            // Catat ke riwayat_stok
+
             RiwayatStok::create([
                 'barang_id'            => $barang->barang_id,
                 'user_id'              => $userId,
                 'barang_masuk_id'      => null,
                 'barang_keluar_id'     => $barangKeluar->barang_keluar_id,
                 'tanggal_riwayat_stok' => $tanggalHari,
-                'stok_awal'            => $stokAwal,  // ✅ tetap stok awal hari ini
+                'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
             ]);
         }
     }
+
+    // ── Admin only ───────────────────────────────────────────────────────────
 
     public function show(string $id)
     {

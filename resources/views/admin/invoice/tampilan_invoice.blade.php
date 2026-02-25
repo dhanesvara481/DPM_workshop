@@ -1,7 +1,7 @@
 {{-- resources/views/admin/invoice/tampilan_invoice.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Invoice - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 

@@ -1,13 +1,13 @@
-@extends('admin.layout.app')
+@extends('staff.layout.app')
 
-@section('title', 'DPM Workshop - Admin')
+@section('title', 'Detail Riwayat Transaksi - DPM Workshop')
+@section('page_title', 'Detail Invoice')
+@section('page_subtitle', 'Rincian transaksi & item invoice.')
 
-@section('content')
-
-
-{{-- TOPBAR (ikut style halaman lain) --}}
+@section('topbar')
 <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
   <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
+
     <div class="flex items-center gap-3 min-w-0">
       <button id="btnSidebar" type="button"
               class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
@@ -16,87 +16,106 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
-
       <div class="min-w-0">
-        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Detail Invoice</h1>
-        <p class="text-xs text-slate-500">Rincian transaksi & item invoice.</p>
+        <h1 class="text-sm font-semibold tracking-tight text-slate-900">@yield('page_title')</h1>
+        <p class="text-xs text-slate-500">@yield('page_subtitle')</p>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="{{ route('riwayat_transaksi') }}"
-         class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
-                border border-slate-200 bg-white hover:bg-slate-50 transition">
-        Kembali
-      </a>
 
-      <button type="button"
-              class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              title="Notifikasi">
+      <a href="{{ route('notifikasi_staff') }}"
+         class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
         </svg>
+      </a>
+
+      <button type="button"
+              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+        {{ now()->format('d M Y') }}
       </button>
+
+      <a href="{{ route('riwayat_transaksi_staff') }}"
+         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-4 py-2 text-sm font-semibold text-slate-700">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Kembali
+      </a>
+
     </div>
   </div>
 </header>
+@endsection
 
-<section class="relative p-4 sm:p-6">
-  {{-- BACKGROUND --}}
-  <div class="pointer-events-none absolute inset-0 -z-10">
-    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-    <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-    <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                bg-gradient-to-tr from-indigo-950/20 via-indigo-700/10 to-transparent"></div>
-  </div>
+@section('content')
 
-  @php
-    // amanin akses
-    $trx = $trx ?? null;
+@php
+  $trx = $trx ?? null;
+  $fmt = fn($n) => 'Rp ' . number_format((int)$n, 0, ',', '.');
 
-    $tanggal = $trx?->created_at
+  if ($trx) {
+    $tanggal = $trx->created_at
       ? \Carbon\Carbon::parse($trx->created_at)->translatedFormat('d F Y')
       : '-';
-
-    $jam = $trx?->created_at
+    $jam = $trx->created_at
       ? \Carbon\Carbon::parse($trx->created_at)->format('H:i')
       : '-';
 
     $nominal = (int)($trx->total ?? 0);
+    $isPlus  = strtolower((string)($trx->tipe ?? 'masuk')) !== 'keluar';
 
-    // Sesuaikan field jika beda:
-    // kalau invoice cuma pemasukan, bisa selalu hijau.
-    $isPlus = (strtolower((string)($trx->tipe ?? $trx->jenis ?? 'masuk')) !== 'keluar');
-
-    $fmt = fn($n) => 'Rp ' . number_format((int)$n, 0, ',', '.');
-
-    $nama = trim((string)($trx->nama_pengguna ?? $trx->nama_pelanggan ?? 'User'));
+    $nama     = trim((string)($trx->nama_pengguna ?? 'User'));
     $initials = collect(preg_split('/\s+/', $nama))
-      ->filter()
-      ->take(2)
-      ->map(fn($p) => mb_strtoupper(mb_substr($p,0,1)))
+      ->filter()->take(2)
+      ->map(fn($p) => mb_strtoupper(mb_substr($p, 0, 1)))
       ->join('');
 
-    $kode = $trx->kode_transaksi ?? $trx->kode ?? ('INV-' . ($trx->id ?? '-'));
+    $kode = $trx->kode_transaksi ?? ('INV-' . ($trx->id ?? '-'));
 
-    $status = strtolower((string)($trx->status ?? 'paid'));
-    $statusUI = match($status){
-      'paid','lunas','success' => ['label'=>'PAID','cls'=>'bg-emerald-50 text-emerald-700 border border-emerald-100'],
-      'unpaid','pending'       => ['label'=>'UNPAID','cls'=>'bg-amber-50 text-amber-700 border border-amber-100'],
-      'expired'                => ['label'=>'EXPIRED','cls'=>'bg-slate-50 text-slate-700 border border-slate-200'],
-      'refund','refunded'      => ['label'=>'REFUND','cls'=>'bg-red-50 text-red-700 border border-red-100'],
-      default                  => ['label'=>strtoupper($status ?: 'STATUS'),'cls'=>'bg-slate-50 text-slate-700 border border-slate-200'],
+    $status   = strtolower((string)($trx->status ?? 'paid'));
+    $statusUI = match($status) {
+      'paid','lunas','success' => ['label' => 'PAID',    'cls' => 'bg-emerald-50 text-emerald-700 border border-emerald-100'],
+      'unpaid','pending'       => ['label' => 'UNPAID',  'cls' => 'bg-amber-50 text-amber-700 border border-amber-100'],
+      'expired'                => ['label' => 'EXPIRED', 'cls' => 'bg-slate-50 text-slate-700 border border-slate-200'],
+      'refund','refunded'      => ['label' => 'REFUND',  'cls' => 'bg-red-50 text-red-700 border border-red-100'],
+      default                  => ['label' => strtoupper($status ?: 'STATUS'), 'cls' => 'bg-slate-50 text-slate-700 border border-slate-200'],
     };
 
-    $metode = $trx->metode_pembayaran ?? $trx->metode ?? '-';
+    $metode  = $trx->metode_pembayaran ?? '-';
     $catatan = $trx->catatan ?? '-';
-  @endphp
 
-  <div class="max-w-5xl mx-auto w-full">
+    $items      = $items ?? collect();
+    $itemsCount = is_countable($items) ? count($items) : 0;
+  }
+@endphp
 
-    {{-- CARD UTAMA --}}
+<div class="max-w-5xl mx-auto w-full">
+
+  @if(!$trx)
+    <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_18px_48px_rgba(2,6,23,0.10)] p-10 text-center">
+      <div class="mx-auto h-12 w-12 rounded-2xl border border-slate-200 bg-white grid place-items-center text-slate-500">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+      </div>
+      <div class="mt-3 text-sm font-semibold text-slate-900">Invoice tidak ditemukan</div>
+      <div class="mt-1 text-xs text-slate-500">Pastikan Anda membuka invoice yang valid.</div>
+      <div class="mt-6">
+        <a href="{{ route('riwayat_transaksi_staff') }}"
+           class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
+                  border border-slate-200 bg-white hover:bg-slate-50 transition">
+          Kembali ke Riwayat
+        </a>
+      </div>
+    </div>
+
+  @else
+
     <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
       {{-- HEADER CARD --}}
@@ -107,12 +126,10 @@
             <div class="mt-1 text-lg font-semibold text-slate-900">{{ $tanggal }}</div>
             <div class="mt-1 text-xs text-slate-500">{{ $kode }} • {{ $jam }}</div>
           </div>
-
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $statusUI['cls'] }}">
               {{ $statusUI['label'] }}
             </span>
-
             <div class="text-right">
               <div class="text-xs text-slate-500">Total</div>
               <div class="text-base font-bold {{ $isPlus ? 'text-emerald-700' : 'text-red-700' }}">
@@ -123,18 +140,20 @@
         </div>
 
         {{-- USER STRIP --}}
-        <div class="mt-5 flex items-center justify-between gap-4">
+        <div class="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="h-11 w-11 rounded-full grid place-items-center border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
               <span class="text-xs font-bold text-slate-700">{{ $initials ?: 'U' }}</span>
             </div>
             <div class="min-w-0">
               <div class="font-semibold text-slate-900 truncate">{{ $nama ?: 'User' }}</div>
-              <div class="text-xs text-slate-500 truncate">Metode: <span class="font-semibold text-slate-700">{{ $metode }}</span></div>
+              <div class="text-xs text-slate-500 truncate">
+                Metode: <span class="font-semibold text-slate-700">{{ $metode }}</span>
+              </div>
             </div>
           </div>
 
-          <a href="{{ route('transaksi.nota', $trx->id ?? 0) }}" target="_blank"
+          <a href="{{ route('transaksi.nota_staff', $trx->id) }}"
              class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
                     bg-slate-900 text-white hover:bg-slate-800 transition
                     shadow-[0_12px_24px_rgba(2,6,23,0.18)]">
@@ -172,7 +191,7 @@
         <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
           <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div class="text-sm font-semibold text-slate-900">Detail Item</div>
-            <div class="text-xs text-slate-500">{{ is_countable($items ?? []) ? count($items) : 0 }} item</div>
+            <div class="text-xs text-slate-500">{{ $itemsCount }} item</div>
           </div>
 
           <div class="overflow-x-auto">
@@ -185,13 +204,14 @@
                   <th class="px-4 py-3 font-semibold text-right">Subtotal</th>
                 </tr>
               </thead>
+
               <tbody class="divide-y divide-slate-200">
-                @forelse(($items ?? []) as $it)
+                @forelse($items as $it)
                   @php
-                    $namaItem  = $it->nama_barang ?? $it->barang->nama_barang ?? $it->nama ?? '-';
-                    $harga     = (int)($it->harga ?? $it->barang->harga ?? 0);
-                    $qty       = (int)($it->qty ?? $it->jumlah ?? 0);
-                    $sub       = $harga * $qty;
+                    $namaItem = $it->nama_barang ?? '-';
+                    $harga    = (int)$it->harga;
+                    $qty      = (int)$it->qty;
+                    $sub      = $harga * $qty;
                   @endphp
                   <tr class="hover:bg-slate-50/70 transition">
                     <td class="px-4 py-3 text-slate-900 font-semibold">{{ $namaItem }}</td>
@@ -208,10 +228,9 @@
                 @endforelse
               </tbody>
 
-              {{-- FOOTER TOTAL --}}
               <tfoot class="bg-slate-50">
                 <tr>
-                  <td class="px-4 py-3 text-slate-500 font-semibold" colspan="3">Total</td>
+                  <td colspan="3" class="px-4 py-3 text-slate-500 font-semibold">Total</td>
                   <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $fmt($nominal) }}</td>
                 </tr>
               </tfoot>
@@ -224,8 +243,10 @@
       <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
         © DPM Workshop 2025
       </div>
-    </div>
-  </div>
-</section>
 
+    </div>
+
+  @endif
+
+</div>
 @endsection

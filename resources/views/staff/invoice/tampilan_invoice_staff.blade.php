@@ -1,0 +1,733 @@
+{{-- resources/views/staff/invoice/tampilan_invoice_staff.blade.php --}}
+@extends('staff.layout.app')
+
+@section('page_title', 'Invoice')
+@section('page_subtitle', 'Staf')
+
+@section('content')
+
+<div class="relative isolate">
+  {{-- BACKGROUND --}}
+  <div class="pointer-events-none absolute inset-0 z-0">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
+    <div class="absolute inset-0 opacity-[0.10]"
+      style="background-image:
+        linear-gradient(to right, rgba(2,6,23,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(2,6,23,0.05) 1px, transparent 1px);
+        background-size: 56px 56px;">
+    </div>
+    <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[680px] w-[680px] rounded-full blur-3xl opacity-10
+      bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
+  </div>
+
+  {{-- CONTENT --}}
+  <div class="relative z-10 max-w-[1280px] mx-auto w-full space-y-6">
+
+    {{-- Flash + error --}}
+    @if(session('success'))
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        {{ session('success') }}
+      </div>
+    @endif
+
+    @if ($errors->any())
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+        <div class="font-semibold mb-1">Terjadi error:</div>
+        <ul class="list-disc pl-5 space-y-1">
+          @foreach($errors->all() as $err)
+            <li>{{ $err }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
+
+    <form id="formInvoice"
+          method="POST"
+          action="{{ Route::has('invoice.store') ? route('invoice.store') : '#' }}"
+          class="space-y-6" data-animate>
+      @csrf
+
+      <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
+                  shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
+
+        <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-900">INVOICE</div>
+            <div class="text-xs text-slate-500 mt-0.5">Pilih kategori, input data, lalu simpan.</div>
+          </div>
+          <button type="button" id="btnReset"
+                  class="h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+            Reset
+          </button>
+        </div>
+
+        <div class="p-5 sm:p-6 space-y-6">
+
+          {{-- Top fields --}}
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+            {{-- Nama Pembuat Transaksi
+                 Tabel user tidak punya kolom 'name', hanya 'username'
+            --}}
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Nama Pembuat Transaksi</label>
+              <input
+                value="{{ auth()->user()->username }}"
+                class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none"
+                readonly
+              />
+              <input type="hidden" name="user_id" value="{{ auth()->user()->user_id }}">
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Tanggal</label>
+              <input type="date" name="tanggal_invoice"
+                     value="{{ old('tanggal_invoice', now()->format('Y-m-d')) }}"
+                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10" />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Kategori Invoice</label>
+              <div class="grid grid-cols-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                <button type="button" data-invtab="barang"
+                        class="invtab h-10 rounded-lg text-sm font-semibold transition">
+                  Barang
+                </button>
+                <button type="button" data-invtab="jasa"
+                        class="invtab h-10 rounded-lg text-sm font-semibold transition">
+                  Jasa
+                </button>
+              </div>
+              <input type="hidden" name="kategori" id="kategori" value="{{ old('kategori','barang') }}">
+              <p class="text-[11px] text-slate-500">Jasa: charge servis, plus barang yang memang ditagihkan (opsional).</p>
+            </div>
+          </div>
+
+          {{-- Optional customer info --}}
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="space-y-1 lg:col-span-2">
+              <label class="text-xs font-semibold text-slate-700">Nama Pelanggan (opsional)</label>
+              <input name="nama_pelanggan" value="{{ old('nama_pelanggan') }}"
+                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                     placeholder="Contoh: Budi" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Kontak Pelanggan (opsional)</label>
+              <input name="kontak" value="{{ old('kontak') }}"
+                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                     placeholder="08xxxxxxxxxx" />
+            </div>
+          </div>
+
+          {{-- ================= BARANG SECTION ================= --}}
+          <div id="sectionBarang" class="space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-slate-900">Barang Yang Dibeli</p>
+                <p class="text-xs text-slate-500">Pilih dari barang yang tersedia (stok > 0).</p>
+              </div>
+              <button type="button" id="btnAddBarang"
+                      class="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+                <span class="text-base">＋</span> Tambah
+              </button>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-[1060px] w-full text-sm">
+                  <thead class="bg-slate-50 border-b border-slate-200">
+                  <tr class="text-xs text-slate-600">
+                    <th class="px-4 py-3 text-left font-semibold w-[140px]">Kode</th>
+                    <th class="px-4 py-3 text-left font-semibold">Barang</th>
+                    <th class="px-4 py-3 text-left font-semibold w-[120px]">Satuan</th>
+                    <th class="px-4 py-3 text-left font-semibold w-[160px]">Stok Digunakan</th>
+                    <th class="px-4 py-3 text-left font-semibold w-[170px]">Harga Satuan</th>
+                    <th class="px-4 py-3 text-left font-semibold w-[170px]">Jumlah</th>
+                    <th class="px-3 py-3 text-right font-semibold w-[64px]"></th>
+                  </tr>
+                  </thead>
+                  <tbody id="tbodyBarang"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {{-- ================= JASA SECTION ================= --}}
+          <div id="sectionJasa" class="space-y-4 hidden">
+            <div>
+              <p class="text-sm font-semibold text-slate-900">Detail Pelayanan / Service</p>
+              <p class="text-xs text-slate-500">Input biaya service, lalu (opsional) barang yang ditagihkan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div class="space-y-1 lg:col-span-2">
+                <label class="text-xs font-semibold text-slate-700">Nama Jasa / Service</label>
+                <input name="jasa_nama" value="{{ old('jasa_nama') }}"
+                       class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                       placeholder="Contoh: Service fan rusak" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-700">Biaya Jasa</label>
+                <input type="number" min="0" step="1" name="jasa_biaya" id="jasaBiaya"
+                       value="{{ old('jasa_biaya') }}"
+                       class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                       placeholder="0" />
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">Barang Yang Ditagihkan (Opsional)</p>
+                  <p class="text-xs text-slate-500">Kalau tidak ditagihkan, tidak perlu diinput.</p>
+                </div>
+                <button type="button" id="btnAddJasaBarang"
+                        class="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+                  <span class="text-base">＋</span> Tambah
+                </button>
+              </div>
+
+              <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="min-w-[1060px] w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr class="text-xs text-slate-600">
+                      <th class="px-4 py-3 text-left font-semibold w-[140px]">Kode</th>
+                      <th class="px-4 py-3 text-left font-semibold">Barang</th>
+                      <th class="px-4 py-3 text-left font-semibold w-[120px]">Satuan</th>
+                      <th class="px-4 py-3 text-left font-semibold w-[160px]">Stok Digunakan</th>
+                      <th class="px-4 py-3 text-left font-semibold w-[170px]">Harga Satuan</th>
+                      <th class="px-4 py-3 text-left font-semibold w-[170px]">Jumlah</th>
+                      <th class="px-3 py-3 text-right font-semibold w-[64px]"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbodyJasaBarang"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500">*Barang yang stok 0 otomatis tidak muncul di pilihan.</p>
+            </div>
+          </div>
+
+          {{-- Deskripsi + Total --}}
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Deskripsi</label>
+              <textarea name="deskripsi" rows="6"
+                        class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                        placeholder="Catatan tambahan untuk invoice...">{{ old('deskripsi') }}</textarea>
+            </div>
+
+            <div class="space-y-3">
+              <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600">Subtotal Barang</span>
+                  <span id="sumBarang" class="font-semibold text-slate-900">0</span>
+                </div>
+                <div class="flex items-center justify-between text-sm mt-2">
+                  <span class="text-slate-600">Biaya Jasa</span>
+                  <span id="sumJasa" class="font-semibold text-slate-900">0</span>
+                </div>
+                <div class="flex items-center justify-between text-sm mt-2">
+                  <span class="text-slate-600">Subtotal Keseluruhan</span>
+                  <span id="sumSubtotal" class="font-semibold text-slate-900">0</span>
+                </div>
+
+                <div class="border-t border-slate-200 my-3"></div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700">Diskon (Rp)</label>
+                    <input type="number" min="0" step="1" id="diskon"
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                           placeholder="0" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700">Pajak (%)</label>
+                    <input type="number" min="0" step="0.01" id="pajak"
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                           placeholder="0" />
+                  </div>
+                </div>
+
+                <div class="border-t border-slate-200 my-3"></div>
+
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-semibold text-slate-900">TOTAL</span>
+                  <span id="sumGrand" class="text-xl font-bold text-slate-900">0</span>
+                </div>
+
+                {{-- hidden totals --}}
+                <input type="hidden" name="subtotal_barang" id="subtotal_barang" value="0">
+                <input type="hidden" name="subtotal_jasa"   id="subtotal_jasa"   value="0">
+                <input type="hidden" name="subtotal"        id="subtotal"        value="0">
+                <input type="hidden" name="grand_total"     id="grand_total"     value="0">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <a href="/tampilan_dashboard_staff" id="btnBack"
+                   class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+                  Batal
+                </a>
+                <button type="submit" id="btnSave"
+                        class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </form>
+
+    <div data-animate class="text-xs text-slate-400 pt-2">© DPM Workshop 2025</div>
+  </div>
+</div>
+
+{{-- Toast --}}
+<div id="toast"
+     class="fixed bottom-6 right-6 z-50 hidden w-[340px] rounded-2xl border border-slate-200 bg-white/90 backdrop-blur px-4 py-3 shadow-[0_18px_48px_rgba(2,6,23,0.14)]">
+  <div class="flex items-start gap-3">
+    <div id="toastDot" class="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500"></div>
+    <div class="min-w-0">
+      <p id="toastTitle" class="text-sm font-semibold text-slate-900">Berhasil</p>
+      <p id="toastMsg" class="text-xs text-slate-600 mt-0.5">Data tersimpan.</p>
+    </div>
+    <button id="toastClose" class="ml-auto text-slate-500 hover:text-slate-800 transition" type="button" aria-label="Close">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+{{-- CONFIRM MODAL --}}
+<div id="confirmModal" class="fixed inset-0 z-[999] hidden">
+  <div id="cmOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+  <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
+    <div class="w-full max-w-[520px] rounded-2xl bg-white border border-slate-200
+                shadow-[0_30px_90px_rgba(2,6,23,0.30)] overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div id="cmTitle" class="text-lg font-semibold text-slate-900">Konfirmasi</div>
+          <div id="cmMsg"   class="text-sm text-slate-600 mt-1">—</div>
+        </div>
+        <button type="button" id="cmClose"
+                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                aria-label="Tutup">
+          <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-5">
+        <div id="cmNoteWrap" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+          <span id="cmNote">Pastikan data sudah benar.</span>
+        </div>
+        <div class="mt-4 flex justify-end gap-2">
+          <button type="button" id="cmCancel"
+                  class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+            Batal
+          </button>
+          <button type="button" id="cmOk"
+                  class="h-10 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
+            Ya
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- Inject barang list dari controller --}}
+@push('scripts')
+<script>
+  window.BARANGS = @json($barangs);
+</script>
+@endpush
+
+@endsection
+
+@push('head')
+<style>
+  [data-animate]{
+    opacity: 0; transform: translateY(14px) scale(.985); filter: blur(3px);
+    transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
+    will-change: opacity, transform, filter;
+  }
+  [data-animate].in{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  @media (prefers-reduced-motion: reduce){
+    [data-animate]{ opacity:1 !important; transform:none !important; filter:none !important; transition:none !important; }
+  }
+  .invtab{ background: transparent; color: rgba(15,23,42,.75); }
+  .invtab.is-active{ background: #0f172a; color: #fff; box-shadow: 0 10px 26px rgba(2,6,23,.18); }
+  @keyframes shake {
+    0%   { transform: translateX(0)  }
+    25%  { transform: translateX(-6px) }
+    50%  { transform: translateX(6px)  }
+    75%  { transform: translateX(-4px) }
+    100% { transform: translateX(0)  }
+  }
+  .shake{ animation: shake .28s ease; }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+// ── Animasi ──────────────────────────────────────────────────────────────────
+(function(){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;
+  const items = Array.from(document.querySelectorAll('[data-animate]'));
+  items.forEach((el, i) => { el.style.transitionDelay = (80 + i * 60) + 'ms'; });
+  requestAnimationFrame(() => { items.forEach(el => el.classList.add('in')); });
+})();
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+const toastEl    = document.getElementById('toast');
+const toastTitle = document.getElementById('toastTitle');
+const toastMsg   = document.getElementById('toastMsg');
+const toastDot   = document.getElementById('toastDot');
+let toastTimer   = null;
+
+const showToast = (title, msg, type = 'success') => {
+  if (!toastEl) return;
+  toastTitle.textContent = title;
+  toastMsg.textContent   = msg;
+  toastDot.className = 'mt-1 h-2.5 w-2.5 rounded-full ' + (type === 'success' ? 'bg-emerald-500' : 'bg-red-500');
+  toastEl.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.add('hidden'), 2600);
+};
+document.getElementById('toastClose')?.addEventListener('click', () => toastEl.classList.add('hidden'));
+
+// ── Confirm Modal ─────────────────────────────────────────────────────────────
+const cm = {
+  el: document.getElementById('confirmModal'),
+  overlay: document.getElementById('cmOverlay'),
+  title: document.getElementById('cmTitle'),
+  msg: document.getElementById('cmMsg'),
+  noteWrap: document.getElementById('cmNoteWrap'),
+  note: document.getElementById('cmNote'),
+  ok: document.getElementById('cmOk'),
+  cancel: document.getElementById('cmCancel'),
+  close: document.getElementById('cmClose'),
+  _resolver: null,
+
+  open({ title='Konfirmasi', message='—', note='', okText='Ya', cancelText='Batal', tone='neutral' } = {}){
+    if (!this.el) return Promise.resolve(false);
+    this.title.textContent = title;
+    this.msg.textContent   = message;
+    if (note) { this.noteWrap.classList.remove('hidden'); this.note.textContent = note; }
+    else       { this.noteWrap.classList.add('hidden'); }
+    this.ok.textContent     = okText;
+    this.cancel.textContent = cancelText;
+    if (tone === 'danger') {
+      this.ok.className       = 'h-10 px-5 rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition text-sm font-semibold';
+      this.noteWrap.className = 'rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700';
+    } else {
+      this.ok.className       = 'h-10 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold';
+      this.noteWrap.className = 'rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600';
+    }
+    this.el.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    return new Promise(resolve => { this._resolver = resolve; });
+  },
+
+  closeModal(result = false){
+    this.el?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    if (this._resolver) this._resolver(result);
+    this._resolver = null;
+  }
+};
+cm.overlay?.addEventListener('click',  () => cm.closeModal(false));
+cm.close?.addEventListener('click',    () => cm.closeModal(false));
+cm.cancel?.addEventListener('click',   () => cm.closeModal(false));
+cm.ok?.addEventListener('click',       () => cm.closeModal(true));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && cm.el && !cm.el.classList.contains('hidden')) cm.closeModal(false);
+});
+
+// ── Invoice Logic ─────────────────────────────────────────────────────────────
+const fmtID        = n => (isFinite(n) ? n : 0).toLocaleString('id-ID');
+const barangList   = (Array.isArray(window.BARANGS) ? window.BARANGS : [])
+                      .filter(b => Number(b?.stok ?? 0) > 0);
+
+const form         = document.getElementById('formInvoice');
+const kategoriEl   = document.getElementById('kategori');
+const tabs         = Array.from(document.querySelectorAll('.invtab'));
+const sectionBarang    = document.getElementById('sectionBarang');
+const sectionJasa      = document.getElementById('sectionJasa');
+const tbodyBarang      = document.getElementById('tbodyBarang');
+const tbodyJasaBarang  = document.getElementById('tbodyJasaBarang');
+const jasaBiaya        = document.getElementById('jasaBiaya');
+const diskon           = document.getElementById('diskon');
+const pajak            = document.getElementById('pajak');
+const sumBarang        = document.getElementById('sumBarang');
+const sumJasa          = document.getElementById('sumJasa');
+const sumSubtotal      = document.getElementById('sumSubtotal');
+const sumGrand         = document.getElementById('sumGrand');
+const h_sub_barang     = document.getElementById('subtotal_barang');
+const h_sub_jasa       = document.getElementById('subtotal_jasa');
+const h_subtotal       = document.getElementById('subtotal');
+const h_grand          = document.getElementById('grand_total');
+
+let isDirty = false;
+const markDirty = () => { isDirty = true; };
+
+form?.querySelectorAll('input, select, textarea').forEach(el => {
+  if (el.closest('#tbodyBarang') || el.closest('#tbodyJasaBarang')) return;
+  el.addEventListener('input', markDirty);
+  el.addEventListener('change', markDirty);
+});
+
+function barangOptionsHTML(){
+  if (!barangList.length) return '';
+  return barangList.map(b => `
+    <option value="${b.barang_id}"
+      data-kode="${b.kode_barang ?? ''}"
+      data-nama="${b.nama_barang ?? ''}"
+      data-satuan="${b.satuan ?? ''}"
+      data-harga="${Number(b.harga_jual ?? 0)}"
+      data-stok="${Number(b.stok ?? 0)}">
+      ${b.nama_barang ?? '-'} (stok: ${Number(b.stok ?? 0)})
+    </option>`).join('');
+}
+
+function setKategori(kat){
+  if (!kategoriEl) return;
+  kategoriEl.value = kat;
+  tabs.forEach(t => t.classList.toggle('is-active', t.dataset.invtab === kat));
+  if (kat === 'barang') { sectionBarang?.classList.remove('hidden'); sectionJasa?.classList.add('hidden'); }
+  else                  { sectionBarang?.classList.add('hidden');    sectionJasa?.classList.remove('hidden'); }
+  recalc();
+}
+tabs.forEach(t => t.addEventListener('click', () => { setKategori(t.dataset.invtab); markDirty(); }));
+
+function rowHTML(idx, prefix){
+  return `
+  <tr class="border-b border-slate-200 last:border-0">
+    <td class="px-4 py-3">
+      <input name="${prefix}[${idx}][kode]" data-kode
+             class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none" readonly />
+    </td>
+    <td class="px-4 py-3">
+      <select name="${prefix}[${idx}][barang_id]" data-barang-select required
+              class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10">
+        <option value="" selected disabled>Pilih barang</option>
+        ${barangOptionsHTML()}
+      </select>
+    </td>
+    <td class="px-4 py-3">
+      <input name="${prefix}[${idx}][satuan]" data-satuan
+             class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none" readonly />
+    </td>
+    <td class="px-4 py-3">
+      <input type="number" min="1" step="1" data-qty required disabled
+             name="${prefix}[${idx}][qty]"
+             class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+             placeholder="0"/>
+      <p class="mt-1 text-[11px] text-slate-500 hidden" data-stock-label>
+        Tersedia: <span data-max>0</span>
+      </p>
+    </td>
+    <td class="px-4 py-3">
+      <input type="number" min="0" step="1" data-price
+             name="${prefix}[${idx}][harga]"
+             class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none" readonly />
+    </td>
+    <td class="px-4 py-3">
+      <div class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm flex items-center justify-between">
+        <span class="text-slate-500">Rp</span>
+        <span data-line-total class="font-semibold text-slate-900">0</span>
+      </div>
+      <input type="hidden" data-line-hidden name="${prefix}[${idx}][total]" value="0" />
+    </td>
+    <td class="px-3 py-3 text-right">
+      <button type="button" data-remove
+              class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 transition grid place-items-center"
+              aria-label="Hapus">
+        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 13a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 11v6M14 11v6"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16"/>
+        </svg>
+      </button>
+    </td>
+  </tr>`;
+}
+
+function recalcRow(tr){
+  const qty   = Number(tr.querySelector('[data-qty]')?.value || 0);
+  const price = Number(tr.querySelector('[data-price]')?.value || 0);
+  const total = Math.max(0, qty) * Math.max(0, price);
+  tr.querySelector('[data-line-total]').textContent = fmtID(total);
+  tr.querySelector('[data-line-hidden]').value = String(total);
+}
+
+function handleTableEvents(tbody){
+  if (!tbody) return;
+
+  tbody.addEventListener('change', e => {
+    const sel = e.target.closest('[data-barang-select]');
+    if (!sel) return;
+    const tr  = sel.closest('tr');
+    const opt = sel.options[sel.selectedIndex];
+    const stok  = Number(opt?.dataset?.stok  || 0);
+    const harga = Number(opt?.dataset?.harga || 0);
+
+    tr.querySelector('[data-kode]').value   = opt?.dataset?.kode   || '';
+    tr.querySelector('[data-satuan]').value = opt?.dataset?.satuan || '';
+    tr.querySelector('[data-price]').value  = String(harga);
+
+    const qtyEl      = tr.querySelector('[data-qty]');
+    const maxEl      = tr.querySelector('[data-max]');
+    const stockLabel = tr.querySelector('[data-stock-label]');
+
+    if (maxEl)      maxEl.textContent = String(stok);
+    if (stockLabel) stockLabel.classList.remove('hidden');
+
+    if (qtyEl) {
+      qtyEl.disabled = stok <= 0;
+      qtyEl.max      = String(stok);
+      qtyEl.value    = '';
+    }
+
+    markDirty(); recalcRow(tr); recalc();
+  });
+
+  tbody.addEventListener('input', e => {
+    const qtyInput = e.target.closest('[data-qty]');
+    if (!qtyInput || qtyInput.disabled) return;
+    const tr  = qtyInput.closest('tr');
+    const max = Number(qtyInput.max || 0);
+    let qty   = Number(qtyInput.value || 0);
+    if (max > 0 && qty > max) qty = max;
+    if (qty < 0) qty = 0;
+    qtyInput.value = qty ? String(qty) : '';
+    recalcRow(tr); markDirty(); recalc();
+  });
+
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove]');
+    if (!btn) return;
+    btn.closest('tr')?.remove(); markDirty(); recalc();
+  });
+}
+
+let barangIdx     = 0;
+let jasaBarangIdx = 0;
+
+const addBarangRow     = () => { tbodyBarang?.insertAdjacentHTML('beforeend', rowHTML(barangIdx++, 'barang')); markDirty(); };
+const addJasaBarangRow = () => { tbodyJasaBarang?.insertAdjacentHTML('beforeend', rowHTML(jasaBarangIdx++, 'jasa_barang')); markDirty(); };
+
+document.getElementById('btnAddBarang')?.addEventListener('click', addBarangRow);
+document.getElementById('btnAddJasaBarang')?.addEventListener('click', addJasaBarangRow);
+
+handleTableEvents(tbodyBarang);
+handleTableEvents(tbodyJasaBarang);
+
+;[jasaBiaya, diskon, pajak].forEach(el => el?.addEventListener('input', () => { markDirty(); recalc(); }));
+
+function sumTable(tbody){
+  let sum = 0;
+  tbody?.querySelectorAll('[data-line-hidden]').forEach(h => sum += Number(h.value || 0));
+  return sum;
+}
+
+function recalc(){
+  const kategori        = kategoriEl?.value || 'barang';
+  const barangSum       = sumTable(tbodyBarang);
+  const jasaBarangSum   = sumTable(tbodyJasaBarang);
+  const jasa            = Number(jasaBiaya?.value || 0);
+  const subtotalBarangVal = kategori === 'barang' ? barangSum : jasaBarangSum;
+  const jasaVal           = kategori === 'jasa' ? Math.max(0, jasa) : 0;
+  const subtotalVal       = subtotalBarangVal + jasaVal;
+  const diskonVal         = Math.max(0, Number(diskon?.value || 0));
+  const pajakPct          = Math.max(0, Number(pajak?.value  || 0));
+  const afterDisc         = Math.max(0, subtotalVal - diskonVal);
+  const pajakVal          = Math.round(afterDisc * (pajakPct / 100));
+  const grand             = afterDisc + pajakVal;
+
+  sumBarang.textContent   = fmtID(subtotalBarangVal);
+  sumJasa.textContent     = fmtID(jasaVal);
+  sumSubtotal.textContent = fmtID(subtotalVal);
+  sumGrand.textContent    = fmtID(grand);
+
+  h_sub_barang.value = String(subtotalBarangVal);
+  h_sub_jasa.value   = String(jasaVal);
+  h_subtotal.value   = String(subtotalVal);
+  h_grand.value      = String(grand);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+setKategori(kategoriEl?.value || 'barang');
+if ((kategoriEl?.value || 'barang') === 'barang') addBarangRow();
+else addJasaBarangRow();
+recalc();
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+document.getElementById('btnReset')?.addEventListener('click', async () => {
+  const ok = await cm.open({
+    title: 'Reset form invoice?',
+    message: 'Semua data yang sudah kamu input akan dihapus.',
+    note: 'Tindakan ini tidak bisa dibatalkan.',
+    okText: 'Ya, Reset', cancelText: 'Batal', tone: 'danger'
+  });
+  if (!ok) return;
+  form.reset();
+  tbodyBarang.innerHTML = '';
+  tbodyJasaBarang.innerHTML = '';
+  barangIdx = 0; jasaBarangIdx = 0;
+  setKategori('barang'); addBarangRow();
+  isDirty = false; recalc();
+  showToast('Reset', 'Form dikosongkan.', 'success');
+});
+
+// ── Keluar ────────────────────────────────────────────────────────────────────
+document.getElementById('btnBack')?.addEventListener('click', async e => {
+  if (!isDirty) return;
+  e.preventDefault();
+  const href = e.currentTarget.getAttribute('href') || '/tampilan_dashboard_staff';
+  const ok = await cm.open({
+    title: 'Keluar dari halaman?',
+    message: 'Perubahan belum disimpan. Kalau keluar sekarang, data akan hilang.',
+    okText: 'Ya, Keluar', cancelText: 'Tetap di sini', tone: 'neutral'
+  });
+  if (ok) window.location.href = href;
+});
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+form?.addEventListener('submit', async e => {
+  if (form.dataset.confirmed === '1') return;
+  e.preventDefault();
+
+  const kategori = kategoriEl.value;
+
+  if (kategori === 'barang' && tbodyBarang.querySelectorAll('tr').length === 0) {
+    showToast('Gagal', 'Tambahkan minimal 1 item barang.', 'error'); return;
+  }
+
+  if (kategori === 'jasa' && Number(jasaBiaya?.value || 0) <= 0) {
+    jasaBiaya?.classList.add('border-red-300', 'shake');
+    setTimeout(() => jasaBiaya?.classList.remove('shake'), 300);
+    showToast('Gagal', 'Biaya jasa wajib diisi untuk kategori Jasa.', 'error'); return;
+  }
+
+  const ok = await cm.open({
+    title: 'Simpan invoice?',
+    message: 'Invoice akan disimpan sesuai data yang kamu input.',
+    note: 'Pastikan item dan jumlah sudah benar.',
+    okText: 'Ya, Simpan', cancelText: 'Batal', tone: 'neutral'
+  });
+
+  if (!ok) return;
+  form.dataset.confirmed = '1';
+  isDirty = false;
+  form.submit();
+});
+</script>
+@endpush

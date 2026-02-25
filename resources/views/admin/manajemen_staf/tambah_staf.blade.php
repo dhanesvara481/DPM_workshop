@@ -1,7 +1,7 @@
 {{-- resources/views/admin/manajemen_staf/tambah_staf.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Tambah Staf - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 
