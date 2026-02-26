@@ -24,20 +24,23 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="{{ route('riwayat_transaksi') }}"
-         class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
-                border border-slate-200 bg-white hover:bg-slate-50 transition">
-        Kembali
-      </a>
-
-      <button type="button"
-              class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              title="Notifikasi">
+      <a href="{{ route('tampilan_notifikasi') }}"
+         class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         title="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
         </svg>
-      </button>
+      </a>
+
+        <a href="{{ route('riwayat_transaksi') }}"
+         class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
+                border border-slate-200 bg-white hover:bg-slate-50 transition">
+        <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Kembali
+      </a>
     </div>
   </div>
 </header>
@@ -130,7 +133,7 @@
             </div>
             <div class="min-w-0">
               <div class="font-semibold text-slate-900 truncate">{{ $nama ?: 'User' }}</div>
-              <div class="text-xs text-slate-500 truncate">Metode: <span class="font-semibold text-slate-700">{{ $metode }}</span></div>
+              <div class="text-xs text-slate-500 truncate">Customer</div>
             </div>
           </div>
 
@@ -158,7 +161,7 @@
               <span class="font-semibold text-slate-900">{{ $statusUI['label'] }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <span class="text-slate-500">Metode</span>
+              <span class="text-slate-500">Kategori</span>
               <span class="font-semibold text-slate-900">{{ $metode }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">

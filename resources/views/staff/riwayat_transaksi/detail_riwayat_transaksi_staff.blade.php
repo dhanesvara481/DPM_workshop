@@ -148,7 +148,7 @@
             <div class="min-w-0">
               <div class="font-semibold text-slate-900 truncate">{{ $nama ?: 'User' }}</div>
               <div class="text-xs text-slate-500 truncate">
-                Metode: <span class="font-semibold text-slate-700">{{ $metode }}</span>
+                Customer
               </div>
             </div>
           </div>
@@ -177,8 +177,8 @@
               <span class="font-semibold text-slate-900">{{ $statusUI['label'] }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <span class="text-slate-500">Metode</span>
-              <span class="font-semibold text-slate-900">{{ $metode }}</span>
+              <span class="text-slate-500">Kategori</span>
+              <span class="font-semibold text-slate-900">{{ $tipe_transaksi }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">
               <span class="text-slate-500">Catatan</span>

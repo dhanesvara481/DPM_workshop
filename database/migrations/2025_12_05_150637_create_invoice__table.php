@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('subtotal', 12,2);
             $table->decimal('subtotal_barang', 12,2);
             $table->decimal('biaya_jasa', 12,2);
+            $table->enum('status', ['Pending', 'Paid'])->default('Pending');
             $table->timestamps();
         });
     }

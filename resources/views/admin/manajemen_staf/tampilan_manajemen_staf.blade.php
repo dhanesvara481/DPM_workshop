@@ -31,9 +31,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
                 </svg>
             </a>
-            <span class="h-10 px-4 rounded-xl border border-slate-200 bg-white grid place-items-center text-sm font-semibold">
-                {{ now()->format('d M Y') }}
-            </span>
         </div>
     </div>
 </header>
@@ -193,7 +190,9 @@
                                             @if($isAktif)
                                                 {{-- DB status = 'aktif' → tombol Nonaktifkan (merah) --}}
                                                 <button type="button"
-                                                        class="btnToggleStatus inline-flex h-9 items-center justify-center px-3 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition text-xs font-semibold whitespace-nowrap"
+                                                        class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
+                                                                border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition
+                                                                text-xs font-semibold whitespace-nowrap"
                                                         data-id="{{ $staf->user_id }}"
                                                         data-action="nonaktifkan"
                                                         data-nama="{{ $staf->username }}">
@@ -202,7 +201,9 @@
                                             @else
                                                 {{-- DB status = 'nonaktif' → tombol Aktifkan (hijau) --}}
                                                 <button type="button"
-                                                        class="btnToggleStatus inline-flex h-9 items-center justify-center px-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition text-xs font-semibold whitespace-nowrap"
+                                                        class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
+                                                                border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition
+                                                                text-xs font-semibold whitespace-nowrap"
                                                         data-id="{{ $staf->user_id }}"
                                                         data-action="aktifkan"
                                                         data-nama="{{ $staf->username }}">

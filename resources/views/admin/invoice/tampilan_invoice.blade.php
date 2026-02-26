@@ -54,8 +54,15 @@
   <div class="max-w-[1280px] mx-auto w-full space-y-6">
 
     @if(session('success'))
-      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-        {{ session('success') }}
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5 text-emerald-900" data-animate>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold">Invoice berhasil dibuat</div>
+            <div class="text-xs text-emerald-800 mt-0.5">
+              Tekan <span class="font-semibold">Lanjut</span> untuk menuju halaman konfirmasi invoice.
+            </div>
+          </div>
+        </div>
       </div>
     @endif
 
@@ -121,16 +128,27 @@
           {{-- Customer info --}}
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="space-y-1 lg:col-span-2">
-              <label class="text-xs font-semibold text-slate-700">Nama Pelanggan (opsional)</label>
-              <input name="nama_pelanggan" value="{{ old('nama_pelanggan') }}"
-                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                     placeholder="Contoh: Budi" />
+              <label class="text-xs font-semibold text-slate-700">Nama Pelanggan <span class="text-red-500">*</span>
+              </label>
+              <input name="nama_pelanggan"
+                    value="{{ old('nama_pelanggan') }}"
+                    required
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                    placeholder="Contoh: Budi" />
             </div>
             <div class="space-y-1">
-              <label class="text-xs font-semibold text-slate-700">Kontak Pelanggan (opsional)</label>
-              <input name="kontak" value="{{ old('kontak') }}"
-                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                     placeholder="08xxxxxxxxxx" />
+              <label class="text-xs font-semibold text-slate-700">
+                Kontak Pelanggan <span class="text-red-500">*</span>
+              </label>
+              <input name="kontak"
+                    value="{{ old('kontak') }}"
+                    required
+                    inputmode="numeric"
+                    maxlength="15"
+                    pattern="^08[0-9]{8,13}$"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,15)"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                    placeholder="08xxxxxxxxxx" />
             </div>
           </div>
 
@@ -179,12 +197,32 @@
                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                        placeholder="Contoh: Service fan rusak" />
               </div>
+             {{-- Biaya Jasa (Rupiah formatted) --}}
               <div class="space-y-1">
                 <label class="text-xs font-semibold text-slate-700">Biaya Jasa</label>
-                <input type="number" min="0" step="1" name="jasa_biaya" id="jasaBiaya"
-                       value="{{ old('jasa_biaya') }}"
-                       class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                       placeholder="0" />
+
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">Rp</span>
+
+                  {{-- input tampilan --}}
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    id="jasaBiayaDisplay"
+                    value="{{ old('jasa_biaya') ? number_format((int)old('jasa_biaya'),0,',','.') : '' }}"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
+                    placeholder="0"
+                    autocomplete="off"
+                  />
+
+                  {{-- input asli yang dikirim --}}
+                  <input
+                    type="hidden"
+                    name="jasa_biaya"
+                    id="jasaBiaya"
+                    value="{{ old('jasa_biaya', 0) }}"
+                  />
+                </div>
               </div>
             </div>
 
@@ -436,7 +474,8 @@ const sectionBarang=document.getElementById('sectionBarang');
 const sectionJasa=document.getElementById('sectionJasa');
 const tbodyBarang=document.getElementById('tbodyBarang');
 const tbodyJasaBarang=document.getElementById('tbodyJasaBarang');
-const jasaBiaya=document.getElementById('jasaBiaya');
+const jasaBiaya = document.getElementById('jasaBiaya'); // hidden (angka asli)
+const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay'); // input tampilan Rp
 const diskon=document.getElementById('diskon');
 const pajak=document.getElementById('pajak');
 const sumBarang=document.getElementById('sumBarang');
@@ -494,12 +533,17 @@ function rowHTML(idx,prefix){
       <input name="${prefix}[${idx}][satuan]" data-satuan
              class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none" readonly/>
     </td>
-    <td class="px-4 py-3">
-      <input type="number" min="1" step="1" data-qty disabled
-             name="${prefix}[${idx}][qty]"
-             class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-             placeholder="0"/>
-      <p class="mt-1 text-[11px] text-slate-500 hidden" data-stock-label>Tersedia: <span data-max>0</span></p>
+   <td class="px-4 py-3 align-middle">
+      <div class="flex items-center gap-3">
+        <input type="number" min="1" step="1" data-qty disabled
+              name="${prefix}[${idx}][qty]"
+              class="h-10 w-[120px] rounded-xl border border-slate-200 bg-white px-3 text-sm text-center outline-none focus:ring-2 focus:ring-slate-900/10 appearance-none"
+              placeholder="0"/>
+
+        <span class="text-[11px] text-slate-500 hidden" data-stock-label>
+          Tersedia: <span data-max>0</span>
+        </span>
+      </div>
       <p class="mt-1 text-[11px] text-red-500 hidden" data-stok-error></p>
     </td>
     <td class="px-4 py-3">
@@ -536,6 +580,25 @@ function recalcRow(tr){
   tr.querySelector('[data-line-hidden]').value=String(total);
 }
 
+/**
+ * NEW: Disable option yang sudah dipilih di row lain (per tbody).
+ * - Item yang sudah kepilih di row lain => option jadi disabled
+ * - Row yang sedang memegang value itu sendiri tetap boleh (tidak di-disable)
+ */
+function syncSelectedOptions(tbody){
+  const selects = Array.from(tbody.querySelectorAll('select[data-barang-select]'));
+  const picked = new Set(selects.map(s => s.value).filter(v => v && v !== ''));
+
+  selects.forEach(sel => {
+    const myValue = sel.value;
+    Array.from(sel.options).forEach(opt => {
+      const v = opt.value;
+      if(!v) return; // skip placeholder/empty
+      opt.disabled = picked.has(v) && v !== myValue;
+    });
+  });
+}
+
 function handleTableEvents(tbody){
   tbody.addEventListener('change',e=>{
     const sel=e.target.closest('[data-barang-select]');
@@ -568,6 +631,10 @@ function handleTableEvents(tbody){
       qtyEl.value='';
       qtyEl.classList.remove('border-red-300');
     }
+
+    // NEW: update disable option setelah memilih
+    syncSelectedOptions(tbody);
+
     markDirty(); recalcRow(tr); recalc();
   });
 
@@ -590,19 +657,58 @@ function handleTableEvents(tbody){
     const btn=e.target.closest('[data-remove]');
     if(!btn)return;
     btn.closest('tr')?.remove();
+
+    // NEW: update disable option setelah remove row
+    syncSelectedOptions(tbody);
+
     markDirty(); recalc();
   });
 }
 
 let barangIdx=0,jasaBarangIdx=0;
-function addBarangRow(){tbodyBarang.insertAdjacentHTML('beforeend',rowHTML(barangIdx++,'barang'));markDirty();}
-function addJasaBarangRow(){tbodyJasaBarang.insertAdjacentHTML('beforeend',rowHTML(jasaBarangIdx++,'jasa_barang'));markDirty();}
+
+function addBarangRow(){
+  tbodyBarang.insertAdjacentHTML('beforeend',rowHTML(barangIdx++,'barang'));
+  markDirty();
+
+  // NEW
+  syncSelectedOptions(tbodyBarang);
+}
+
+function addJasaBarangRow(){
+  tbodyJasaBarang.insertAdjacentHTML('beforeend',rowHTML(jasaBarangIdx++,'jasa_barang'));
+  markDirty();
+
+  // NEW
+  syncSelectedOptions(tbodyJasaBarang);
+}
 
 document.getElementById('btnAddBarang')?.addEventListener('click',addBarangRow);
 document.getElementById('btnAddJasaBarang')?.addEventListener('click',addJasaBarangRow);
 handleTableEvents(tbodyBarang);
 handleTableEvents(tbodyJasaBarang);
-;[jasaBiaya,diskon,pajak].forEach(el=>el?.addEventListener('input',()=>{markDirty();recalc();}));
+const onlyDigits = (s) => (s || '').toString().replace(/[^\d]/g,'');
+const formatID = (n) => (isFinite(n) ? n : 0).toLocaleString('id-ID');
+
+function syncJasaBiayaFromDisplay(){
+  if(!jasaBiayaDisplay || !jasaBiaya) return;
+  const raw = onlyDigits(jasaBiayaDisplay.value);
+  const num = raw ? parseInt(raw, 10) : 0;
+
+  jasaBiaya.value = String(num);                  // yang dikirim ke server
+  jasaBiayaDisplay.value = raw ? formatID(num) : ''; // yang kelihatan di UI
+  markDirty();
+  recalc();
+}
+
+jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
+jasaBiayaDisplay?.addEventListener('blur', syncJasaBiayaFromDisplay);
+
+// diskon & pajak tetap seperti biasa
+;[diskon,pajak].forEach(el=>el?.addEventListener('input',()=>{markDirty();recalc();}));
+
+// init kalau ada old value
+syncJasaBiayaFromDisplay();
 
 function sumTable(tbody){
   let sum=0;
@@ -675,9 +781,13 @@ function tandaiBarisProblem(items,errorMessages){
 
 // INIT
 setKategori(kategoriEl.value||'barang');
-if((kategoriEl.value||'barang')==='barang')addBarangRow();
+if((kategoriEl.value||'barang')==='barang') addBarangRow();
 else addJasaBarangRow();
 recalc();
+
+// NEW: pastikan state option sync sejak awal
+syncSelectedOptions(tbodyBarang);
+syncSelectedOptions(tbodyJasaBarang);
 
 // RESET
 document.getElementById('btnReset')?.addEventListener('click',async()=>{
@@ -689,6 +799,11 @@ document.getElementById('btnReset')?.addEventListener('click',async()=>{
   barangIdx=0;jasaBarangIdx=0;
   setKategori('barang');addBarangRow();
   isDirty=false;recalc();
+
+  // NEW
+  syncSelectedOptions(tbodyBarang);
+  syncSelectedOptions(tbodyJasaBarang);
+
   showToast('Reset','Form dikosongkan.','success');
 });
 
@@ -709,6 +824,30 @@ form?.addEventListener('submit',async e=>{
   e.preventDefault();
 
   const kategori=kategoriEl.value;
+
+  const nama = form.querySelector('[name="nama_pelanggan"]');
+  const kontak = form.querySelector('[name="kontak"]');
+
+  if(!nama?.value.trim()){
+    showToast('Gagal','Nama pelanggan wajib diisi.','error');
+    nama?.classList.add('border-red-300','shake');
+    setTimeout(()=>nama?.classList.remove('shake'),300);
+    return;
+  }
+
+  if(!kontak?.value.trim()){
+    showToast('Gagal','Kontak pelanggan wajib diisi.','error');
+    kontak?.classList.add('border-red-300','shake');
+    setTimeout(()=>kontak?.classList.remove('shake'),300);
+    return;
+  }
+
+  if(!/^08[0-9]{8,13}$/.test(kontak.value.trim())){
+    showToast('Gagal','Kontak harus angka, diawali 08, panjang 10–15 digit.','error');
+    kontak.classList.add('border-red-300','shake');
+    setTimeout(()=>kontak.classList.remove('shake'),300);
+    return;
+  }
 
   // ---- Validasi kategori BARANG ----
   if(kategori==='barang'){

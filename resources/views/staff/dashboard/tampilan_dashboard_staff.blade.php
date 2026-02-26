@@ -1,7 +1,7 @@
 @extends('staff.layout.app')
 
 @section('page_title', 'Dashboard')
-@section('page_subtitle', 'Staf')
+@section('page_subtitle', 'Staff')
 
 @section('content')
 
@@ -157,6 +157,39 @@
         </div>
       </div>
 
+    </div>
+
+     {{-- KONFIRMASI INVOICE (FULL WIDTH BANNER) --}}
+    <div data-animate>
+      <a href="{{ route('tampilan_konfirmasi_invoice_staff') }}"
+        class="group block rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
+                shadow-[0_16px_44px_rgba(2,6,23,0.08)]
+                p-5 sm:p-6 hover:shadow-[0_22px_60px_rgba(2,6,23,0.12)] transition">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="min-w-0">
+            <p class="text-sm text-slate-500">Invoice</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">Konfirmasi Invoice</p>
+            <p class="text-sm text-slate-500 mt-1">
+              Konfirmasi invoice dari user (Not Paid → Paid).
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center border border-emerald-200">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4"/>
+                <path stroke-linecap="round" stroke-linejoin="round"d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+              </svg>
+            </div>
+
+            <span class="inline-flex items-center justify-center h-11 px-5 rounded-2xl
+                        border border-slate-200 bg-white group-hover:bg-slate-50 transition
+                        text-sm font-semibold text-slate-900">
+              Lihat & konfirmasi →
+            </span>
+          </div>
+        </div>
+      </a>
     </div>
 
     {{-- JADWAL KERJA --}}

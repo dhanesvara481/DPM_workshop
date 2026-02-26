@@ -11,6 +11,7 @@ class Invoice extends Model
 
     public $timestamps = false;
 
+    // Daftar atribut yang dapat diisi secara massal
     protected $fillable = [
         'user_id',
         'tanggal_invoice',
@@ -19,13 +20,14 @@ class Invoice extends Model
         'biaya_jasa',
     ];
 
+    // Formating atribut untuk kemudahan penggunaan
     protected $casts = [
         'tanggal_invoice' => 'date',
         'subtotal'        => 'decimal:2',
         'subtotal_barang' => 'decimal:2',
         'biaya_jasa'      => 'decimal:2',
     ];
-
+    
     public function getTotalAttribute(): float
     {
         return (float) $this->subtotal;
@@ -35,7 +37,8 @@ class Invoice extends Model
     {
         return $this->user?->username ?? $this->user?->nama ?? $this->user?->name ?? 'User';
     }
-
+    
+    // 
     public function items()
     {
         return $this->hasMany(InvoiceItem::class, 'invoice_id', 'invoice_id');

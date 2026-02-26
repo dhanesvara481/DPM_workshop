@@ -71,7 +71,7 @@
                             <div class="relative text-center px-6">
                                 <div class="mx-auto w-[220px] h-[220px] md:w-[260px] md:h-[260px]">
                                     <img
-                                        src="{{ asset('images/logo.png') }}"
+                                        src="{{ asset('asset/DPM Workshop Logo.jpeg') }}"
                                         alt="Logo DPW Workshop"
                                         class="w-full h-full object-contain drop-shadow-[0_22px_55px_rgba(0,0,0,0.35)]"
                                     >

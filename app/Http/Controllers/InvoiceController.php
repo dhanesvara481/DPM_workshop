@@ -48,6 +48,43 @@ class InvoiceController extends Controller
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
 
+    public function getTampilanKonfirmasi(Request $request)
+    {
+        $q = $request->get('q');
+        $status = $request->get('status', 'Pending'); // default tampilkan Pending
+
+       $invoices = Invoice::query()
+        ->where('status', 'Pending') // FIX: hanya pending
+        ->when($q, function ($qq) use ($q) {
+            $qq->where(function ($sub) use ($q) {
+                $sub->where('invoice_number', 'like', "%{$q}%")
+                    ->orWhere('customer_name', 'like', "%{$q}%");
+            });
+        })
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+        $pendingCount = Invoice::where('status', 'Pending')->count();
+
+        return view('admin.invoice.konfirmasi_invoice', compact('invoices', 'pendingCount', 'q', 'status'));
+    }
+
+    public function tandaKonfirmasi(Request $request, Invoice $invoice)
+    {
+        // Guard: hanya boleh dari Pending -> Paid
+        if ($invoice->status !== 'Pending') {
+            return back()->with('error', 'Invoice ini sudah dikonfirmasi / status bukan Pending.');
+        }
+
+        $invoice->status = 'Paid';
+        $invoice->paid_at = now(); // kalau kamu punya kolom paid_at (opsional)
+        $invoice->save();
+
+        return back()->with('success', 'Invoice berhasil dikonfirmasi.');
+    }
+
+
     // ── Staff ────────────────────────────────────────────────────────────────
 
     public function getTampilanInvoiceStaff()
@@ -59,6 +96,42 @@ class InvoiceController extends Controller
         return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
     }
 
+    public function getTampilanKonfirmasiStaff(Request $request)
+    {
+        $q = $request->get('q');
+        $status = $request->get('status', 'Pending'); // default tampilkan Pending
+
+        $invoices = Invoice::query()
+            ->when($status, fn($qq) => $qq->where('status', $status))
+            ->when($q, function ($qq) use ($q) {
+                $qq->where(function ($sub) use ($q) {
+                    $sub->where('invoice_number', 'like', "%{$q}%")
+                        ->orWhere('customer_name', 'like', "%{$q}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $pendingCount = Invoice::where('status', 'Pending')->count();
+
+        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'pendingCount', 'q', 'status'));
+    }
+
+    public function tandaKonfirmasiStaff(Request $request, Invoice $invoice)
+    {
+        // Guard: hanya boleh dari Pending -> Paid
+        if ($invoice->status !== 'Pending') {
+            return back()->with('error', 'Invoice ini sudah dikonfirmasi / status bukan Pending.');
+        }
+
+        $invoice->status = 'Paid';
+        $invoice->paid_at = now(); // kalau kamu punya kolom paid_at (opsional)
+        $invoice->save();
+
+        return back()->with('success', 'Invoice berhasil dikonfirmasi menjadi Paid.');
+    }
+
     // ── Store (dipakai admin & staff) ────────────────────────────────────────
 
     public function store(Request $request)
@@ -67,6 +140,8 @@ class InvoiceController extends Controller
             'tanggal_invoice' => 'required|date',
             'kategori'        => 'required|in:barang,jasa',
             'grand_total'     => 'required|numeric|min:0',
+            'nama_pelanggan'  => 'required|string|max:255',
+            'kontak'          => ['required','regex:/^08[0-9]{8,13}$/'],
         ]);
 
         DB::beginTransaction();
@@ -125,12 +200,14 @@ class InvoiceController extends Controller
             $role = auth()->user()->role;
 
             if ($role === 'staff') {
-                return redirect()->route('tampilan_invoice_staff')
-                    ->with('success', 'Invoice berhasil disimpan.');
+                return redirect()->route('tampilan_konfirmasi_invoice_staff')
+                    ->with('success', 'Invoice berhasil disimpan.')
+                    ->with('last_invoice', $invoice->invoice_number ?? ('INV-'.$invoice->invoice_id));
             }
 
-            return redirect()->route('tampilan_invoice')
-                ->with('success', 'Invoice berhasil disimpan.');
+            return redirect()->route('tampilan_konfirmasi_invoice')
+                ->with('success', 'Invoice berhasil disimpan.')
+                ->with('last_invoice', $invoice->invoice_number ?? ('INV-'.$invoice->invoice_id));
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -19,8 +19,10 @@
   {{-- HEADER --}}
   <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
     <div class="flex items-center gap-3">
-      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-        <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+     <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden">
+        <img src="{{ asset('asset/DPM Workshop Logo.jpeg') }}"
+            class="w-full h-full object-cover"
+            alt="Logo">
       </div>
       <div class="leading-tight">
         <p class="font-semibold tracking-tight">DPM Workshop</p>
@@ -41,8 +43,11 @@
 
     {{-- PROFILE — $username & $role diisi oleh View Composer di AppServiceProvider --}}
     <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-      <div class="h-10 w-10 rounded-full bg-white/10 border border-white/15 grid place-items-center">
-        <svg class="h-5 w-5 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="h-10 w-10 rounded-full 
+            bg-gradient-to-br from-blue-500 to-indigo-600
+            border border-white/20 
+            grid place-items-center shadow-md">
+        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 10-16 0"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a4 4 0 100-8 4 4 0 000 8z"/>
         </svg>
@@ -85,7 +90,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v10"/>
             </svg>
           </span>
-          Barang
+          Stok Realtime
         </a>
       </div>
 

@@ -10,8 +10,10 @@
   {{-- HEADER --}}
   <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
     <div class="flex items-center gap-3">
-      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 grid place-items-center overflow-hidden">
-        <img src="{{ asset('images/logo.png') }}" class="h-7 w-7 object-contain" alt="Logo">
+      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden">
+        <img src="{{ asset('asset/DPM Workshop Logo.jpeg') }}"
+            class="w-full h-full object-cover"
+            alt="Logo">
       </div>
       <div class="leading-tight">
         <p class="font-semibold tracking-tight">DPM Workshop</p>
@@ -32,7 +34,17 @@
   <div class="px-5 py-5">
     {{-- Profile --}}
     <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-      <div class="h-10 w-10 rounded-full bg-white/10 border border-white/15"></div>
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 
+            border border-white/20 grid place-items-center shadow-lg">
+        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <!-- Kepala -->
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 14a4 4 0 10-6 0m6 0a6 6 0 016 6H3a6 6 0 016-6m6 0H9"/>
+          <!-- Mahkota -->
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M5 6l3 3 4-4 4 4 3-3 1 6H4l1-6z"/>
+        </svg>
+      </div>
       <div class="min-w-0">
         <p class="text-sm font-medium truncate">{{ $username ?? 'User' }}</p>
         <p class="text-[11px] text-white/60">{{ $role ?? 'Admin' }}</p>

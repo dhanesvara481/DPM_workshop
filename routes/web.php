@@ -146,6 +146,15 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [InvoiceController::class, 'destroy']
         )->name('invoice.destroy');
 
+        // Konfirmasi Invoice
+        Route::prefix('admin')->middleware(['auth'])->group(function () {
+            Route::get('/konfirmasi_invoice', [InvoiceController::class, 'getTampilanKonfirmasi'])
+                ->name('tampilan_konfirmasi_invoice');
+
+            Route::patch('/konfirmasi_invoice/{invoice}/paid', [InvoiceController::class, 'tandaKonfirmasi'])
+                ->name('konfirmasi_invoice_tanda_konfirmasi');
+        });
+
         //============== Laporan =================//
         Route::get('/laporan_penjualan',
             [LaporanPenjualanController::class, 'getLaporanPenjualan']
@@ -254,6 +263,12 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::get('/tampilan_invoice_staff',
             [InvoiceController::class, 'getTampilanInvoiceStaff']
         )->name('tampilan_invoice_staff');
+
+        Route::get('/staff/konfirmasi-invoice', [InvoiceController::class, 'getTampilanKonfirmasiStaff'])
+            ->name('tampilan_konfirmasi_invoice_staff');
+
+        Route::patch('/staff/konfirmasi-invoice/{invoice}/paid', [InvoiceController::class, 'tandaKonfirmasiStaff'])
+            ->name('konfirmasi_invoice_tanda_konfirmasi_staff');
 
         Route::get('/stok_realtime_staff',
             [StokRealtimeController::class, 'getStokRealtimeStaff']
