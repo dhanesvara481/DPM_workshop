@@ -2,63 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Notifikasi;
 
 class NotifikasiController extends Controller
 {
-     public function getTampilanNotifikasi()
+    public function getTampilanNotifikasi()
     {
-        //View barang_masuk
-        return view('admin.notifikasi.tampilan_notifikasi', [
-        'notifikasis' => [],
-    ]);
+        $notifs = Notifikasi::orderBy('tanggal_dibuat', 'desc')->get();
+
+        return view('admin.notifikasi.tampilan_notifikasi', compact('notifs'));
     }
 
-     public function getDetailNotifikasi($id)
+    public function getDetailNotifikasi($id)
     {
-        //View detail notifikasi
-        return view('admin.notifikasi.detail_notifikasi', [
-        'notifikasi' => null,
-    ]);
-    }
+        $notif = Notifikasi::findOrFail($id);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return view('admin.notifikasi.detail_notifikasi', compact('notif'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\JadwalKerja;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,8 +19,10 @@ class JadwalKerjaController extends Controller
             ->get();
 
         $events = [];
+
         foreach ($rawEvents as $j) {
             $key = $j->tanggal_kerja->format('Y-m-d');
+
             $events[$key][] = [
                 'id'     => $j->jadwal_id,
                 'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
@@ -78,7 +81,9 @@ class JadwalKerjaController extends Controller
 
         $users = User::orderBy('username')->get(['user_id', 'username']);
 
-        return view('admin.jadwal_kerja.ubah_jadwal_kerja', compact('jadwalKerjas', 'users', 'date'));
+        return view('admin.jadwal_kerja.ubah_jadwal_kerja',
+            compact('jadwalKerjas', 'users', 'date')
+        );
     }
 
     public function perbaruiJadwalKerja(Request $request, $id)
@@ -112,7 +117,9 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
-        return view('admin.jadwal_kerja.hapus_jadwal_kerja', compact('jadwalKerjas', 'date'));
+        return view('admin.jadwal_kerja.hapus_jadwal_kerja',
+            compact('jadwalKerjas', 'date')
+        );
     }
 
     public function hapusJadwalKerja($id)
@@ -138,6 +145,7 @@ class JadwalKerjaController extends Controller
     public function hapusSemuaTanggal(Request $request)
     {
         $date = $request->input('date');
+
         JadwalKerja::whereDate('tanggal_kerja', $date)->delete();
 
         return redirect()->route('kelola_jadwal_kerja')
@@ -153,20 +161,25 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
-        return view('admin.jadwal_kerja.tampilan_jadwal_kerja', compact('jadwalKerjas'));
+        return view('admin.jadwal_kerja.tampilan_jadwal_kerja',
+            compact('jadwalKerjas')
+        );
     }
 
-    // STAFF CONTROLLER
-     public function getJadwalKerjaStaff()
+    // ─── STAFF ───────────────────────────────────────────────────────────────
+
+    public function getJadwalKerjaStaff()
     {
         $rawEvents = JadwalKerja::with('user')
             ->orderBy('tanggal_kerja')
             ->orderBy('jam_mulai')
             ->get();
-    
+
         $events = [];
+
         foreach ($rawEvents as $j) {
             $key = $j->tanggal_kerja->format('Y-m-d');
+
             $events[$key][] = [
                 'id'     => $j->jadwal_id,
                 'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
@@ -175,15 +188,13 @@ class JadwalKerjaController extends Controller
                 'desc'   => $j->deskripsi,
             ];
         }
-    
+
         return view('staff.jadwal_kerja.jadwal_kerja_staff', [
             'events'             => $events,
             'MAX_EVENTS_PER_DAY' => 4,
         ]);
     }
-    /**
-     * Remove the specified resource from storage.
-     */
+
     public function destroy(string $id)
     {
         JadwalKerja::findOrFail($id)->delete();

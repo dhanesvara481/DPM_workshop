@@ -234,6 +234,10 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [NotifikasiController::class, 'getDetailNotifikasi']
         )->name('detail_notifikasi');
 
+        Route::get('/tampilan_notifikasi', [NotifikasiController::class, 'getTampilanNotifikasi'])->name('tampilan_notifikasi');
+        
+        Route::get('/detail_notifikasi/{id}', [NotifikasiController::class, 'getDetailNotifikasi'])->name('detail_notifikasi');
+
     });
 
     /*

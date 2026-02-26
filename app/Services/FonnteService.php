@@ -3,58 +3,41 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class FonnteService
 {
     private string $token;
+    private string $url;
 
     public function __construct()
     {
-        $this->token = env('FONNTE_TOKEN', '');
+        $this->token = env('FONNTE_TOKEN');
+        $this->url   = 'https://api.fonnte.com/send';
     }
 
-    public function sendText(string $phone, string $message): bool
+    public function sendText(string $target, string $message): bool
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $this->token,
-            ])
-            ->timeout(15)
-            ->post('https://api.fonnte.com/send', [
-                'target'  => $phone,
-                'message' => $message,
-            ]);
+        // Normalisasi nomor
+        $target = $this->formatNomor($target);
 
-            $body = $response->json();
+        $response = Http::withHeaders([
+            'Authorization' => $this->token
+        ])->asForm()->post($this->url, [
+            'target'  => $target,
+            'message' => $message,
+        ]);
 
-            if (!($body['status'] ?? false)) {
-                Log::warning('Fonnte gagal', [
-                    'phone'  => $phone,
-                    'reason' => $body['reason'] ?? 'unknown',
-                ]);
-                return false;
-            }
-
-            Log::info('Fonnte sukses', ['phone' => $phone]);
-            return true;
-
-        } catch (\Throwable $e) {
-            Log::error('Fonnte exception', [
-                'phone'   => $phone,
-                'message' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        return $response->successful();
     }
 
-    public function sendBulk(array $phones, string $message): array
+    private function formatNomor($nomor)
     {
-        $results = [];
-        foreach ($phones as $phone) {
-            $results[$phone] = $this->sendText($phone, $message);
-            usleep(500_000);
+        $nomor = preg_replace('/[^0-9]/', '', $nomor);
+
+        if (substr($nomor, 0, 1) === '0') {
+            $nomor = '62' . substr($nomor, 1);
         }
-        return $results;
+
+        return $nomor;
     }
 }

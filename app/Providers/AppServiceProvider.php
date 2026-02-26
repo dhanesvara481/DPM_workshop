@@ -5,6 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use App\Models\JadwalKerja;
+use App\Observers\JadwalKerjaObserver;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,7 +29,11 @@ class AppServiceProvider extends ServiceProvider
                     'username' => $user?->username ?? 'User',
                     'role'     => $user?->role     ?? 'Staff',
                 ]);
+
+                JadwalKerja::observe(JadwalKerjaObserver::class);
             }
         );
     }
+
+    
 }
