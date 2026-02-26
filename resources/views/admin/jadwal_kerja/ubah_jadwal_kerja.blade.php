@@ -66,8 +66,8 @@
         'user_id'     => $j->user_id,
         'title'       => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
         'status'      => strtolower($j->status),
-        'jam_mulai'   => substr($j->jam_mulai, 0, 5),
-        'jam_selesai' => substr($j->jam_selesai, 0, 5),
+        'jam_mulai'   => substr($j->jam_mulai ?? '', 0, 5),
+        'jam_selesai' => substr($j->jam_selesai ?? '', 0, 5),
         'waktu_shift' => $j->waktu_shift,
         'deskripsi'   => $j->deskripsi,
       ])->toArray();
@@ -96,9 +96,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="min-w-0">
             <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Form Ubah Jadwal</div>
-            <div class="text-xs text-slate-500 mt-1">
-              Step 1: pilih jadwal yang mau diubah. Step 2: edit form lalu simpan.
-            </div>
+            <div class="text-xs text-slate-500 mt-1">Step 1: pilih jadwal yang mau diubah. Step 2: edit form lalu simpan.</div>
           </div>
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center gap-2 text-xs text-slate-600">
@@ -141,7 +139,9 @@
                         $st       = strtolower($j['status'] ?? 'aktif');
                         $badge    = strtoupper($st);
                         $title    = $j['title'] ?? 'Jadwal';
-                        $range    = trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . $j['jam_selesai'] : ''));
+                        $range    = ($st !== 'tutup')
+                          ? trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . $j['jam_selesai'] : ''))
+                          : '';
                         $rangeTxt = $range ? " • {$range}" : '';
                       @endphp
                       <option value="{{ $j['id'] }}"
@@ -151,8 +151,8 @@
                               data-status="{{ $st }}"
                               data-tanggal="{{ $j['tanggal'] ?? $date }}"
                               data-user_id="{{ $j['user_id'] ?? '' }}"
-                              data-jam_mulai="{{ $j['jam_mulai'] ?? '' }}"
-                              data-jam_selesai="{{ $j['jam_selesai'] ?? '' }}"
+                              data-jam_mulai="{{ $st !== 'tutup' ? ($j['jam_mulai'] ?? '') : '' }}"
+                              data-jam_selesai="{{ $st !== 'tutup' ? ($j['jam_selesai'] ?? '') : '' }}"
                               data-waktu_shift="{{ $j['waktu_shift'] ?? '' }}"
                               data-deskripsi="{{ $j['deskripsi'] ?? '' }}">
                         [{{ $badge }}] {{ $title }}{{ $rangeTxt }}
@@ -236,17 +236,14 @@
                       </option>
                     @endforeach
                   </select>
-                  {{-- Ikon kunci — muncul saat terkunci --}}
-                  <span id="lockIcon"
-                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <span id="lockIcon" class="hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                   </span>
                 </div>
-                <p class="text-[11px] mt-1 transition-colors" id="userSelectHint"
-                   style="color:#64748b">Pilih admin/staff yang dijadwalkan.</p>
+                <p class="text-[11px] mt-1" id="userSelectHint" style="color:#64748b">Pilih admin/staff yang dijadwalkan.</p>
               </div>
 
               {{-- Tanggal --}}
@@ -258,18 +255,20 @@
                 <p class="text-[11px] text-slate-500 mt-1">Bisa diubah bila jadwal pindah hari.</p>
               </div>
 
-              {{-- Jam Mulai --}}
-              <div>
+              {{-- Jam Mulai — disembunyikan saat status Tutup --}}
+              <div id="jamMulaiWrapper" @if(strtolower($prefillStatus) === 'tutup') style="display:none" @endif>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Jam Mulai</label>
-                <input type="time" name="jam_mulai" id="jamMulaiInput" value="{{ $prefillMulai }}"
+                <input type="time" name="jam_mulai" id="jamMulaiInput"
+                       value="{{ strtolower($prefillStatus) === 'tutup' ? '' : $prefillMulai }}"
                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
               </div>
 
-              {{-- Jam Selesai --}}
-              <div>
+              {{-- Jam Selesai — disembunyikan saat status Tutup --}}
+              <div id="jamSelesaiWrapper" @if(strtolower($prefillStatus) === 'tutup') style="display:none" @endif>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Jam Selesai</label>
-                <input type="time" name="jam_selesai" id="jamSelesaiInput" value="{{ $prefillSelesai }}"
+                <input type="time" name="jam_selesai" id="jamSelesaiInput"
+                       value="{{ strtolower($prefillStatus) === 'tutup' ? '' : $prefillSelesai }}"
                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
               </div>
@@ -384,7 +383,7 @@
 
 @push('head')
 <style>
-  @media (prefers-reduced-motion: reduce) { .animate-grid-scan { animation: none !important; transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .animate-grid-scan { animation: none !important; } }
   @keyframes gridScan {
     0%   { background-position: 0 0, 0 0; opacity: 0.10; }
     40%  { opacity: 0.22; }
@@ -404,88 +403,96 @@
   }
   .tip:hover::after { opacity: 1; transform: translateY(0); }
 
-  /* ✅ Visual terkunci: background abu-abu, border lebih gelap, cursor tidak-boleh */
   select.is-locked {
-    background-color: #f1f5f9 !important; /* slate-100  */
-    border-color:     #94a3b8 !important; /* slate-400  */
-    color:            #475569 !important; /* slate-600  */
+    background-color: #f1f5f9 !important;
+    border-color:     #94a3b8 !important;
+    color:            #475569 !important;
     cursor: not-allowed !important;
     pointer-events: none;
-    opacity: 1 !important;               /* teks tetap jelas, tidak pudar */
+    opacity: 1 !important;
   }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-  // ─── Data admin yang sedang login ──────────────────────────────────────────
+  // ─── Auth admin yang login ─────────────────────────────────────────────────
   const authUserId   = document.getElementById('authUserId')?.value  ?? '';
   const authUserRole = document.getElementById('authUserRole')?.value ?? '';
 
-  const userSelect     = document.getElementById('userSelect');
-  const userSelectHint = document.getElementById('userSelectHint');
-  const lockIcon       = document.getElementById('lockIcon');
+  // ─── Elemen ────────────────────────────────────────────────────────────────
+  const userSelect        = document.getElementById('userSelect');
+  const userSelectHint    = document.getElementById('userSelectHint');
+  const lockIcon          = document.getElementById('lockIcon');
+  const jamMulaiWrapper   = document.getElementById('jamMulaiWrapper');
+  const jamSelesaiWrapper = document.getElementById('jamSelesaiWrapper');
+  const jamMulaiInput     = document.getElementById('jamMulaiInput');
+  const jamSelesaiInput   = document.getElementById('jamSelesaiInput');
 
-  // ─── Kunci / buka dropdown berdasarkan status ──────────────────────────────
+  // ─── 1. Kunci / buka dropdown Nama ────────────────────────────────────────
   function filterUserDropdown(statusValue) {
     if (!userSelect) return;
-
     const isRestricted = ['Catatan', 'Tutup'].includes(statusValue);
 
     if (isRestricted) {
-      // 1. Pilih otomatis ke admin yang login
       userSelect.value    = authUserId;
-      // 2. Disable agar tidak bisa diklik
       userSelect.disabled = true;
-      // 3. Tambah class visual abu-abu terkunci
       userSelect.classList.add('is-locked');
-      // 4. Tampilkan ikon gembok
       lockIcon?.classList.remove('hidden');
 
-      // 5. Hidden input agar user_id tetap terkirim
-      //    (elemen disabled TIDAK ikut dikirim ke server)
-      let hiddenUser = document.getElementById('hiddenUserId');
-      if (!hiddenUser) {
-        hiddenUser      = document.createElement('input');
-        hiddenUser.type = 'hidden';
-        hiddenUser.name = 'user_id';
-        hiddenUser.id   = 'hiddenUserId';
-        userSelect.parentNode.appendChild(hiddenUser);
+      let h = document.getElementById('hiddenUserId');
+      if (!h) {
+        h = document.createElement('input');
+        h.type = 'hidden'; h.name = 'user_id'; h.id = 'hiddenUserId';
+        userSelect.parentNode.appendChild(h);
       }
-      hiddenUser.value = authUserId;
+      h.value = authUserId;
 
-      // 6. Update hint
       if (userSelectHint) {
-        userSelectHint.textContent = '🔒 Terkunci — otomatis menggunakan akun admin yang sedang login.';
-        userSelectHint.style.color = '#b45309'; /* amber-700 */
+        userSelectHint.textContent = '';
       }
-
     } else {
-      // Buka kembali ke kondisi normal
       userSelect.disabled = false;
       userSelect.classList.remove('is-locked');
       lockIcon?.classList.add('hidden');
-
-      // Hapus hidden input jika ada
       document.getElementById('hiddenUserId')?.remove();
 
       if (userSelectHint) {
         userSelectHint.textContent = 'Pilih admin/staff yang dijadwalkan.';
-        userSelectHint.style.color = '#64748b'; /* slate-500 */
+        userSelectHint.style.color = '#64748b';
       }
     }
   }
 
-  // Bind ke radio status di editForm
+  // ─── 2. Sembunyikan / tampilkan field Jam saat status Tutup ───────────────
+  function filterTimeFields(statusValue) {
+    const isTutup = statusValue === 'Tutup';
+
+    if (jamMulaiWrapper)   jamMulaiWrapper.style.display   = isTutup ? 'none' : '';
+    if (jamSelesaiWrapper) jamSelesaiWrapper.style.display = isTutup ? 'none' : '';
+
+    if (isTutup) {
+      if (jamMulaiInput)   jamMulaiInput.value   = '';
+      if (jamSelesaiInput) jamSelesaiInput.value = '';
+    }
+  }
+
+  // ─── Bind radio status ────────────────────────────────────────────────────
   document.querySelectorAll('#editForm input[name="status"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      if (radio.checked) filterUserDropdown(radio.value);
+      if (radio.checked) {
+        filterUserDropdown(radio.value);
+        filterTimeFields(radio.value);
+      }
     });
   });
 
   // Jalankan saat load sesuai status prefill
   const checkedStatus = document.querySelector('#editForm input[name="status"]:checked');
-  if (checkedStatus) filterUserDropdown(checkedStatus.value);
+  if (checkedStatus) {
+    filterUserDropdown(checkedStatus.value);
+    filterTimeFields(checkedStatus.value);
+  }
 
   // ─── Sinkronisasi dropdown pilih jadwal → form edit ───────────────────────
   const sel             = document.getElementById('jadwalSelect');
@@ -495,8 +502,6 @@
   const pvStatusCard    = document.getElementById('pvStatusCard');
   const jadwalIdHidden  = document.getElementById('jadwalIdHidden');
   const tanggalInput    = document.getElementById('tanggalInput');
-  const jamMulaiInput   = document.getElementById('jamMulaiInput');
-  const jamSelesaiInput = document.getElementById('jamSelesaiInput');
   const shiftSelect     = document.getElementById('shiftSelect');
   const descArea        = document.getElementById('descArea');
   const editForm        = document.getElementById('editForm');
@@ -520,7 +525,8 @@
     const radio = document.querySelector(`#editForm input[name="status"][value="${value}"]`);
     if (radio) {
       radio.checked = true;
-      filterUserDropdown(value); // trigger kunci/buka setelah radio dipilih via JS
+      filterUserDropdown(value);
+      filterTimeFields(value);
     }
   };
 
@@ -549,7 +555,6 @@
   sel?.addEventListener('change', syncFromOption);
   syncFromOption();
 
-  // Auto submit saat dropdown pilih jadwal berubah
   sel?.addEventListener('change', () => document.getElementById('pickForm')?.submit());
 
   // ─── Confirm Modal ─────────────────────────────────────────────────────────
@@ -583,7 +588,6 @@
         </div>
       </div>
     `;
-
     function close() { wrap.remove(); }
     wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
     wrap.querySelector('.btn-x')?.addEventListener('click', close);

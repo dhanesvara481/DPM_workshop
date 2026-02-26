@@ -1,3 +1,4 @@
+{{-- resources/views/admin/jadwal_kerja/kelola_jadwal_kerja.blade.php --}}
 @extends('admin.layout.app')
 
 @section('title', 'DPM Workshop - Admin')
@@ -23,14 +24,15 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <button type="button"
-              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              data-tip="Notifikasi">
+      <a href="{{ route('tampilan_notifikasi') }}"
+         class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         data-tip="Notifikasi"
+         aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
         </svg>
-      </button>
+      </a>
     </div>
   </div>
 </header>
@@ -65,17 +67,13 @@
     @php
       $MAX_EVENTS_PER_DAY = $MAX_EVENTS_PER_DAY ?? 4;
 
-      // ===== DUMMY DATA (hapus kalau backend sudah siap) =====
       $events = $events ?? [
         now()->format('Y-m-d') => [
           ['id'=>101, 'title'=>'Shift Pagi - Asep', 'status'=>'aktif', 'time'=>'08:00 - 16:00', 'desc'=>'Servis rutin / tune up'],
           ['id'=>102, 'title'=>'Catatan: Sparepart datang', 'status'=>'catatan', 'time'=>'10:30', 'desc'=>'Cek gudang + follow up supplier'],
         ],
         now()->addDay()->format('Y-m-d') => [
-          ['id'=>103, 'title'=>'Tutup (Libur)', 'status'=>'tutup', 'time'=>'-', 'desc'=>'Hari libur operasional'],
-        //   // kalau ada data lain di tanggal ini, UI akan "anggap" tutup dan hanya tampilkan event tutup saja
-        //   ['id'=>104, 'title'=>'Shift Siang - Budi', 'status'=>'aktif', 'time'=>'12:00 - 16:00', 'desc'=>'—'],
-        //   ['id'=>105, 'title'=>'Shift Sore - Ujang', 'status'=>'aktif', 'time'=>'16:00 - 20:00', 'desc'=>'—'],
+          ['id'=>103, 'title'=>'Tutup (Libur)', 'status'=>'tutup', 'time'=>null, 'desc'=>'Hari libur operasional'],
         ],
       ];
     @endphp
@@ -159,7 +157,7 @@
       </div>
     </div>
 
-    {{-- ✅ MODAL DETAIL --}}
+    {{-- MODAL DETAIL --}}
     <div id="detailModal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
       <div id="detailOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
 
@@ -184,10 +182,8 @@
 
           {{-- body --}}
           <div class="p-5 flex-1 min-h-0 overflow-hidden flex flex-col gap-4">
-            {{-- meta --}}
             <div id="modalMeta" class="shrink-0"></div>
 
-            {{-- list --}}
             <div class="rounded-xl border border-slate-200 bg-slate-50 flex flex-col min-h-0 flex-1">
               <div class="px-4 py-3 border-b border-slate-200 bg-white rounded-t-xl shrink-0">
                 <div class="text-sm font-semibold text-slate-900">Daftar Jadwal</div>
@@ -346,85 +342,57 @@
 <script>
   const MAX_EVENTS_PER_DAY = @json($MAX_EVENTS_PER_DAY);
 
-  const monthTitle = document.getElementById('monthTitle');
-  const grid = document.getElementById('calendarGrid');
-  const btnPrev = document.getElementById('btnPrev');
-  const btnNext = document.getElementById('btnNext');
-  const btnToday = document.getElementById('btnToday');
-
-  const detailModal = document.getElementById('detailModal');
+  const monthTitle    = document.getElementById('monthTitle');
+  const grid          = document.getElementById('calendarGrid');
+  const btnPrev       = document.getElementById('btnPrev');
+  const btnNext       = document.getElementById('btnNext');
+  const btnToday      = document.getElementById('btnToday');
+  const detailModal   = document.getElementById('detailModal');
   const detailOverlay = document.getElementById('detailOverlay');
   const btnCloseModal = document.getElementById('btnCloseModal');
-
-  const modalDate = document.getElementById('modalDate');
-  const modalMeta = document.getElementById('modalMeta');
-  const modalEvents = document.getElementById('modalEvents');
-  const modalEmpty = document.getElementById('modalEmpty');
-  const modalHint = document.getElementById('modalHint');
-
-  const modalTambah = document.getElementById('modalTambah');
-  const modalUbah = document.getElementById('modalUbah');
-  const modalHapus = document.getElementById('modalHapus');
+  const modalDate     = document.getElementById('modalDate');
+  const modalMeta     = document.getElementById('modalMeta');
+  const modalEvents   = document.getElementById('modalEvents');
+  const modalEmpty    = document.getElementById('modalEmpty');
+  const modalHint     = document.getElementById('modalHint');
+  const modalTambah   = document.getElementById('modalTambah');
+  const modalUbah     = document.getElementById('modalUbah');
+  const modalHapus    = document.getElementById('modalHapus');
 
   const EVENTS = @json($events);
 
-  const pad2 = (n) => String(n).padStart(2, '0');
-  const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const pad2    = (n) => String(n).padStart(2, '0');
+  const ymd     = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
   const fmtMonth = (d) => d.toLocaleDateString('id-ID', { month:'long', year:'numeric' });
-  const fmtLong = (iso) => {
+  const fmtLong  = (iso) => {
     try {
       const [y,m,dd] = iso.split('-').map(Number);
-      const obj = new Date(y, m-1, dd);
-      return obj.toLocaleDateString('id-ID', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+      return new Date(y, m-1, dd).toLocaleDateString('id-ID', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
     } catch(e) { return iso; }
   };
 
-  const getEvents = (dateStr) => (EVENTS?.[dateStr] || []);
-
-  // ✅ RULE: kalau ada status 'tutup' di tanggal tsb, hari dianggap TUTUP
-  const isClosedDay = (dateStr) => {
-    const list = getEvents(dateStr);
-    return list.some(e => String(e?.status || '').toLowerCase() === 'tutup');
-  };
-
-  // ✅ kalau TUTUP, UI cuma tampilkan event tutup saja (yang lain diabaikan)
+  const getEvents        = (dateStr) => (EVENTS?.[dateStr] || []);
+  const isClosedDay      = (dateStr) => getEvents(dateStr).some(e => String(e?.status || '').toLowerCase() === 'tutup');
   const getVisibleEvents = (dateStr) => {
     const all = getEvents(dateStr);
     if (!isClosedDay(dateStr)) return all;
     return all.filter(e => String(e?.status || '').toLowerCase() === 'tutup');
   };
+  const usedCount        = (dateStr) => isClosedDay(dateStr) ? 0 : getVisibleEvents(dateStr).length;
+  const remainingQuota   = (dateStr) => isClosedDay(dateStr) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
+  const isFull           = (dateStr) => isClosedDay(dateStr) ? true : (remainingQuota(dateStr) <= 0);
 
-  const usedCount = (dateStr) => {
-    if (isClosedDay(dateStr)) return 0; // dianggap N/A
-    return getVisibleEvents(dateStr).length;
-  };
-
-  const remainingQuota = (dateStr) => {
-    if (isClosedDay(dateStr)) return 0;
-    return Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
-  };
-
-  // ✅ FULL hanya berlaku kalau tidak tutup
-  const isFull = (dateStr) => {
-    if (isClosedDay(dateStr)) return true; // tutup = tidak bisa tambah
-    return remainingQuota(dateStr) <= 0;
-  };
-
-  let current = new Date();
-  current.setDate(1);
-
-  function showModal(dateStr){
+  function showModal(dateStr) {
     const closed = isClosedDay(dateStr);
-    const ev = getVisibleEvents(dateStr);
-
-    const used = usedCount(dateStr);
-    const left = remainingQuota(dateStr);
+    const ev     = getVisibleEvents(dateStr);
+    const used   = usedCount(dateStr);
+    const left   = remainingQuota(dateStr);
 
     modalDate.textContent = fmtLong(dateStr);
 
-    // ✅ META: kalau tutup => jadwal terpakai "- / -" + label "Tutup"
+    // Meta: batas & sisa
     modalMeta.innerHTML = `
       <div class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="flex items-center justify-between gap-3">
@@ -433,7 +401,6 @@
             ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
           </span>
         </div>
-
         <div class="mt-3">
           <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
@@ -445,23 +412,33 @@
       </div>
     `;
 
-    // LIST events (kalau tutup -> cuma tampil tutup)
+    // List event
     modalEvents.innerHTML = '';
     if (ev.length > 0) {
       ev.forEach((e) => {
-        const status = (e.status || 'aktif');
-        const time = e.time ? `<div class="text-xs text-slate-500 mt-0.5">${e.time}</div>` : '';
-        const desc = e.desc ? `<div class="text-xs text-slate-600 mt-1">${e.desc}</div>` : '';
+        const status  = (e.status || 'aktif').toLowerCase();
+        const isTutup = status === 'tutup';
+
+        // ✅ Waktu TIDAK ditampilkan kalau status tutup atau time kosong/null
+        const showTime = !isTutup && e.time && e.time !== '-' && e.time !== 'null' && e.time !== null;
+        const timeHtml = showTime
+          ? `<div class="text-xs text-slate-500 mt-0.5">${e.time}</div>`
+          : '';
+
+        const descHtml = e.desc
+          ? `<div class="text-xs text-slate-600 mt-1">${e.desc}</div>`
+          : '';
+
         modalEvents.innerHTML += `
           <div class="rounded-xl border border-slate-200 bg-white p-4">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <div class="text-sm font-semibold text-slate-900 truncate">${e.title || 'Jadwal'}</div>
-                ${time}
+                ${timeHtml}
               </div>
               <span class="pill ${status}">${String(status).toUpperCase()}</span>
             </div>
-            ${desc}
+            ${descHtml}
           </div>
         `;
       });
@@ -470,29 +447,27 @@
       modalEmpty.classList.remove('hidden');
     }
 
-    // ✅ hasData pakai data asli (biar ubah/hapus masih bisa kalau ada apa pun, termasuk tutup)
-    const hasData = (getEvents(dateStr).length > 0);
-
+    // Tombol Ubah & Hapus
+    const hasData = getEvents(dateStr).length > 0;
     modalUbah.href  = hasData ? "{{ route('ubah_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr) : '#';
     modalHapus.href = hasData ? "{{ route('hapus_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr) : '#';
-
     modalUbah.classList.toggle('opacity-50', !hasData);
     modalUbah.classList.toggle('pointer-events-none', !hasData);
     modalHapus.classList.toggle('opacity-50', !hasData);
     modalHapus.classList.toggle('pointer-events-none', !hasData);
 
-    // ✅ Tambah: kalau tutup -> disable + button jadi "TUTUP"
+    // Tombol Tambah
     if (!closed && !isFull(dateStr)) {
       modalTambah.href = "{{ route('tambah_jadwal_kerja') }}?date=" + encodeURIComponent(dateStr);
       modalTambah.classList.remove('btn-disabled');
       modalTambah.textContent = `Tambah Jadwal (sisa ${left})`;
-      modalHint.textContent = `Masih bisa tambah ${left} jadwal lagi di tanggal ini.`;
+      modalHint.textContent   = `Masih bisa tambah ${left} jadwal lagi di tanggal ini.`;
     } else {
       modalTambah.href = '#';
       modalTambah.classList.add('btn-disabled');
-      modalTambah.textContent = closed ? `TUTUP` : `Sudah FULL (${MAX_EVENTS_PER_DAY}/${MAX_EVENTS_PER_DAY})`;
-      modalHint.textContent = closed
-        ? `Hari ini TUTUP. Tidak bisa menambah jadwal.`
+      modalTambah.textContent = closed ? 'TUTUP' : `Sudah FULL (${MAX_EVENTS_PER_DAY}/${MAX_EVENTS_PER_DAY})`;
+      modalHint.textContent   = closed
+        ? 'Hari ini TUTUP. Tidak bisa menambah jadwal.'
         : `Tidak bisa tambah jadwal karena sudah mencapai batas ${MAX_EVENTS_PER_DAY} jadwal per hari.`;
     }
 
@@ -500,7 +475,7 @@
     document.body.classList.add('overflow-hidden');
   }
 
-  function hideModal(){
+  function hideModal() {
     detailModal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
   }
@@ -514,14 +489,14 @@
     monthTitle.textContent = fmtMonth(current);
 
     const today = new Date();
-    const year = current.getFullYear();
+    const year  = current.getFullYear();
     const month = current.getMonth();
 
-    const first = new Date(year, month, 1);
-    const startDay = first.getDay();
+    const first      = new Date(year, month, 1);
+    const startDay   = first.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // kosong awal
+    // Kosong awal
     for (let i = 0; i < startDay; i++) {
       const empty = document.createElement('div');
       empty.className = 'day-card day-muted';
@@ -531,28 +506,24 @@
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateObj = new Date(year, month, day);
-      const key = ymd(dateObj);
+      const key     = ymd(dateObj);
       const isToday = sameDay(dateObj, today);
-
-      const closed = isClosedDay(key);
-
-      // ✅ kalender card: kalau tutup, tampilkan cuma pill tutup
-      const ev = getVisibleEvents(key);
-      const hasData = (getEvents(key).length > 0);
-
-      const left = remainingQuota(key);
-      const full = (!closed && (left <= 0) && hasData); // FULL badge cuma buat hari normal
+      const closed  = isClosedDay(key);
+      const ev      = getVisibleEvents(key);
+      const hasData = getEvents(key).length > 0;
+      const left    = remainingQuota(key);
+      const full    = (!closed && left <= 0 && hasData);
 
       const card = document.createElement('button');
-      card.type = 'button';
+      card.type      = 'button';
       card.className = `day-card text-left ${hasData ? 'has-data' : ''}`;
       card.dataset.date = key;
 
-      const top = document.createElement('div');
+      const top  = document.createElement('div');
       top.className = 'day-top';
 
       const num = document.createElement('div');
-      num.className = `day-num ${isToday ? 'today' : ''}`;
+      num.className  = `day-num ${isToday ? 'today' : ''}`;
       num.textContent = String(day);
 
       const right = document.createElement('div');
@@ -560,7 +531,7 @@
 
       if (full) {
         const badge = document.createElement('div');
-        badge.className = 'badge-full';
+        badge.className  = 'badge-full';
         badge.textContent = 'FULL';
         right.appendChild(badge);
       }
@@ -571,45 +542,42 @@
       const body = document.createElement('div');
       body.className = 'day-body';
 
-      const take = ev.slice(0, 3);
-      take.forEach(e => {
+      ev.slice(0, 3).forEach(e => {
         const pill = document.createElement('div');
-        const status = (e.status || 'aktif');
-        pill.className = `pill ${status}`;
-        pill.title = e.title || '';
+        pill.className   = `pill ${e.status || 'aktif'}`;
+        pill.title       = e.title || '';
         pill.textContent = e.title || 'Jadwal';
         body.appendChild(pill);
       });
 
       if (!closed && ev.length > 3) {
         const more = document.createElement('div');
-        more.className = 'text-[11px] text-slate-500';
+        more.className   = 'text-[11px] text-slate-500';
         more.textContent = `+${ev.length - 3} lainnya`;
         body.appendChild(more);
       }
 
       if (!hasData) {
         const hint = document.createElement('div');
-        hint.className = 'text-[11px] text-slate-500/80';
+        hint.className   = 'text-[11px] text-slate-500/80';
         hint.textContent = '—';
         body.appendChild(hint);
       } else {
         const info = document.createElement('div');
-        info.className = 'text-[11px] text-slate-600';
-        info.textContent = closed ? `TUTUP` : `Sisa tambah: ${left}`;
+        info.className   = 'text-[11px] text-slate-600';
+        info.textContent = closed ? 'TUTUP' : `Sisa tambah: ${left}`;
         body.appendChild(info);
       }
 
       card.appendChild(top);
       card.appendChild(body);
-
       card.addEventListener('click', () => showModal(key));
       grid.appendChild(card);
     }
 
-    // kosong akhir
+    // Kosong akhir
     const totalCells = startDay + daysInMonth;
-    const remaining = (7 - (totalCells % 7)) % 7;
+    const remaining  = (7 - (totalCells % 7)) % 7;
     for (let i = 0; i < remaining; i++) {
       const empty = document.createElement('div');
       empty.className = 'day-card day-muted';
@@ -618,6 +586,9 @@
       grid.appendChild(empty);
     }
   }
+
+  let current = new Date();
+  current.setDate(1);
 
   btnPrev?.addEventListener('click', () => {
     current = new Date(current.getFullYear(), current.getMonth()-1, 1);

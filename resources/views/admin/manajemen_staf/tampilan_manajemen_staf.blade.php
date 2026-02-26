@@ -80,7 +80,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                     <div class="min-w-0">
                         <div class="text-lg font-semibold text-slate-900">Daftar Staf</div>
-                        <div class="text-xs text-slate-500 mt-1">Cari nama / filter role / filter status.</div>
+                        <div class="text-xs text-slate-500 mt-1">Cari nama / filter status.</div>
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-2">
@@ -92,13 +92,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 18a8 8 0 100-16 8 8 0 000 16z"/>
                             </svg>
                         </div>
-
-                        {{-- Filter role: value pakai lowercase sesuai DB --}}
-                        <select id="filterRole" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">
-                            <option value="">Semua Role</option>
-                            <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
-                        </select>
 
                         {{-- Filter status: value pakai lowercase sesuai DB --}}
                         <select id="filterStatus" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">

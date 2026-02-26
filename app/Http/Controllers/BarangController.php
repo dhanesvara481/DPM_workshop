@@ -19,6 +19,7 @@ class BarangController extends Controller
 
         return view('admin.mengelola_barang.tampilan_barang', [
             'barangs' => $barangs,
+            'stokMin' => 25,
         ]);
     }
 

@@ -23,15 +23,15 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <button type="button"
-              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              data-tip="Notifikasi"
-              aria-label="Notifikasi">
+      <a href="{{ route('tampilan_notifikasi') }}"
+         class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         data-tip="Notifikasi"
+         aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
         </svg>
-      </button>
+      </a>
     </div>
   </div>
 </header>
@@ -121,13 +121,13 @@
 
               $stokBadge = match(true) {
                 $stok <= 0 => 'bg-rose-50 text-rose-700 border-rose-200',
-                $stok <= 5 => 'bg-amber-50 text-amber-700 border-amber-200',
+                $stok < 25 => 'bg-amber-50 text-amber-700 border-amber-200',
                 default    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
               };
 
               $stokLabel = match(true) {
                 $stok <= 0 => 'Habis',
-                $stok <= 5 => 'Menipis',
+                $stok < 25 => 'Menipis',
                 default    => 'Aman',
               };
             @endphp

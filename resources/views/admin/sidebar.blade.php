@@ -34,7 +34,7 @@
     <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
       <div class="h-10 w-10 rounded-full bg-white/10 border border-white/15"></div>
       <div class="min-w-0">
-        <p class="text-sm font-medium truncate">{{ $userName ?? 'User' }}</p>
+        <p class="text-sm font-medium truncate">{{ $username ?? 'User' }}</p>
         <p class="text-[11px] text-white/60">{{ $role ?? 'Admin' }}</p>
       </div>
     </div>

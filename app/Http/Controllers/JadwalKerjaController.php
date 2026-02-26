@@ -23,11 +23,14 @@ class JadwalKerjaController extends Controller
         foreach ($rawEvents as $j) {
             $key = $j->tanggal_kerja->format('Y-m-d');
 
+            // ✅ Kalau status Tutup, jam tidak ditampilkan (null/kosong)
+            $isTutup = strtolower($j->status) === 'tutup';
+
             $events[$key][] = [
                 'id'     => $j->jadwal_id,
                 'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
                 'status' => strtolower($j->status),
-                'time'   => substr($j->jam_mulai, 0, 5) . ' - ' . substr($j->jam_selesai, 0, 5),
+                'time'   => $isTutup ? null : (substr($j->jam_mulai ?? '', 0, 5) . ' - ' . substr($j->jam_selesai ?? '', 0, 5)),
                 'desc'   => $j->deskripsi,
             ];
         }
@@ -47,18 +50,21 @@ class JadwalKerjaController extends Controller
         return view('admin.jadwal_kerja.tambah_jadwal_kerja', [
             'users'        => $users,
             'selectedDate' => $request->query('date'),
-            'authUser'     => auth()->user(), // ✅ kirim data admin yang login
+            'authUser'     => auth()->user(),
         ]);
     }
 
     public function simpanJadwalKerja(Request $request)
     {
+        // ✅ Jam Mulai & Jam Selesai tidak wajib saat status Tutup
+        $isTutup = $request->status === 'Tutup';
+
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
             'waktu_shift'   => 'required|in:Pagi,Siang,Sore,Malam',
-            'jam_mulai'     => 'required|date_format:H:i',
-            'jam_selesai'   => 'required|date_format:H:i|after:jam_mulai',
+            'jam_mulai'     => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',
             'status'        => 'required|in:Aktif,Catatan,Tutup',
         ]);
@@ -80,10 +86,10 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
-        $users = User::orderBy('username')->get(['user_id', 'username', 'role']); // ✅ ambil kolom role
+        $users = User::orderBy('username')->get(['user_id', 'username', 'role']);
 
         return view('admin.jadwal_kerja.ubah_jadwal_kerja',
-            compact('jadwalKerjas', 'users', 'date') + ['authUser' => auth()->user()] // ✅ kirim authUser
+            compact('jadwalKerjas', 'users', 'date') + ['authUser' => auth()->user()]
         );
     }
 
@@ -91,12 +97,15 @@ class JadwalKerjaController extends Controller
     {
         $jadwal = JadwalKerja::findOrFail($id);
 
+        // ✅ Jam Mulai & Jam Selesai tidak wajib saat status Tutup
+        $isTutup = $request->status === 'Tutup';
+
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
             'waktu_shift'   => 'required|in:Pagi,Siang,Sore,Malam',
-            'jam_mulai'     => 'required|date_format:H:i',
-            'jam_selesai'   => 'required|date_format:H:i|after:jam_mulai',
+            'jam_mulai'     => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
+            'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',
             'status'        => 'required|in:Aktif,Catatan,Tutup',
         ]);
@@ -179,13 +188,14 @@ class JadwalKerjaController extends Controller
         $events = [];
 
         foreach ($rawEvents as $j) {
-            $key = $j->tanggal_kerja->format('Y-m-d');
+            $key     = $j->tanggal_kerja->format('Y-m-d');
+            $isTutup = strtolower($j->status) === 'tutup';
 
             $events[$key][] = [
                 'id'     => $j->jadwal_id,
                 'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
                 'status' => strtolower($j->status),
-                'time'   => substr($j->jam_mulai, 0, 5) . ' - ' . substr($j->jam_selesai, 0, 5),
+                'time'   => $isTutup ? null : (substr($j->jam_mulai ?? '', 0, 5) . ' - ' . substr($j->jam_selesai ?? '', 0, 5)),
                 'desc'   => $j->deskripsi,
             ];
         }
