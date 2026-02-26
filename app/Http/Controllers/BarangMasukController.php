@@ -13,9 +13,6 @@ use Illuminate\Support\Facades\Auth;
 
 class BarangMasukController extends Controller
 {
-    /**
-     * Tampilan barang masuk
-     */
     public function getBarangMasuk()
     {
         $barangs = Barang::orderBy('kode_barang', 'asc')->get();
@@ -45,7 +42,21 @@ class BarangMasukController extends Controller
     }
 
     /**
-     * Simpan barang masuk & update stok
+     * Simpan barang masuk dan update stok.
+     *
+     * Aturan stok_awal & stok_akhir:
+     *
+     *   Hari 1  masuk  qty 100  => stok_awal 100, stok_akhir 100
+     *   Hari 1  masuk  qty  50  => stok_awal 100, stok_akhir 150
+     *   Hari 1  keluar qty  25  => stok_awal 100, stok_akhir 125
+     *   Hari 2  masuk  qty  55  => stok_awal 125, stok_akhir 180
+     *
+     * - stok_awal  = stok_awal record PERTAMA hari ini (tetap sepanjang hari)
+     *               Jika belum ada transaksi hari ini:
+     *                 ada riwayat sebelumnya  -> stok_awal = stok_akhir terakhir kemarin
+     *                 tidak ada riwayat sama sekali -> stok_awal = qty itu sendiri (pertama kali)
+     *
+     * - stok_akhir = stok_akhir record TERAKHIR hari ini + qty
      */
     public function simpanBarangMasuk(Request $request)
     {
@@ -74,48 +85,52 @@ class BarangMasukController extends Controller
             }
 
             $tanggalInput = $validated['tanggal'];
+            $qty          = (int) $validated['qty_masuk'];
 
-            // Cek apakah sudah ada riwayat di hari yang SAMA
-            $riwayatHariIni = RiwayatStok::where('barang_id', $validated['barang_id'])
+            // Record pertama hari ini -> untuk stok_awal awal hari (tidak berubah)
+            $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
                 ->whereDate('tanggal_riwayat_stok', $tanggalInput)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
 
-            // Ambil stok_akhir hari sebelumnya
+            // Record terakhir hari ini -> untuk melanjutkan stok_akhir
+            $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $validated['barang_id'])
+                ->whereDate('tanggal_riwayat_stok', $tanggalInput)
+                ->orderBy('riwayat_stok_id', 'desc')
+                ->first();
+
+            // Record terakhir sebelum hari ini -> menjadi stok_awal hari baru
             $riwayatSebelumnya = RiwayatStok::where('barang_id', $validated['barang_id'])
                 ->whereDate('tanggal_riwayat_stok', '<', $tanggalInput)
                 ->orderBy('tanggal_riwayat_stok', 'desc')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
 
-            if ($riwayatHariIni) {
-                // Sudah ada transaksi hari ini → stok_awal tetap dari awal hari ini
-                $stokAwal            = (int) $riwayatHariIni->stok_awal;
-                $stokAkhirSebelumnya = (int) $riwayatHariIni->stok_akhir;
+            if ($riwayatHariIniPertama) {
+                // Sudah ada transaksi hari ini
+                $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
+                $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir + $qty;
+
             } elseif ($riwayatSebelumnya) {
-                // Hari baru → stok_awal = stok_akhir hari sebelumnya
-                $stokAwal            = (int) $riwayatSebelumnya->stok_akhir;
-                $stokAkhirSebelumnya = $stokAwal;
+                // Hari baru, ada riwayat kemarin
+                $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
+                $stokAkhir = $stokAwal + $qty;
+
             } else {
-                // Transaksi pertama kali → stok_awal = qty itu sendiri
-                $stokAwal            = (int) $validated['qty_masuk'];
-                $stokAkhirSebelumnya = 0;
+                // Pertama kali input, belum ada riwayat sama sekali
+                $stokAwal  = $qty;
+                $stokAkhir = $qty;
             }
 
-            $stokBaru = $stokAkhirSebelumnya + (int) $validated['qty_masuk'];
-
-            // Simpan ke barang_masuk
             $barangMasuk = BarangMasuk::create([
                 'barang_id'     => $validated['barang_id'],
                 'user_id'       => $userId,
-                'jumlah_masuk'  => $validated['qty_masuk'],
+                'jumlah_masuk'  => $qty,
                 'tanggal_masuk' => $tanggalInput,
             ]);
 
-            // Update stok barang
-            $barang->update(['stok' => (string) $stokBaru]);
+            $barang->update(['stok' => (string) $stokAkhir]);
 
-            // Catat ke riwayat_stok
             RiwayatStok::create([
                 'barang_id'            => $validated['barang_id'],
                 'user_id'              => $userId,
@@ -123,14 +138,14 @@ class BarangMasukController extends Controller
                 'barang_keluar_id'     => null,
                 'tanggal_riwayat_stok' => $tanggalInput,
                 'stok_awal'            => $stokAwal,
-                'stok_akhir'           => $stokBaru,
+                'stok_akhir'           => $stokAkhir,
             ]);
 
             DB::commit();
 
             return redirect()
                 ->route('barang_masuk')
-                ->with('success', "Berhasil menambah stok {$barang->nama_barang} sebanyak {$validated['qty_masuk']} {$barang->satuan}. Stok sekarang: {$stokBaru}.");
+                ->with('success', "Berhasil menambah stok {$barang->nama_barang} sebanyak {$qty} {$barang->satuan}. Stok sekarang: {$stokAkhir}.");
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();

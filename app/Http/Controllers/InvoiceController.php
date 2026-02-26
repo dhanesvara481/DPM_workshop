@@ -17,7 +17,6 @@ class InvoiceController extends Controller
 
     public function getTampilanInvoice()
     {
-        // Tabel: barang | kolom stok: VARCHAR(10) → CAST untuk filter > 0
         $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
             ->orderBy('barang_id')
             ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
@@ -53,7 +52,6 @@ class InvoiceController extends Controller
 
     public function getTampilanInvoiceStaff()
     {
-        // Sama persis dengan admin — staff juga butuh daftar barang untuk dropdown
         $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
             ->orderBy('barang_id')
             ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
@@ -61,7 +59,7 @@ class InvoiceController extends Controller
         return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
     }
 
-    // ── Store (dipakai admin & staff, redirect sesuai role) ──────────────────
+    // ── Store (dipakai admin & staff) ────────────────────────────────────────
 
     public function store(Request $request)
     {
@@ -124,7 +122,6 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            // Redirect ke halaman invoice sesuai role
             $role = auth()->user()->role;
 
             if ($role === 'staff') {
@@ -143,6 +140,27 @@ class InvoiceController extends Controller
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
+    /**
+     * Simpan item barang ke invoice + catat riwayat stok.
+     *
+     * Aturan stok_awal & stok_akhir:
+     *
+     *   Hari 1  masuk    qty 100  => stok_awal 100, stok_akhir 100
+     *   Hari 1  masuk    qty  50  => stok_awal 100, stok_akhir 150
+     *   Hari 1  keluar   qty  25  => stok_awal 100, stok_akhir 125
+     *   Hari 2  masuk    qty  55  => stok_awal 125, stok_akhir 180
+     *   Hari 2  invoice  qty  20  => stok_awal 125, stok_akhir 160
+     *
+     * - stok_awal  = stok_awal record PERTAMA hari ini (tetap sepanjang hari)
+     *               Jika belum ada transaksi hari ini:
+     *                 ada riwayat sebelumnya       -> stok_awal = stok_akhir terakhir kemarin
+     *                 tidak ada riwayat sama sekali -> stok_awal = stok barang saat ini
+     *
+     * - stok_akhir = stok_akhir record TERAKHIR hari ini - qty
+     *
+     * PENTING: update stok barang pakai nilai stok_akhir yang sudah dihitung,
+     *          BUKAN decrement(), agar tidak terjadi double-kurang.
+     */
     private function simpanItemBarang(
         int     $invoiceId,
         array   $items,
@@ -161,7 +179,6 @@ class InvoiceController extends Controller
             $qty    = (int) ($item['qty'] ?? 0);
             if ($qty <= 0) continue;
 
-            // Stok VARCHAR — cast untuk perbandingan
             if ((int) $barang->stok < $qty) {
                 throw new \Exception(
                     "Stok {$barang->nama_barang} tidak cukup (tersedia: {$barang->stok})."
@@ -179,17 +196,49 @@ class InvoiceController extends Controller
                 'tipe_transaksi' => $tipe,
             ]);
 
-            // Riwayat stok: gunakan stok_awal dari record pertama hari ini kalau sudah ada
-            $riwayatHariIni = RiwayatStok::where('barang_id', $barang->barang_id)
+            // ── Tentukan stok_awal & stok_akhir ────────────────────────────
+
+            // Record pertama hari ini → stok_awal awal hari (tidak berubah sepanjang hari)
+            $riwayatHariIniPertama = RiwayatStok::where('barang_id', $barang->barang_id)
                 ->whereDate('tanggal_riwayat_stok', $tanggalHari)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
 
-            $stokAwal = $riwayatHariIni ? (int) $riwayatHariIni->stok_awal : (int) $barang->stok;
+            // Record terakhir hari ini → titik lanjut stok_akhir
+            $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $barang->barang_id)
+                ->whereDate('tanggal_riwayat_stok', $tanggalHari)
+                ->orderBy('riwayat_stok_id', 'desc')
+                ->first();
 
-            $barang->decrement('stok', $qty);
-            $stokAkhir = (int) $barang->fresh()->stok;
+            // Record terakhir sebelum hari ini → menjadi stok_awal hari baru
+            $riwayatSebelumnya = RiwayatStok::where('barang_id', $barang->barang_id)
+                ->whereDate('tanggal_riwayat_stok', '<', $tanggalHari)
+                ->orderBy('tanggal_riwayat_stok', 'desc')
+                ->orderBy('riwayat_stok_id', 'desc')
+                ->first();
 
+            if ($riwayatHariIniPertama) {
+                // Sudah ada transaksi hari ini
+                $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
+                $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir - $qty;
+
+            } elseif ($riwayatSebelumnya) {
+                // Hari baru, ada riwayat kemarin
+                $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
+                $stokAkhir = $stokAwal - $qty;
+
+            } else {
+                // Belum ada riwayat sama sekali
+                $stokAwal  = (int) $barang->stok;
+                $stokAkhir = $stokAwal - $qty;
+            }
+
+            // ── Update stok barang dengan nilai yang sudah dihitung ─────────
+            // Gunakan update() langsung, BUKAN decrement(), agar konsisten
+            // dengan stok_akhir yang tercatat di riwayat_stok
+            $barang->update(['stok' => (string) $stokAkhir]);
+
+            // ── Simpan barang_keluar & riwayat_stok ─────────────────────────
             $barangKeluar = BarangKeluar::create([
                 'user_id'        => $userId,
                 'barang_id'      => $barang->barang_id,

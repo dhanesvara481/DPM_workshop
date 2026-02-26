@@ -42,14 +42,12 @@
          style="background-image:
             linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-            background-size: 56px 56px;">
-    </div>
+            background-size: 56px 56px;"></div>
     <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
          style="background-image:
             repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
             repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-            background-size: 112px 112px, 112px 112px;">
-    </div>
+            background-size: 112px 112px, 112px 112px;"></div>
     <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
                 bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
     <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
@@ -62,7 +60,6 @@
       $date       = $date ?? request('date') ?? now()->format('Y-m-d');
       $selectedId = request('jadwal_id') ?? old('jadwal_id');
 
-      // ✅ FIX: gunakan ->username (bukan ->name) sesuai migration & controller
       $jadwals = collect($jadwalKerjas ?? [])->map(fn($j) => [
         'id'          => $j->jadwal_id,
         'tanggal'     => $j->tanggal_kerja->format('Y-m-d'),
@@ -132,7 +129,6 @@
             <form id="pickForm" method="GET" action="{{ route('ubah_jadwal_kerja') }}" class="w-full sm:w-[420px]">
               <input type="hidden" name="date" value="{{ $date }}">
               <label class="block text-[11px] font-semibold text-slate-600 mb-1">Jadwal di tanggal ini</label>
-
               <div class="flex gap-2">
                 <select id="jadwalSelect" name="jadwal_id"
                         class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
@@ -142,10 +138,10 @@
                   @else
                     @foreach($jadwals as $j)
                       @php
-                        $st      = strtolower($j['status'] ?? 'aktif');
-                        $badge   = strtoupper($st);
-                        $title   = $j['title'] ?? 'Jadwal';
-                        $range   = trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . $j['jam_selesai'] : ''));
+                        $st       = strtolower($j['status'] ?? 'aktif');
+                        $badge    = strtoupper($st);
+                        $title    = $j['title'] ?? 'Jadwal';
+                        $range    = trim(($j['jam_mulai'] ?? '') . (($j['jam_selesai'] ?? '') ? ' - ' . $j['jam_selesai'] : ''));
                         $rangeTxt = $range ? " • {$range}" : '';
                       @endphp
                       <option value="{{ $j['id'] }}"
@@ -158,23 +154,18 @@
                               data-jam_mulai="{{ $j['jam_mulai'] ?? '' }}"
                               data-jam_selesai="{{ $j['jam_selesai'] ?? '' }}"
                               data-waktu_shift="{{ $j['waktu_shift'] ?? '' }}"
-                              data-deskripsi="{{ $j['deskripsi'] ?? '' }}"
-                      >
+                              data-deskripsi="{{ $j['deskripsi'] ?? '' }}">
                         [{{ $badge }}] {{ $title }}{{ $rangeTxt }}
                       </option>
                     @endforeach
                   @endif
                 </select>
-
                 <button type="submit"
                         class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   Pilih
                 </button>
               </div>
-
-              <div class="text-[11px] text-slate-500 mt-2">
-                Tip: ganti dropdown → auto prefill form + preview
-              </div>
+              <div class="text-[11px] text-slate-500 mt-2">Tip: ganti dropdown → auto prefill form + preview</div>
             </form>
           </div>
 
@@ -192,7 +183,6 @@
                   ? 'bg-amber-50 border-amber-200 text-amber-700'
                   : 'bg-emerald-50 border-emerald-200 text-emerald-700');
             @endphp
-
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div class="text-[11px] text-slate-500">ID</div>
@@ -212,6 +202,11 @@
 
         {{-- STEP 2: FORM EDIT --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+
+          {{-- Auth info untuk JS --}}
+          <input type="hidden" id="authUserId"   value="{{ $authUser->user_id ?? '' }}">
+          <input type="hidden" id="authUserRole" value="{{ $authUser->role ?? '' }}">
+
           <form id="editForm"
                 action="{{ $selectedId ? route('perbarui_jadwal_kerja', $selectedId) : '#' }}"
                 method="POST" class="space-y-5"
@@ -227,17 +222,31 @@
               {{-- Nama --}}
               <div>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Nama</label>
-                {{-- ✅ FIX: gunakan ->username (bukan ->name) --}}
-                <select name="user_id" id="userSelect"
-                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                  <option value="">Pilih user</option>
-                  @foreach(($users ?? []) as $u)
-                    <option value="{{ $u->user_id }}" @selected((string)$prefillUser === (string)$u->user_id)>
-                      {{ $u->username ?? 'User' }}
-                    </option>
-                  @endforeach
-                </select>
+                <div class="relative">
+                  <select name="user_id" id="userSelect"
+                          class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 pr-10
+                                 focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300
+                                 transition appearance-none">
+                    <option value="">Pilih user</option>
+                    @foreach(($users ?? []) as $u)
+                      <option value="{{ $u->user_id }}"
+                              data-role="{{ $u->role }}"
+                              @selected((string)$prefillUser === (string)$u->user_id)>
+                        {{ $u->username ?? 'User' }}
+                      </option>
+                    @endforeach
+                  </select>
+                  {{-- Ikon kunci — muncul saat terkunci --}}
+                  <span id="lockIcon"
+                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                  </span>
+                </div>
+                <p class="text-[11px] mt-1 transition-colors" id="userSelectHint"
+                   style="color:#64748b">Pilih admin/staff yang dijadwalkan.</p>
               </div>
 
               {{-- Tanggal --}}
@@ -384,28 +393,107 @@
   }
   .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
 
-  .tip{ position: relative; }
-  .tip[data-tip]::after{
+  .tip { position: relative; }
+  .tip[data-tip]::after {
     content: attr(data-tip);
-    position:absolute; right:0; top: calc(100% + 10px);
+    position: absolute; right: 0; top: calc(100% + 10px);
     background: rgba(15,23,42,.92); color: rgba(255,255,255,.92);
     font-size: 11px; padding: 6px 10px; border-radius: 10px;
-    white-space: nowrap; opacity:0; transform: translateY(-4px);
-    pointer-events:none; transition: .15s ease;
+    white-space: nowrap; opacity: 0; transform: translateY(-4px);
+    pointer-events: none; transition: .15s ease;
   }
-  .tip:hover::after{ opacity:1; transform: translateY(0); }
+  .tip:hover::after { opacity: 1; transform: translateY(0); }
+
+  /* ✅ Visual terkunci: background abu-abu, border lebih gelap, cursor tidak-boleh */
+  select.is-locked {
+    background-color: #f1f5f9 !important; /* slate-100  */
+    border-color:     #94a3b8 !important; /* slate-400  */
+    color:            #475569 !important; /* slate-600  */
+    cursor: not-allowed !important;
+    pointer-events: none;
+    opacity: 1 !important;               /* teks tetap jelas, tidak pudar */
+  }
 </style>
 @endpush
 
 @push('scripts')
 <script>
+  // ─── Data admin yang sedang login ──────────────────────────────────────────
+  const authUserId   = document.getElementById('authUserId')?.value  ?? '';
+  const authUserRole = document.getElementById('authUserRole')?.value ?? '';
+
+  const userSelect     = document.getElementById('userSelect');
+  const userSelectHint = document.getElementById('userSelectHint');
+  const lockIcon       = document.getElementById('lockIcon');
+
+  // ─── Kunci / buka dropdown berdasarkan status ──────────────────────────────
+  function filterUserDropdown(statusValue) {
+    if (!userSelect) return;
+
+    const isRestricted = ['Catatan', 'Tutup'].includes(statusValue);
+
+    if (isRestricted) {
+      // 1. Pilih otomatis ke admin yang login
+      userSelect.value    = authUserId;
+      // 2. Disable agar tidak bisa diklik
+      userSelect.disabled = true;
+      // 3. Tambah class visual abu-abu terkunci
+      userSelect.classList.add('is-locked');
+      // 4. Tampilkan ikon gembok
+      lockIcon?.classList.remove('hidden');
+
+      // 5. Hidden input agar user_id tetap terkirim
+      //    (elemen disabled TIDAK ikut dikirim ke server)
+      let hiddenUser = document.getElementById('hiddenUserId');
+      if (!hiddenUser) {
+        hiddenUser      = document.createElement('input');
+        hiddenUser.type = 'hidden';
+        hiddenUser.name = 'user_id';
+        hiddenUser.id   = 'hiddenUserId';
+        userSelect.parentNode.appendChild(hiddenUser);
+      }
+      hiddenUser.value = authUserId;
+
+      // 6. Update hint
+      if (userSelectHint) {
+        userSelectHint.textContent = '🔒 Terkunci — otomatis menggunakan akun admin yang sedang login.';
+        userSelectHint.style.color = '#b45309'; /* amber-700 */
+      }
+
+    } else {
+      // Buka kembali ke kondisi normal
+      userSelect.disabled = false;
+      userSelect.classList.remove('is-locked');
+      lockIcon?.classList.add('hidden');
+
+      // Hapus hidden input jika ada
+      document.getElementById('hiddenUserId')?.remove();
+
+      if (userSelectHint) {
+        userSelectHint.textContent = 'Pilih admin/staff yang dijadwalkan.';
+        userSelectHint.style.color = '#64748b'; /* slate-500 */
+      }
+    }
+  }
+
+  // Bind ke radio status di editForm
+  document.querySelectorAll('#editForm input[name="status"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) filterUserDropdown(radio.value);
+    });
+  });
+
+  // Jalankan saat load sesuai status prefill
+  const checkedStatus = document.querySelector('#editForm input[name="status"]:checked');
+  if (checkedStatus) filterUserDropdown(checkedStatus.value);
+
+  // ─── Sinkronisasi dropdown pilih jadwal → form edit ───────────────────────
   const sel             = document.getElementById('jadwalSelect');
   const pvId            = document.getElementById('pvId');
   const pvTitle         = document.getElementById('pvTitle');
   const pvStatus        = document.getElementById('pvStatus');
   const pvStatusCard    = document.getElementById('pvStatusCard');
   const jadwalIdHidden  = document.getElementById('jadwalIdHidden');
-  const userSelect      = document.getElementById('userSelect');
   const tanggalInput    = document.getElementById('tanggalInput');
   const jamMulaiInput   = document.getElementById('jamMulaiInput');
   const jamSelesaiInput = document.getElementById('jamSelesaiInput');
@@ -413,9 +501,7 @@
   const descArea        = document.getElementById('descArea');
   const editForm        = document.getElementById('editForm');
 
-  // ✅ FIX: base URL yang robust menggunakan Blade helper
   const routeBase = "{{ rtrim(url(route('perbarui_jadwal_kerja', 0, false)), '/0') }}/";
-
   const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
   const setStatusPreview = (stRaw) => {
@@ -423,7 +509,7 @@
     if (pvStatus) pvStatus.textContent = st.toUpperCase();
     if (!pvStatusCard) return;
     pvStatusCard.className = "rounded-xl border p-3 " + (
-      st === 'tutup'    ? 'bg-rose-50 border-rose-200 text-rose-700'
+      st === 'tutup'     ? 'bg-rose-50 border-rose-200 text-rose-700'
       : st === 'catatan' ? 'bg-amber-50 border-amber-200 text-amber-700'
       : 'bg-emerald-50 border-emerald-200 text-emerald-700'
     );
@@ -431,8 +517,11 @@
 
   const setRadioStatus = (stRaw) => {
     const value = capitalize(stRaw || 'aktif');
-    const radio = document.querySelector(`input[name="status"][value="${value}"]`);
-    if (radio) radio.checked = true;
+    const radio = document.querySelector(`#editForm input[name="status"][value="${value}"]`);
+    if (radio) {
+      radio.checked = true;
+      filterUserDropdown(value); // trigger kunci/buka setelah radio dipilih via JS
+    }
   };
 
   const syncFromOption = () => {
@@ -445,11 +534,7 @@
     setStatusPreview(opt.dataset.status);
 
     if (jadwalIdHidden) jadwalIdHidden.value = opt.value || '';
-
-    // ✅ FIX: update form action dengan base URL yang sudah benar
-    if (editForm && opt.value) {
-      editForm.setAttribute('action', routeBase + opt.value);
-    }
+    if (editForm && opt.value) editForm.setAttribute('action', routeBase + opt.value);
 
     if (tanggalInput)    tanggalInput.value    = opt.dataset.tanggal     || tanggalInput.value || '';
     if (jamMulaiInput)   jamMulaiInput.value   = opt.dataset.jam_mulai   || '';
@@ -464,16 +549,14 @@
   sel?.addEventListener('change', syncFromOption);
   syncFromOption();
 
-  // Auto submit saat dropdown berubah
-  sel?.addEventListener('change', () => {
-    document.getElementById('pickForm')?.submit();
-  });
+  // Auto submit saat dropdown pilih jadwal berubah
+  sel?.addEventListener('change', () => document.getElementById('pickForm')?.submit());
 
-  // ===== Confirm Modal =====
+  // ─── Confirm Modal ─────────────────────────────────────────────────────────
   function showConfirmModal({ title, message, confirmText, cancelText, tone = "neutral", onConfirm }) {
     const toneMap = {
       neutral: { btn: "bg-slate-900 hover:bg-slate-800" },
-      danger:  { btn: "bg-rose-600 hover:bg-rose-700" },
+      danger:  { btn: "bg-rose-600 hover:bg-rose-700"  },
     };
     const t = toneMap[tone] || toneMap.neutral;
 
@@ -501,12 +584,11 @@
       </div>
     `;
 
-    function close(){ wrap.remove(); }
-    wrap.addEventListener('click', (e)=>{ if(e.target===wrap) close(); });
+    function close() { wrap.remove(); }
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
     wrap.querySelector('.btn-x')?.addEventListener('click', close);
     wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
-    wrap.querySelector('.btn-ok')?.addEventListener('click', ()=>{ close(); onConfirm?.(); });
-
+    wrap.querySelector('.btn-ok')?.addEventListener('click', () => { close(); onConfirm?.(); });
     document.body.appendChild(wrap);
   }
 
@@ -518,10 +600,7 @@
       message: "Perubahan jadwal akan disimpan ke sistem.",
       confirmText: "Ya, Simpan",
       cancelText: "Batal",
-      onConfirm: () => {
-        editForm.dataset.confirmed = "1";
-        editForm.submit();
-      }
+      onConfirm: () => { editForm.dataset.confirmed = "1"; editForm.submit(); }
     });
   });
 

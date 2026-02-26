@@ -16,13 +16,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
-
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Tambah Jadwal Kerja</h1>
         <p class="text-xs text-slate-500">Isi form untuk menambahkan kegiatan / shift.</p>
       </div>
     </div>
-
     <div class="flex items-center gap-2">
       <button type="button"
               class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
@@ -44,14 +42,12 @@
          style="background-image:
             linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-            background-size: 56px 56px;">
-    </div>
+            background-size: 56px 56px;"></div>
     <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
          style="background-image:
             repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
             repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-            background-size: 112px 112px, 112px 112px;">
-    </div>
+            background-size: 112px 112px, 112px 112px;"></div>
     <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
                 bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
     <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
@@ -69,11 +65,8 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="min-w-0">
             <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Form Tambah Jadwal</div>
-            <div class="text-xs text-slate-500 mt-1">
-              Minimal isi: Nama, Tanggal, Jam Mulai & Jam Selesai.
-            </div>
+            <div class="text-xs text-slate-500 mt-1">Minimal isi: Nama, Tanggal, Jam Mulai & Jam Selesai.</div>
           </div>
-
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center gap-2 text-xs text-slate-600">
               <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Aktif
@@ -92,25 +85,41 @@
         <form id="createForm" action="{{ route('simpan_jadwal_kerja') }}" method="POST" class="space-y-5">
           @csrf
 
-          {{-- ✅ Tandai field mana yang merupakan default (bukan input user) --}}
+          {{-- Auth info untuk JS --}}
           <input type="hidden" id="defaultStatus" value="Aktif">
+          <input type="hidden" id="authUserId"    value="{{ $authUser->user_id ?? '' }}">
+          <input type="hidden" id="authUserRole"  value="{{ $authUser->role ?? '' }}">
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {{-- Nama --}}
             <div>
               <label class="block text-sm font-semibold text-slate-800 mb-1">Nama</label>
-              <select name="user_id"
-                      class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                             focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                <option value="">Pilih user</option>
-                @foreach(($users ?? []) as $u)
-                  <option value="{{ $u->user_id }}" @selected(old('user_id') == $u->user_id)>
-                    {{ $u->username ?? 'User' }}
-                  </option>
-                @endforeach
-              </select>
-              <p class="text-[11px] text-slate-500 mt-1">Pilih admin/staff yang dijadwalkan.</p>
+              <div class="relative">
+                <select name="user_id" id="userSelect"
+                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 pr-10
+                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300
+                               transition appearance-none">
+                  <option value="">Pilih user</option>
+                  @foreach(($users ?? []) as $u)
+                    <option value="{{ $u->user_id }}"
+                            data-role="{{ $u->role }}"
+                            @selected(old('user_id') == $u->user_id)>
+                      {{ $u->username ?? 'User' }}
+                    </option>
+                  @endforeach
+                </select>
+                {{-- Ikon kunci — muncul saat terkunci --}}
+                <span id="lockIcon"
+                      class="hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </span>
+              </div>
+              <p class="text-[11px] mt-1 transition-colors" id="userSelectHint"
+                 style="color:#64748b">Pilih admin/staff yang dijadwalkan.</p>
             </div>
 
             {{-- Tanggal --}}
@@ -157,8 +166,8 @@
             {{-- Status --}}
             <div class="md:col-span-2">
               <label class="block text-sm font-semibold text-slate-800 mb-1">Status</label>
-
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
                 {{-- AKTIF --}}
                 <label class="group cursor-pointer">
                   <input type="radio" name="status" value="Aktif" class="peer sr-only"
@@ -260,25 +269,105 @@
   }
   .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
 
-  .tip{ position: relative; }
-  .tip[data-tip]::after{
+  .tip { position: relative; }
+  .tip[data-tip]::after {
     content: attr(data-tip);
-    position:absolute; right:0; top: calc(100% + 10px);
+    position: absolute; right: 0; top: calc(100% + 10px);
     background: rgba(15,23,42,.92); color: rgba(255,255,255,.92);
     font-size: 11px; padding: 6px 10px; border-radius: 10px;
-    white-space: nowrap; opacity:0; transform: translateY(-4px);
-    pointer-events:none; transition: .15s ease;
+    white-space: nowrap; opacity: 0; transform: translateY(-4px);
+    pointer-events: none; transition: .15s ease;
   }
-  .tip:hover::after{ opacity:1; transform: translateY(0); }
+  .tip:hover::after { opacity: 1; transform: translateY(0); }
+
+  /* ✅ Visual terkunci: background abu-abu, border lebih gelap, cursor tidak-boleh */
+  select.is-locked {
+    background-color: #f1f5f9 !important; /* slate-100  */
+    border-color:     #94a3b8 !important; /* slate-400  */
+    color:            #475569 !important; /* slate-600  */
+    cursor: not-allowed !important;
+    pointer-events: none;
+    opacity: 1 !important;               /* teks tetap jelas, tidak pudar */
+  }
 </style>
 @endpush
 
 @push('scripts')
 <script>
+  // ─── Data admin yang sedang login ──────────────────────────────────────────
+  const authUserId    = document.getElementById('authUserId')?.value  ?? '';
+  const authUserRole  = document.getElementById('authUserRole')?.value ?? '';
+  const defaultStatus = document.getElementById('defaultStatus')?.value ?? 'Aktif';
+
+  const userSelect     = document.getElementById('userSelect');
+  const userSelectHint = document.getElementById('userSelectHint');
+  const lockIcon       = document.getElementById('lockIcon');
+
+  // ─── Filter / kunci dropdown berdasarkan status ────────────────────────────
+  function filterUserDropdown(statusValue) {
+    if (!userSelect) return;
+
+    const isRestricted = ['Catatan', 'Tutup'].includes(statusValue);
+
+    if (isRestricted) {
+      // 1. Pilih otomatis ke admin yang login
+      userSelect.value    = authUserId;
+      // 2. Disable agar tidak bisa diklik
+      userSelect.disabled = true;
+      // 3. Tambah class visual abu-abu terkunci
+      userSelect.classList.add('is-locked');
+      // 4. Tampilkan ikon gembok
+      lockIcon?.classList.remove('hidden');
+
+      // 5. Hidden input agar user_id tetap terkirim
+      //    (elemen disabled TIDAK ikut dikirim ke server)
+      let hiddenUser = document.getElementById('hiddenUserId');
+      if (!hiddenUser) {
+        hiddenUser      = document.createElement('input');
+        hiddenUser.type = 'hidden';
+        hiddenUser.name = 'user_id';
+        hiddenUser.id   = 'hiddenUserId';
+        userSelect.parentNode.appendChild(hiddenUser);
+      }
+      hiddenUser.value = authUserId;
+
+      // 6. Update hint
+      if (userSelectHint) {
+        userSelectHint.textContent = '';
+      }
+
+    } else {
+      // Buka kembali ke kondisi normal
+      userSelect.disabled = false;
+      userSelect.classList.remove('is-locked');
+      lockIcon?.classList.add('hidden');
+
+      // Hapus hidden input jika ada
+      document.getElementById('hiddenUserId')?.remove();
+
+      if (userSelectHint) {
+        userSelectHint.textContent = 'Pilih admin/staff yang dijadwalkan.';
+        userSelectHint.style.color = '#64748b'; /* slate-500 */
+      }
+    }
+  }
+
+  // Bind ke setiap radio status
+  document.querySelectorAll('input[name="status"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) filterUserDropdown(radio.value);
+    });
+  });
+
+  // Jalankan saat halaman load (termasuk old() dari validasi gagal)
+  const checkedStatus = document.querySelector('input[name="status"]:checked');
+  if (checkedStatus) filterUserDropdown(checkedStatus.value);
+
+  // ─── Confirm modal ─────────────────────────────────────────────────────────
   function showConfirmModal({ title, message, confirmText, cancelText, note, tone = "neutral", onConfirm }) {
     const toneMap = {
-      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg:"bg-slate-50", noteBr:"border-slate-200", noteTx:"text-slate-600" },
-      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg:"bg-rose-50",  noteBr:"border-rose-200",  noteTx:"text-rose-700" },
+      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg: "bg-slate-50", noteBr: "border-slate-200", noteTx: "text-slate-600" },
+      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg: "bg-rose-50",  noteBr: "border-rose-200",  noteTx: "text-rose-700"  },
     };
     const t = toneMap[tone] || toneMap.neutral;
 
@@ -309,15 +398,15 @@
       </div>
     `;
 
-    function close(){ wrap.remove(); }
-    wrap.addEventListener('click', (e)=>{ if(e.target===wrap) close(); });
+    function close() { wrap.remove(); }
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
     wrap.querySelector('.btn-x')?.addEventListener('click', close);
     wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
-    wrap.querySelector('.btn-ok')?.addEventListener('click', ()=>{ close(); onConfirm?.(); });
-
+    wrap.querySelector('.btn-ok')?.addEventListener('click', () => { close(); onConfirm?.(); });
     document.body.appendChild(wrap);
   }
 
+  // ─── Submit form ───────────────────────────────────────────────────────────
   const createForm = document.getElementById('createForm');
   createForm?.addEventListener('submit', (e) => {
     if (createForm.dataset.confirmed === "1") return;
@@ -335,10 +424,9 @@
     });
   });
 
-  const btnBatal   = document.getElementById('btnBatal');
-  // ✅ FIX: prefillDate dari Blade agar bisa dibandingkan di JS
-  const prefillDate   = "{{ $prefillDate ?? '' }}";
-  const defaultStatus = document.getElementById('defaultStatus')?.value ?? 'Aktif';
+  // ─── Tombol Batal ─────────────────────────────────────────────────────────
+  const btnBatal    = document.getElementById('btnBatal');
+  const prefillDate = "{{ $prefillDate ?? '' }}";
 
   btnBatal?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -347,15 +435,8 @@
     const hasAnyValue = Array.from(createForm.querySelectorAll('input, select, textarea'))
       .some(el => {
         if (!el.name || el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
-
-        // ✅ FIX: radio status "Aktif" adalah default — jangan dianggap input user
-        if (el.type === 'radio') {
-          return el.checked && el.value !== defaultStatus;
-        }
-
-        // ✅ FIX: tanggal yang ter-prefill dari kalender bukan input user
+        if (el.type === 'radio') return el.checked && el.value !== defaultStatus;
         if (el.name === 'tanggal_kerja' && prefillDate && el.value === prefillDate) return false;
-
         return String(el.value || '').trim().length > 0;
       });
 

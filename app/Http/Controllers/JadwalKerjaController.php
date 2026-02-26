@@ -42,11 +42,12 @@ class JadwalKerjaController extends Controller
 
     public function getTambahJadwalKerja(Request $request)
     {
-        $users = User::orderBy('username')->get(['user_id', 'username']);
+        $users = User::orderBy('username')->get(['user_id', 'username', 'role']);
 
         return view('admin.jadwal_kerja.tambah_jadwal_kerja', [
             'users'        => $users,
             'selectedDate' => $request->query('date'),
+            'authUser'     => auth()->user(), // ✅ kirim data admin yang login
         ]);
     }
 
@@ -79,10 +80,10 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
-        $users = User::orderBy('username')->get(['user_id', 'username']);
+        $users = User::orderBy('username')->get(['user_id', 'username', 'role']); // ✅ ambil kolom role
 
         return view('admin.jadwal_kerja.ubah_jadwal_kerja',
-            compact('jadwalKerjas', 'users', 'date')
+            compact('jadwalKerjas', 'users', 'date') + ['authUser' => auth()->user()] // ✅ kirim authUser
         );
     }
 
