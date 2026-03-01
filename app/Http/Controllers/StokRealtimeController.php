@@ -44,13 +44,6 @@ class StokRealtimeController extends Controller
         return view('admin.print.stokrealtime', compact('barangs'));
     }
 
-    public function create()
-    {
-        $barangs = Barang::orderBy('barang_id', 'asc')->get();
-
-        return view('admin.print.stokrealtime', compact('barangs'));
-    }
-
     // ── Staff ────────────────────────────────────────────────────────────────
 
     public function getStokRealtimeStaff(Request $request)
