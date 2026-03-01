@@ -126,10 +126,4 @@ class BarangKeluarController extends Controller
             ->route('barang_keluar')
             ->with('success', 'Stok keluar berhasil dicatat.');
     }
-
-    public function create()  {}
-    public function show(string $id)  {}
-    public function edit(string $id)  {}
-    public function update(Request $request, string $id) {}
-    public function destroy(string $id) {}
 }
