@@ -5,9 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use App\Models\Barang;
 use App\Models\JadwalKerja;
+use App\Observers\BarangObserver;
 use App\Observers\JadwalKerjaObserver;
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,11 +16,16 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // ✅ Daftarkan observer di sini — BUKAN di dalam View Composer
+        // agar tidak terdaftar berulang setiap kali view di-render
+        JadwalKerja::observe(JadwalKerjaObserver::class);
+        Barang::observe(BarangObserver::class);
+
         View::composer(
             [
                 'staff.sidebar.sidebar',
-                'admin.sidebar',   
-                'staff.layout.app',                
+                'admin.sidebar',
+                'staff.layout.app',
                 'admin.layout.app',
             ],
             function (\Illuminate\View\View $view) {
@@ -29,11 +35,7 @@ class AppServiceProvider extends ServiceProvider
                     'username' => $user?->username ?? 'User',
                     'role'     => $user?->role     ?? 'Staff',
                 ]);
-
-                JadwalKerja::observe(JadwalKerjaObserver::class);
             }
         );
     }
-
-    
 }

@@ -12,10 +12,16 @@ class Kernel extends ConsoleKernel
         // Kirim jadwal mingguan setiap Senin jam 08:00
         $schedule->command('jadwal:kirim-mingguan')
                  ->weeklyOn(1, '08:00');
-
-        // Kirim reminder H-1 setiap hari jam 18:00
+    
+        // Kirim reminder H-1 setiap hari jam 18:00 ✅ diperbaiki
         $schedule->command('jadwal:reminder-h1')
-                 ->dailyAt('10:00');
+                 ->dailyAt('18:00');
+    
+        // Notifikasi stok menipis setiap hari jam 08:00
+        // (sudah ada di console.php, pilih salah satu tempatnya)
+        $schedule->command('notifikasi:stok-menipis')
+                 ->dailyAt('08:00')
+                 ->withoutOverlapping();
     }
 
     protected function commands(): void

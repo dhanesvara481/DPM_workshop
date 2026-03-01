@@ -19,4 +19,12 @@ class NotifikasiController extends Controller
 
         return view('admin.notifikasi.detail_notifikasi', compact('notif'));
     }
+
+    public function getNotifikasiStaff()
+    {
+        $notifs = Notifikasi::orderBy('tanggal_dibuat', 'desc')->get();
+
+        return view('staff.notifikasi.tampilan_notifikasi_staff', compact('notifs'));
+    }
+    
 }
