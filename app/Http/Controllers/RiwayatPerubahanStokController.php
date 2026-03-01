@@ -64,6 +64,27 @@ class RiwayatPerubahanStokController extends Controller
             ->orderByDesc('riwayat_stok.riwayat_stok_id') // tiebreaker
             ->paginate(20)
             ->withQueryString();
+
+        // ✅ Tambahin ini:
+        $rows->getCollection()->transform(function ($r) {
+            $awal  = (int) $r->stok_awal;
+            $akhir = (int) $r->stok_akhir;
+            $delta = $akhir - $awal;
+
+            // Tipe utama dari kolom relasi (paling valid)
+            if (!is_null($r->barang_masuk_id) && is_null($r->barang_keluar_id)) {
+                $r->tipe = 'masuk';
+            } elseif (is_null($r->barang_masuk_id) && !is_null($r->barang_keluar_id)) {
+                $r->tipe = 'keluar';
+            } else {
+                // fallback kalau ada data "aneh" (dua-duanya terisi / dua-duanya null)
+                $r->tipe = $delta > 0 ? 'masuk' : ($delta < 0 ? 'keluar' : null);
+            }
+
+            $r->qty = abs($delta); // qty perubahan stok (selisih)
+            return $r;
+        });
+
     
         return view('admin.riwayat_perubahan_stok', compact('rows', 'q', 'tipe', 'dari', 'sampai', 'sort', 'dir'));
     }

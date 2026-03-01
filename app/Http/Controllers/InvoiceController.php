@@ -207,18 +207,18 @@ class InvoiceController extends Controller
                 // Catatan disimpan sebagai row Jasa dengan total=0 & jumlah=0
                 // Ini adalah satu-satunya cara menyimpan catatan di detail_invoice
                 // tanpa mengubah struktur tabel (ENUM hanya Barang/Jasa)
-                if ($deskripsi !== '') {
-                    InvoiceItem::create([
-                        'invoice_id'     => $invoice->invoice_id,
-                        'barang_id'      => null,
-                        'nama_pelanggan' => $namaPelanggan,
-                        'kontak'         => $kontak,
-                        'deskripsi'      => $deskripsi,
-                        'jumlah'         => '0',
-                        'total'          => 0,
-                        'tipe_transaksi' => 'Jasa',
-                    ]);
-                }
+                // if ($deskripsi !== '') {
+                //     InvoiceItem::create([
+                //         'invoice_id'     => $invoice->invoice_id,
+                //         'barang_id'      => null,
+                //         'nama_pelanggan' => $namaPelanggan,
+                //         'kontak'         => $kontak,
+                //         'deskripsi'      => $deskripsi,
+                //         'jumlah'         => '0',
+                //         'total'          => 0,
+                //         'tipe_transaksi' => 'Jasa',
+                //     ]);
+                // }
             }
 
             if ($kategori === 'jasa') {
@@ -231,8 +231,7 @@ class InvoiceController extends Controller
                     $jasaNama,
                     (float) ($request->subtotal_jasa ?? 0),
                     $namaPelanggan,
-                    $kontak,
-                    $deskripsi !== '' ? $deskripsi : $jasaNama  // ← catatan masuk ke deskripsi
+                    $kontak
                 );
 
                 $jasaBarang        = $request->jasa_barang ?? [];
@@ -242,11 +241,25 @@ class InvoiceController extends Controller
                     $this->simpanItemBarang(
                         $invoice->invoice_id,
                         $itemsDenganBarang,
-                        'Jasa',
+                        'Barang',
                         $namaPelanggan,
                         $kontak
                     );
                 }
+            }
+
+            // ✅ SIMPAN CATATAN invoice (berlaku utk Barang & Jasa)
+            if ($deskripsi !== '') {
+                InvoiceItem::create([
+                    'invoice_id'     => $invoice->invoice_id,
+                    'barang_id'      => null,
+                    'nama_pelanggan' => $namaPelanggan,
+                    'kontak'         => $kontak,
+                    'deskripsi'      => $deskripsi,
+                    'jumlah'         => '0',
+                    'total'          => 0,
+                    'tipe_transaksi' => 'Jasa', // karena enum cuma Barang/Jasa
+                ]);
             }
 
             RiwayatTransaksi::create([
@@ -281,8 +294,8 @@ class InvoiceController extends Controller
         string  $jasaNama,
         float   $biayaJasa,
         ?string $namaPelanggan,
-        ?string $kontak,
-        ?string $deskripsi = null
+        ?string $kontak
+        // ?string $deskripsi = null
     ): void {
         InvoiceItem::create([
             'invoice_id'     => $invoiceId,
@@ -346,6 +359,8 @@ class InvoiceController extends Controller
             ? $invoice->tanggal_invoice->toDateString()
             : $invoice->tanggal_invoice;
 
+        $waktuKeluar = $invoice->tanggal_bayar; // datetime real saat konfirmasi
+
         // whereNotNull('barang_id') otomatis skip row catatan (barang_id=null)
         $items = $invoice->items()->whereNotNull('barang_id')->get();
 
@@ -394,7 +409,7 @@ class InvoiceController extends Controller
                 'user_id'        => $userId,
                 'barang_id'      => $barang->barang_id,
                 'jumlah_keluar'  => $qty,
-                'tanggal_keluar' => $tanggalHari,
+                'tanggal_keluar' => $waktuKeluar,
                 'keterangan'     => 'Invoice',
                 'ref_invoice'    => $invoice->invoice_id,
             ]);
@@ -404,7 +419,7 @@ class InvoiceController extends Controller
                 'user_id'              => $userId,
                 'barang_masuk_id'      => null,
                 'barang_keluar_id'     => $barangKeluar->barang_keluar_id,
-                'tanggal_riwayat_stok' => $tanggalHari,
+                'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
             ]);

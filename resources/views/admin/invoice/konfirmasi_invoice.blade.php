@@ -109,12 +109,12 @@
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead class="bg-slate-50 border-b border-slate-200">
-            <tr class="text-left text-slate-600">
-              <th class="px-5 py-3 font-semibold">No Invoice</th>
-              <th class="px-5 py-3 font-semibold">Pelanggan</th>
-              <th class="px-5 py-3 font-semibold">Total</th>
-              <th class="px-5 py-3 font-semibold">Status</th>
-              <th class="px-5 py-3 font-semibold">Tanggal</th>
+            <tr class="text-slate-600">
+              <th class="px-5 py-3 font-semibold text-left">No Invoice</th>
+              <th class="px-5 py-3 font-semibold text-left">Pelanggan</th>
+              <th class="px-5 py-3 font-semibold text-left">Total</th>
+              <th class="px-5 py-3 font-semibold text-left">Status</th>
+              <th class="px-5 py-3 font-semibold text-left">Tanggal</th>
               <th class="px-5 py-3 font-semibold text-right">Aksi</th>
             </tr>
           </thead>
@@ -185,7 +185,7 @@
                       {{-- Sudah Paid: hanya label, tanpa tombol hapus --}}
                       <span class="inline-flex items-center justify-center h-10 px-4 rounded-xl
                                    border border-slate-200 bg-white text-slate-500 font-semibold">
-                        Sudah Paid
+                        Terkonfirmasi
                       </span>
                     @endif
                   </div>

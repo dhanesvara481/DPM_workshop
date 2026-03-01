@@ -248,7 +248,7 @@
       </div>
 
       <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-        Tips: dari kalender, klik tanggal → Tambah Jadwal (otomatis bawa query <span class="font-semibold">?date=YYYY-MM-DD</span>).
+        Tips: Pilih Status Sesuai dengan kebutuhan. "Aktif" untuk jadwal kerja normal, "Catatan" untuk info penting, dan "Tutup" untuk hari libur atau non-operasional. 
       </div>
     </div>
   </div>

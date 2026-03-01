@@ -145,7 +145,7 @@
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div class="text-xs text-slate-500">Total Transaksi</div>
             <div class="text-3xl font-bold text-slate-900 mt-1">{{ $txTotalAll }}</div>
-            <div class="text-xs text-slate-500 mt-1">Transaksi Anda sejak bergabung</div>
+            <div class="text-xs text-slate-500 mt-1">Yang anda buat sejak bergabung</div>
           </div>
         </div>
 

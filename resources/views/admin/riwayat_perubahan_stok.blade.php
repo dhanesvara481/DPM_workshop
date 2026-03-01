@@ -232,8 +232,13 @@
                 </td>
 
                 {{-- Stok Akhir --}}
+                @php
+                  $awal  = (int) $r->stok_awal;
+                  $akhir = (int) $r->stok_akhir;
+                @endphp
+
                 <td class="px-5 py-4 text-right font-semibold
-                           {{ (int)$r->stok_akhir > (int)$r->stok_awal ? 'text-emerald-700' : 'text-red-700' }}">
+                  {{ $akhir > $awal ? 'text-emerald-700' : ($akhir < $awal ? 'text-red-700' : 'text-slate-600') }}">
                   {{ $r->stok_akhir }}
                 </td>
 

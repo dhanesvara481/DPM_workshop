@@ -69,7 +69,8 @@ class BarangKeluarController extends Controller
         }
 
         DB::transaction(function () use ($validated, $barang) {
-            $tanggalInput = $validated['tanggal'];
+             $tanggalInput = $validated['tanggal']; // buat whereDate
+             $waktuKeluar  = now();                 // ini yg bikin jam kebaca
             $qty          = (int) $validated['qty_keluar'];
 
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
@@ -105,7 +106,7 @@ class BarangKeluarController extends Controller
                 'user_id'        => Auth::id(),
                 'barang_id'      => $validated['barang_id'],
                 'jumlah_keluar'  => $qty,
-                'tanggal_keluar' => $tanggalInput,
+                'tanggal_keluar' => $waktuKeluar,
                 'keterangan'     => $validated['keterangan'], // manual input: Barang Rusak, dll.
                 'ref_invoice'    => null,
             ]);
@@ -115,7 +116,7 @@ class BarangKeluarController extends Controller
                 'user_id'              => Auth::id(),
                 'barang_masuk_id'      => null,
                 'barang_keluar_id'     => $barangKeluar->barang_keluar_id,
-                'tanggal_riwayat_stok' => $tanggalInput,
+                'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
             ]);

@@ -1,8 +1,8 @@
 {{-- resources/views/staff/invoice/tampilan_invoice_staff.blade.php --}}
-@extends('staff.layout.app')
+@extends('admin.layout.app')
 
-@section('page_title', 'Invoice')
-@section('page_subtitle', 'Staff')
+@section('page_title', 'DPM Workshop - Admin')
+@section('page_subtitle', 'Buat Invoice/Transaksi')
 
 @section('content')
 

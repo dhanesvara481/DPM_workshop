@@ -21,6 +21,7 @@ class LaporanPenjualanController extends Controller
         // saat 1 invoice punya banyak item di detail_invoice.
         $query = RiwayatTransaksi::query()
             ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
+            ->where('invoice.status', 'Paid') // ✅ FIX: hanya invoice yang sudah dibayar
             ->selectRaw("
                 riwayat_transaksi.riwayat_transaksi_id                      AS id,
                 riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
