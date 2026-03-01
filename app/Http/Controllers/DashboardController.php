@@ -23,7 +23,7 @@ class DashboardController extends Controller
     {
         $chartMasuk  = $this->buildChartMasuk();
         $chartKeluar = $this->buildChartKeluar();
-        $events      = $this->buildEvents();
+        $events      = $this->buatEvents();
 
         $MAX_EVENTS_PER_DAY = 4;
 
@@ -94,7 +94,7 @@ class DashboardController extends Controller
             ->count();
 
         // ── Events Jadwal ───────────────────────────────────────────────────
-        $events             = $this->buildEvents();
+        $events             = $this->buatEvents();
         $MAX_EVENTS_PER_DAY = 4;
 
         return view('staff.dashboard.tampilan_dashboard_staff', compact(
@@ -118,7 +118,7 @@ class DashboardController extends Controller
             'year' => $this->queryMasukKuartal(),
         ];
     }
-
+    
     private function queryMasuk(int $months): array
     {
         $rows = DB::table('barang_masuk')
@@ -214,7 +214,7 @@ class DashboardController extends Controller
 
     // ── Events Jadwal (dipakai admin & staff) ───────────────────────────────
     // Data jadwal kerja dari 30 hari ke belakang sampai 60 hari ke depan, diurutkan berdasarkan tanggal & jam.
-    private function buildEvents(): array
+    private function buatEvents(): array
     {
         try {
             $rows = JadwalKerja::with('user')
