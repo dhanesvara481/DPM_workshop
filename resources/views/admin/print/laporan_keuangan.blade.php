@@ -256,7 +256,8 @@
           <td class="kode">{{ $r->kode_transaksi ?? ('INV-' . ($r->id ?? '-')) }}</td>
           <td class="nama">{{ $name ?: 'User' }}</td>
           <td class="tgl">
-            {{ isset($r->created_at) ? \Carbon\Carbon::parse($r->created_at)->format('d/m/Y') : '-' }}
+            {{ !empty($r->tanggal_invoice) ? \Carbon\Carbon::parse($r->tanggal_invoice)->format('d/m/Y') : '-' }}
+          </td>
           </td>
           <td class="nominal">{{ $fmt($r->total ?? 0) }}</td>
         </tr>

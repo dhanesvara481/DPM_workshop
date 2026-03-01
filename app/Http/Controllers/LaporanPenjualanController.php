@@ -25,6 +25,7 @@ class LaporanPenjualanController extends Controller
             ->selectRaw("
                 riwayat_transaksi.riwayat_transaksi_id                      AS id,
                 riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
+                invoice.tanggal_invoice                                     AS tanggal_invoice, 
                 CONCAT('INV-', invoice.invoice_id)                          AS kode_transaksi,
                 invoice.subtotal                                             AS total,
                 invoice.subtotal_barang,

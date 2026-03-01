@@ -193,9 +193,10 @@
 
           {{-- Group header tanggal --}}
           <div class="px-4 sm:px-6 py-3 bg-slate-50/80 flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-700 tracking-wide">
+            {{-- TANGGAL NI --}}
+            {{-- <span class="text-xs font-semibold text-slate-700 tracking-wide">
               {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }}
-            </span>
+            </span> --}}
             <span class="text-xs text-slate-400">{{ $items->count() }} invoice</span>
           </div>
 

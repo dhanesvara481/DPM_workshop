@@ -224,7 +224,7 @@
                   <span class="truncate text-slate-700">{{ $name }}</span>
                 </div>
                 <div class="px-4 py-3 border-r border-slate-100 text-center text-slate-600 text-xs">
-                  {{ isset($r->created_at) ? \Carbon\Carbon::parse($r->created_at)->format('d M Y') : '-' }}
+                  {{ isset($r->tanggal_invoice) ? \Carbon\Carbon::parse($r->tanggal_invoice)->format('d M Y') : '-' }}
                 </div>
                 <div class="px-4 py-3 text-right font-semibold text-emerald-700">
                   {{ $fmt($r->total ?? 0) }}
