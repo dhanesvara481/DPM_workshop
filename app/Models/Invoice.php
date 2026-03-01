@@ -11,25 +11,27 @@ class Invoice extends Model
 
     public $timestamps = true;
 
-    // Hanya kolom yang ada di migration tabel invoice
     protected $fillable = [
         'user_id',
         'tanggal_invoice',
-        'subtotal',
         'subtotal_barang',
         'biaya_jasa',
+        'subtotal',
         'status',
         'tanggal_bayar',
     ];
-    // Di Invoice model, tambahkan:
+
     protected $attributes = [
-        'status' => 'Pending',
+        'status'          => 'Pending',
+        'subtotal_barang' => 0,
+        'biaya_jasa'      => 0,
+        'subtotal'        => 0,
     ];
 
     protected $casts = [
-        'subtotal'        => 'decimal:2',
         'subtotal_barang' => 'decimal:2',
         'biaya_jasa'      => 'decimal:2',
+        'subtotal'        => 'decimal:2',
         'tanggal_invoice' => 'datetime',
         'tanggal_bayar'   => 'datetime',
     ];
@@ -51,28 +53,65 @@ class Invoice extends Model
         return $this->hasOne(RiwayatTransaksi::class, 'invoice_id', 'invoice_id');
     }
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
-    // nama_pelanggan & kontak tidak ada di tabel invoice,
-    // diambil dari detail_invoice (item pertama).
+    // ── Accessors ────────────────────────────────────────────────────────────
 
+    /**
+     * Diambil dari item pertama yang punya nilai (skip row catatan yang null)
+     */
     public function getNamaPelangganAttribute(): ?string
     {
-        return $this->items->first()?->nama_pelanggan;
+        return $this->items->first(fn($i) => !is_null($i->nama_pelanggan))?->nama_pelanggan;
     }
 
     public function getKontakAttribute(): ?string
     {
-        return $this->items->first()?->kontak;
+        return $this->items->first(fn($i) => !is_null($i->kontak))?->kontak;
     }
 
     /**
-     * Kategori ditentukan dari tipe_transaksi di detail_invoice:
-     * - ada row dengan barang_id null (row jasa murni) => 'jasa'
-     * - semua row punya barang_id                      => 'barang'
+     * Row ringkasan = row dengan barang_id null, jumlah = '0', total = 0,
+     * dan diskon/pajak terisi. Disimpan oleh controller saat store().
+     */
+    public function getRingkasanAttribute(): ?InvoiceItem
+    {
+        return $this->items->first(
+            fn($i) => is_null($i->barang_id)
+                   && (int) $i->jumlah === 0
+                   && (!is_null($i->diskon) || !is_null($i->pajak))
+        );
+    }
+
+    /**
+     * grand_total dihitung dari subtotal invoice + pajak - diskon
+     * yang tersimpan di row ringkasan detail_invoice.
+     */
+    public function getGrandTotalAttribute(): float
+    {
+        $subtotal  = (float) $this->subtotal;
+        $ringkasan = $this->ringkasan;
+
+        $diskon    = (float) ($ringkasan?->diskon ?? 0);
+        $pajakPct  = (float) ($ringkasan?->pajak  ?? 0);
+
+        $afterDisc = max(0, $subtotal - $diskon);
+        $pajakVal  = round($afterDisc * ($pajakPct / 100));
+
+        return $afterDisc + $pajakVal;
+    }
+
+    /**
+     * Kategori ditentukan dari tipe_transaksi:
+     * - ada row Jasa dengan barang_id null DAN jumlah > 0  => 'jasa'
+     * - semua row adalah Barang (atau row ringkasan jumlah=0) => 'barang'
+     *
+     * Row ringkasan/catatan (barang_id=null, jumlah='0') tidak dihitung.
      */
     public function getKategoriAttribute(): string
     {
-        return $this->items->contains(fn($i) => is_null($i->barang_id)) ? 'jasa' : 'barang';
+        return $this->items->contains(
+            fn($i) => $i->tipe_transaksi === 'Jasa'
+                   && is_null($i->barang_id)
+                   && (int) $i->jumlah > 0
+        ) ? 'jasa' : 'barang';
     }
-    
 }

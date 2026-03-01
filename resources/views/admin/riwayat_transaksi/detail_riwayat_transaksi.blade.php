@@ -28,7 +28,7 @@
       </a>
       <a href="{{ route('riwayat_transaksi') }}"
          class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 transition">
-        <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg class="h-4 w-4 text-slate-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
         Kembali
@@ -52,34 +52,39 @@
       ? \Carbon\Carbon::parse($trx->created_at)->format('H:i')
       : '-';
 
-    $nominal  = (int)($trx->total ?? 0);
-    $fmt      = fn($n) => 'Rp ' . number_format((int)$n, 0, ',', '.');
-    $nama     = trim((string)($trx->nama_pengguna ?? 'User'));
+    $fmt  = fn($n) => 'Rp ' . number_format((int) $n, 0, ',', '.');
+    $nama = trim((string) ($trx->nama_pengguna ?? 'User'));
+
     $initials = collect(preg_split('/\s+/', $nama))->filter()->take(2)
-      ->map(fn($p) => mb_strtoupper(mb_substr($p,0,1)))->join('');
+      ->map(fn($p) => mb_strtoupper(mb_substr($p, 0, 1)))->join('');
 
     $kode = $trx->kode_transaksi ?? ('INV-' . ($trx->id ?? '-'));
 
-    $status   = strtolower((string)($trx->status ?? 'paid'));
-    $statusUI = match($status){
-      'paid','lunas','success' => ['label'=>'PAID',    'cls'=>'bg-emerald-50 text-emerald-700 border border-emerald-100'],
-      'unpaid','pending'       => ['label'=>'PENDING', 'cls'=>'bg-amber-50 text-amber-700 border border-amber-100'],
-      default                  => ['label'=>strtoupper($status ?: 'STATUS'), 'cls'=>'bg-slate-50 text-slate-700 border border-slate-200'],
+    $status   = strtolower((string) ($trx->status ?? 'paid'));
+    $statusUI = match($status) {
+      'paid','lunas','success' => ['label' => 'PAID',    'cls' => 'bg-emerald-50 text-emerald-700 border border-emerald-100'],
+      'unpaid','pending'       => ['label' => 'PENDING', 'cls' => 'bg-amber-50 text-amber-700 border border-amber-100'],
+      default                  => ['label' => strtoupper($status ?: 'STATUS'), 'cls' => 'bg-slate-50 text-slate-700 border border-slate-200'],
     };
 
-    // Nama pembuat invoice (username dari tabel user)
-    $namaPembuat = $trx->nama_pembuat ?? '-';
-
-    // Kategori invoice: Jasa atau Barang, diturunkan dari tipe_transaksi di detail_invoice
+    $namaPembuat     = $trx->nama_pembuat ?? '-';
     $kategoriInvoice = $trx->kategori_invoice ?? '-';
+    $catatan         = $trx->catatan ?? '-';
 
-    // Catatan dari deskripsi item pertama
-    $catatan = $trx->catatan ?? '-';
+    // Nilai keuangan dari controller
+    $subtotalBarang = (int) ($trx->subtotal_barang ?? 0);
+    $biayaJasa      = (int) ($trx->biaya_jasa      ?? 0);
+    $subtotal       = (int) ($trx->subtotal        ?? 0);
+    $diskon         = (float) ($trx->diskon        ?? 0);
+    $pajakPct       = (int)   ($trx->pajak         ?? 0);
+    $pajakNominal   = (int)   ($trx->pajak_nominal ?? 0);
+    $grandTotal     = (int)   ($trx->grand_total   ?? $subtotal);
   @endphp
 
   <div class="max-w-5xl mx-auto w-full">
     <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
+      {{-- Header kartu --}}
       <div class="p-5 sm:p-6 border-b border-slate-200">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
@@ -92,8 +97,8 @@
               {{ $statusUI['label'] }}
             </span>
             <div class="text-right">
-              <div class="text-xs text-slate-500">Total</div>
-              <div class="text-base font-bold text-emerald-700">+{{ $fmt(abs($nominal)) }}</div>
+              <div class="text-xs text-slate-500">Grand Total</div>
+              <div class="text-base font-bold text-emerald-700">+{{ $fmt($grandTotal) }}</div>
             </div>
           </div>
         </div>
@@ -118,33 +123,29 @@
 
       <div class="p-5 sm:p-6 space-y-5">
 
+        {{-- Info kartu --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-
-            {{-- Menampilkan nama pembuat invoice (username staff/admin) --}}
             <div class="flex items-center justify-between gap-3">
               <span class="text-slate-500">Dibuat Oleh</span>
               <span class="font-semibold text-slate-900">{{ $namaPembuat }}</span>
             </div>
-
             <div class="flex items-center justify-between gap-3">
               <span class="text-slate-500">Status</span>
               <span class="font-semibold text-slate-900">{{ $statusUI['label'] }}</span>
             </div>
-
-            {{-- Kategori diambil dari tipe_transaksi di detail_invoice --}}
             <div class="flex items-center justify-between gap-3">
               <span class="text-slate-500">Kategori</span>
               <span class="font-semibold text-slate-900">{{ $kategoriInvoice }}</span>
             </div>
-
             <div class="flex items-center justify-between gap-3">
               <span class="text-slate-500">Catatan</span>
-              <span class="font-semibold text-slate-900">{{ $catatan }}</span>
+              <span class="font-semibold text-slate-900 text-right">{{ $catatan }}</span>
             </div>
           </div>
         </div>
 
+        {{-- Tabel item --}}
         <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
           <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div class="text-sm font-semibold text-slate-900">Detail Item</div>
@@ -162,15 +163,14 @@
                   <th class="px-4 py-3 font-semibold text-right">Subtotal</th>
                 </tr>
               </thead>
+
               <tbody class="divide-y divide-slate-200">
                 @forelse(($items ?? []) as $it)
                   @php
-                    $namaItem = $it->nama_barang ?? $it->deskripsi ?? '-';
-                    $harga    = (int)($it->harga ?? $it->total ?? 0);
-                    $qty      = (int)($it->jumlah ?? $it->qty ?? 0);
-                    $sub      = (int)($it->total ?? ($harga * $qty));
-
-                    // tipe_transaksi langsung dari kolom enum di detail_invoice: 'Barang' atau 'Jasa'
+                    $namaItem    = $it->nama_barang ?? $it->deskripsi ?? '-';
+                    $harga       = (int) ($it->harga ?? $it->total ?? 0);
+                    $qty         = (int) ($it->jumlah ?? $it->qty ?? 0);
+                    $sub         = (int) ($it->total ?? ($harga * $qty));
                     $tipeItem    = $it->tipe_transaksi ?? 'Barang';
                     $isJasaMurni = $tipeItem === 'Jasa';
                   @endphp
@@ -199,24 +199,46 @@
                 @endforelse
               </tbody>
 
-              <tfoot class="bg-slate-50">
-                @php
-                  $subtotalBarang = (int)($trx->subtotal_barang ?? 0);
-                  $biayaJasa      = (int)($trx->biaya_jasa ?? 0);
-                @endphp
-                @if($biayaJasa > 0)
+              <tfoot class="bg-slate-50 text-sm divide-y divide-slate-200">
+                {{-- Subtotal Barang --}}
+                @if($subtotalBarang > 0)
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal Barang</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotalBarang) }}</td>
                 </tr>
+                @endif
+                {{-- Biaya Jasa --}}
+                @if($biayaJasa > 0)
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Biaya Jasa</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($biayaJasa) }}</td>
                 </tr>
                 @endif
+                {{-- Subtotal sebelum diskon/pajak --}}
+                @if($diskon > 0 || $pajakPct > 0)
                 <tr>
-                  <td class="px-4 py-3 text-slate-500 font-semibold" colspan="4">Total</td>
-                  <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $fmt($nominal) }}</td>
+                  <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal</td>
+                  <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotal) }}</td>
+                </tr>
+                @endif
+                {{-- Diskon --}}
+                @if($diskon > 0)
+                <tr>
+                  <td class="px-4 py-2 text-slate-500" colspan="4">Diskon</td>
+                  <td class="px-4 py-2 text-right text-rose-600">− {{ $fmt($diskon) }}</td>
+                </tr>
+                @endif
+                {{-- Pajak --}}
+                @if($pajakPct > 0)
+                <tr>
+                  <td class="px-4 py-2 text-slate-500" colspan="4">Pajak ({{ $pajakPct }}%)</td>
+                  <td class="px-4 py-2 text-right text-slate-700">+ {{ $fmt($pajakNominal) }}</td>
+                </tr>
+                @endif
+                {{-- Grand Total --}}
+                <tr>
+                  <td class="px-4 py-3 font-bold text-slate-900" colspan="4">Grand Total</td>
+                  <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $fmt($grandTotal) }}</td>
                 </tr>
               </tfoot>
             </table>

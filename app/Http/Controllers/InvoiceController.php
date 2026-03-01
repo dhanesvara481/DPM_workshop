@@ -185,12 +185,21 @@ class InvoiceController extends Controller
             $deskripsi     = trim($request->deskripsi ?? '');
             $userId        = auth()->id();
 
+            // Nilai keuangan dari form
+            $subtotalBarang = (float) ($request->subtotal_barang ?? 0);
+            $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
+            $subtotal       = $subtotalBarang + $biayaJasa;
+
+            // Diskon & pajak dari form — akan disimpan di row ringkasan detail_invoice
+            $diskon    = max(0, (float) ($request->diskon ?? 0));
+            $pajak     = max(0, (int)   ($request->pajak  ?? 0)); // dalam persen (%)
+
             $invoice = Invoice::create([
                 'user_id'         => $userId,
                 'tanggal_invoice' => $request->tanggal_invoice,
-                'subtotal_barang' => $request->subtotal_barang ?? 0,
-                'biaya_jasa'      => $kategori === 'jasa' ? ($request->subtotal_jasa ?? 0) : 0,
-                'subtotal'        => $request->grand_total ?? 0,
+                'subtotal_barang' => $subtotalBarang,
+                'biaya_jasa'      => $biayaJasa,
+                'subtotal'        => $subtotal,
                 'status'          => 'Pending',
                 'tanggal_bayar'   => null,
             ]);
@@ -203,39 +212,21 @@ class InvoiceController extends Controller
                     $namaPelanggan,
                     $kontak
                 );
-
-                // Catatan disimpan sebagai row Jasa dengan total=0 & jumlah=0
-                // Ini adalah satu-satunya cara menyimpan catatan di detail_invoice
-                // tanpa mengubah struktur tabel (ENUM hanya Barang/Jasa)
-                // if ($deskripsi !== '') {
-                //     InvoiceItem::create([
-                //         'invoice_id'     => $invoice->invoice_id,
-                //         'barang_id'      => null,
-                //         'nama_pelanggan' => $namaPelanggan,
-                //         'kontak'         => $kontak,
-                //         'deskripsi'      => $deskripsi,
-                //         'jumlah'         => '0',
-                //         'total'          => 0,
-                //         'tipe_transaksi' => 'Jasa',
-                //     ]);
-                // }
             }
 
             if ($kategori === 'jasa') {
-                // Untuk kategori jasa, catatan langsung masuk ke deskripsi item jasa
-                // Jika ada catatan, pakai catatan; jika tidak, pakai nama jasa
                 $jasaNama = $request->jasa_nama ?? 'Jasa';
 
                 $this->simpanItemJasa(
                     $invoice->invoice_id,
                     $jasaNama,
-                    (float) ($request->subtotal_jasa ?? 0),
+                    $biayaJasa,
                     $namaPelanggan,
                     $kontak
                 );
 
                 $jasaBarang        = $request->jasa_barang ?? [];
-                $itemsDenganBarang = array_filter($jasaBarang, fn($i) => !empty($i['barang_id']));   
+                $itemsDenganBarang = array_filter($jasaBarang, fn($i) => !empty($i['barang_id']));
 
                 if (!empty($itemsDenganBarang)) {
                     $this->simpanItemBarang(
@@ -248,19 +239,22 @@ class InvoiceController extends Controller
                 }
             }
 
-            // ✅ SIMPAN CATATAN invoice (berlaku utk Barang & Jasa)
-            if ($deskripsi !== '') {
-                InvoiceItem::create([
-                    'invoice_id'     => $invoice->invoice_id,
-                    'barang_id'      => null,
-                    'nama_pelanggan' => $namaPelanggan,
-                    'kontak'         => $kontak,
-                    'deskripsi'      => $deskripsi,
-                    'jumlah'         => '0',
-                    'total'          => 0,
-                    'tipe_transaksi' => 'Jasa', // karena enum cuma Barang/Jasa
-                ]);
-            }
+            // ── Row ringkasan ────────────────────────────────────────────────
+            // Satu row khusus di detail_invoice untuk menyimpan diskon, pajak,
+            // dan/atau catatan. Selalu dibuat agar grand_total selalu bisa dihitung.
+            // Diidentifikasi via: barang_id=null, jumlah='0', total=0.
+            InvoiceItem::create([
+                'invoice_id'     => $invoice->invoice_id,
+                'barang_id'      => null,
+                'nama_pelanggan' => $namaPelanggan,
+                'kontak'         => $kontak,
+                'deskripsi'      => $deskripsi !== '' ? $deskripsi : '-', // '-' jika tidak ada catatan
+                'jumlah'         => '0',
+                'total'          => 0,
+                'tipe_transaksi' => 'Jasa', // enum hanya Barang/Jasa
+                'diskon'         => $diskon > 0 ? $diskon : null,
+                'pajak'          => $pajak  > 0 ? $pajak  : null,
+            ]);
 
             RiwayatTransaksi::create([
                 'invoice_id'                => $invoice->invoice_id,
@@ -285,17 +279,12 @@ class InvoiceController extends Controller
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
-    /**
-     * Simpan 1 row jasa ke detail_invoice.
-     * $deskripsi: kalau ada catatan dari form → isi catatan, kalau tidak → nama jasa.
-     */
     private function simpanItemJasa(
         int     $invoiceId,
         string  $jasaNama,
         float   $biayaJasa,
         ?string $namaPelanggan,
         ?string $kontak
-        // ?string $deskripsi = null
     ): void {
         InvoiceItem::create([
             'invoice_id'     => $invoiceId,
@@ -303,15 +292,16 @@ class InvoiceController extends Controller
             'nama_pelanggan' => $namaPelanggan,
             'kontak'         => $kontak,
             'deskripsi'      => $jasaNama,
-            'jumlah'         => '1',
+            'jumlah'         => '1', // jumlah > 0 → jasa asli, bukan row ringkasan
             'total'          => $biayaJasa,
             'tipe_transaksi' => 'Jasa',
+            'diskon'         => null,
+            'pajak'          => null,
         ]);
     }
 
     /**
      * Simpan item barang ke detail_invoice.
-     * deskripsi = nama barang dari database.
      * Stok belum dikurangi — baru dikurangi saat Paid.
      */
     private function simpanItemBarang(
@@ -343,6 +333,8 @@ class InvoiceController extends Controller
                 'jumlah'         => (string) $qty,
                 'total'          => (float) ($item['total'] ?? 0),
                 'tipe_transaksi' => $tipe,
+                'diskon'         => null,
+                'pajak'          => null,
             ]);
         }
     }
@@ -350,7 +342,7 @@ class InvoiceController extends Controller
     /**
      * Dipanggil saat invoice dikonfirmasi Paid.
      * Hanya item dengan barang_id yang mempengaruhi stok.
-     * Row catatan (barang_id=null, jumlah=0, total=0) dilewati otomatis.
+     * Row ringkasan (barang_id=null, jumlah=0) dilewati otomatis.
      */
     private function prosesStokDariInvoice(Invoice $invoice): void
     {
@@ -359,9 +351,8 @@ class InvoiceController extends Controller
             ? $invoice->tanggal_invoice->toDateString()
             : $invoice->tanggal_invoice;
 
-        $waktuKeluar = $invoice->tanggal_bayar; // datetime real saat konfirmasi
+        $waktuKeluar = $invoice->tanggal_bayar;
 
-        // whereNotNull('barang_id') otomatis skip row catatan (barang_id=null)
         $items = $invoice->items()->whereNotNull('barang_id')->get();
 
         foreach ($items as $item) {

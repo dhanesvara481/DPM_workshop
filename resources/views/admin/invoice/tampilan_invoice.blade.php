@@ -1,4 +1,4 @@
-{{-- resources/views/staff/invoice/tampilan_invoice_staff.blade.php --}}
+{{-- resources/views/admin/invoice/tampilan_invoice.blade.php --}}
 @extends('admin.layout.app')
 
 @section('page_title', 'DPM Workshop - Admin')
@@ -60,7 +60,7 @@
           <div class="min-w-0">
             <div class="text-sm font-semibold">Invoice berhasil dibuat</div>
             <div class="text-xs text-emerald-800 mt-0.5">
-              Tekan <span class="font-semibold">Lanjut</span> untuk menuju halaman riwayat transaksi.
+              Tekan <span class="font-semibold">Lanjut</span> untuk menuju halaman konfirmasi invoice.
             </div>
           </div>
         </div>
@@ -208,28 +208,15 @@
                        placeholder="Contoh: Service fan rusak" />
               </div>
 
-              {{-- Biaya Jasa (Rupiah formatted) --}}
               <div class="space-y-1">
                 <label class="text-xs font-semibold text-slate-700">Biaya Jasa</label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">Rp</span>
-                  {{-- input tampilan --}}
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    id="jasaBiayaDisplay"
+                  <input type="text" inputmode="numeric" id="jasaBiayaDisplay"
                     value="{{ old('jasa_biaya') ? number_format((int)old('jasa_biaya'),0,',','.') : '' }}"
                     class="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                    placeholder="0"
-                    autocomplete="off"
-                  />
-                  {{-- input asli yang dikirim --}}
-                  <input
-                    type="hidden"
-                    name="jasa_biaya"
-                    id="jasaBiaya"
-                    value="{{ old('jasa_biaya', 0) }}"
-                  />
+                    placeholder="0" autocomplete="off" />
+                  <input type="hidden" name="jasa_biaya" id="jasaBiaya" value="{{ old('jasa_biaya', 0) }}" />
                 </div>
               </div>
             </div>
@@ -270,7 +257,7 @@
           {{-- Deskripsi + Total --}}
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="lg:col-span-2 space-y-1">
-              <label class="text-xs font-semibold text-slate-700">Deskripsi</label>
+              <label class="text-xs font-semibold text-slate-700">Deskripsi / Catatan</label>
               <textarea name="deskripsi" rows="6"
                         class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                         placeholder="Catatan tambahan untuk invoice...">{{ old('deskripsi') }}</textarea>
@@ -302,7 +289,7 @@
                   </div>
                   <div class="space-y-1">
                     <label class="text-[11px] font-semibold text-slate-700">Pajak (%)</label>
-                    <input type="number" min="0" step="0.01" id="pajak"
+                    <input type="number" min="0" step="1" id="pajak"
                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                            placeholder="0" />
                   </div>
@@ -315,14 +302,17 @@
                   <span id="sumGrand" class="text-xl font-bold text-slate-900">0</span>
                 </div>
 
+                {{-- Hidden inputs yang dikirim ke server --}}
                 <input type="hidden" name="subtotal_barang" id="subtotal_barang" value="0">
                 <input type="hidden" name="subtotal_jasa"   id="subtotal_jasa"   value="0">
                 <input type="hidden" name="subtotal"        id="subtotal"        value="0">
                 <input type="hidden" name="grand_total"     id="grand_total"     value="0">
+                <input type="hidden" name="diskon"          id="diskon_val"      value="0">
+                <input type="hidden" name="pajak"           id="pajak_val"       value="0">
               </div>
 
               <div class="grid grid-cols-2 gap-2">
-                <a href="/tampilan_dashboard_staff" id="btnBack"
+                <a href="/tampilan_dashboard" id="btnBack"
                    class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   Batal
                 </a>
@@ -475,32 +465,34 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cm.el&&!cm.el.class
 const fmtID=n=>(isFinite(n)?n:0).toLocaleString('id-ID');
 const barangList=(Array.isArray(window.BARANGS)?window.BARANGS:[]).filter(b=>Number(b?.stok??0)>0);
 
-const form=document.getElementById('formInvoice');
-const kategoriEl=document.getElementById('kategori');
-const tabs=Array.from(document.querySelectorAll('.invtab'));
-const sectionBarang=document.getElementById('sectionBarang');
-const sectionJasa=document.getElementById('sectionJasa');
-const tbodyBarang=document.getElementById('tbodyBarang');
-const tbodyJasaBarang=document.getElementById('tbodyJasaBarang');
-const jasaBiaya = document.getElementById('jasaBiaya');
+const form          = document.getElementById('formInvoice');
+const kategoriEl    = document.getElementById('kategori');
+const tabs          = Array.from(document.querySelectorAll('.invtab'));
+const sectionBarang = document.getElementById('sectionBarang');
+const sectionJasa   = document.getElementById('sectionJasa');
+const tbodyBarang   = document.getElementById('tbodyBarang');
+const tbodyJasaBarang = document.getElementById('tbodyJasaBarang');
+const jasaBiaya       = document.getElementById('jasaBiaya');
 const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay');
-const diskon=document.getElementById('diskon');
-const pajak=document.getElementById('pajak');
-const sumBarang=document.getElementById('sumBarang');
-const sumJasa=document.getElementById('sumJasa');
-const sumSubtotal=document.getElementById('sumSubtotal');
-const sumGrand=document.getElementById('sumGrand');
-const h_sub_barang=document.getElementById('subtotal_barang');
-const h_sub_jasa=document.getElementById('subtotal_jasa');
-const h_subtotal=document.getElementById('subtotal');
-const h_grand=document.getElementById('grand_total');
+const diskon  = document.getElementById('diskon');
+const pajak   = document.getElementById('pajak');
+const sumBarang   = document.getElementById('sumBarang');
+const sumJasa     = document.getElementById('sumJasa');
+const sumSubtotal = document.getElementById('sumSubtotal');
+const sumGrand    = document.getElementById('sumGrand');
+const h_sub_barang = document.getElementById('subtotal_barang');
+const h_sub_jasa   = document.getElementById('subtotal_jasa');
+const h_subtotal   = document.getElementById('subtotal');
+const h_grand      = document.getElementById('grand_total');
+const h_diskon     = document.getElementById('diskon_val');
+const h_pajak      = document.getElementById('pajak_val');
 
-let isDirty=false;
-const markDirty=()=>{isDirty=true;};
-form?.querySelectorAll('input,select,textarea').forEach(el=>{
-  if(el.closest('#tbodyBarang')||el.closest('#tbodyJasaBarang'))return;
-  el.addEventListener('input',markDirty);
-  el.addEventListener('change',markDirty);
+let isDirty = false;
+const markDirty = () => { isDirty = true; };
+form?.querySelectorAll('input,select,textarea').forEach(el => {
+  if(el.closest('#tbodyBarang') || el.closest('#tbodyJasaBarang')) return;
+  el.addEventListener('input', markDirty);
+  el.addEventListener('change', markDirty);
 });
 
 function barangOptionsHTML(){
@@ -515,15 +507,15 @@ function barangOptionsHTML(){
 }
 
 function setKategori(kat){
-  kategoriEl.value=kat;
-  tabs.forEach(t=>t.classList.toggle('is-active',t.dataset.invtab===kat));
-  sectionBarang.classList.toggle('hidden',kat!=='barang');
-  sectionJasa.classList.toggle('hidden',kat!=='jasa');
+  kategoriEl.value = kat;
+  tabs.forEach(t => t.classList.toggle('is-active', t.dataset.invtab === kat));
+  sectionBarang.classList.toggle('hidden', kat !== 'barang');
+  sectionJasa.classList.toggle('hidden', kat !== 'jasa');
   recalc();
 }
-tabs.forEach(t=>t.addEventListener('click',()=>{setKategori(t.dataset.invtab);markDirty();}));
+tabs.forEach(t => t.addEventListener('click', () => { setKategori(t.dataset.invtab); markDirty(); }));
 
-function rowHTML(idx,prefix){
+function rowHTML(idx, prefix){
   return `
   <tr class="border-b border-slate-200 last:border-0">
     <td class="px-4 py-3">
@@ -580,16 +572,16 @@ function rowHTML(idx,prefix){
 }
 
 function recalcRow(tr){
-  const qty=Number(tr.querySelector('[data-qty]')?.value||0);
-  const price=Number(tr.querySelector('[data-price]')?.value||0);
-  const total=Math.max(0,qty)*Math.max(0,price);
-  tr.querySelector('[data-line-total]').textContent=fmtID(total);
-  tr.querySelector('[data-line-hidden]').value=String(total);
+  const qty   = Number(tr.querySelector('[data-qty]')?.value || 0);
+  const price = Number(tr.querySelector('[data-price]')?.value || 0);
+  const total = Math.max(0, qty) * Math.max(0, price);
+  tr.querySelector('[data-line-total]').textContent = fmtID(total);
+  tr.querySelector('[data-line-hidden]').value = String(total);
 }
 
 function syncSelectedOptions(tbody){
   const selects = Array.from(tbody.querySelectorAll('select[data-barang-select]'));
-  const picked = new Set(selects.map(s => s.value).filter(v => v && v !== ''));
+  const picked  = new Set(selects.map(s => s.value).filter(v => v && v !== ''));
   selects.forEach(sel => {
     const myValue = sel.value;
     Array.from(sel.options).forEach(opt => {
@@ -601,125 +593,134 @@ function syncSelectedOptions(tbody){
 }
 
 function handleTableEvents(tbody){
-  tbody.addEventListener('change',e=>{
-    const sel=e.target.closest('[data-barang-select]');
-    if(!sel)return;
-    const tr=sel.closest('tr');
-    const opt=sel.options[sel.selectedIndex];
-    const stok  =Number(opt.getAttribute('data-stok')||0);
-    const harga =Number(opt.getAttribute('data-harga')||0);
-    const kode  =opt.getAttribute('data-kode')||'';
-    const satuan=opt.getAttribute('data-satuan')||'';
-    tr.querySelector('input[data-kode]').value   =kode;
-    tr.querySelector('input[data-satuan]').value =satuan;
-    const priceEl   =tr.querySelector('[data-price]');
-    const qtyEl     =tr.querySelector('[data-qty]');
-    const maxEl     =tr.querySelector('[data-max]');
-    const stockLabel=tr.querySelector('[data-stock-label]');
-    const stokError =tr.querySelector('[data-stok-error]');
-    if(priceEl) priceEl.value=String(harga);
-    if(maxEl)   maxEl.textContent=String(stok);
+  tbody.addEventListener('change', e => {
+    const sel = e.target.closest('[data-barang-select]');
+    if(!sel) return;
+    const tr     = sel.closest('tr');
+    const opt    = sel.options[sel.selectedIndex];
+    const stok   = Number(opt.getAttribute('data-stok') || 0);
+    const harga  = Number(opt.getAttribute('data-harga') || 0);
+    const kode   = opt.getAttribute('data-kode') || '';
+    const satuan = opt.getAttribute('data-satuan') || '';
+    tr.querySelector('input[data-kode]').value   = kode;
+    tr.querySelector('input[data-satuan]').value = satuan;
+    const priceEl    = tr.querySelector('[data-price]');
+    const qtyEl      = tr.querySelector('[data-qty]');
+    const maxEl      = tr.querySelector('[data-max]');
+    const stockLabel = tr.querySelector('[data-stock-label]');
+    const stokError  = tr.querySelector('[data-stok-error]');
+    if(priceEl)    priceEl.value = String(harga);
+    if(maxEl)      maxEl.textContent = String(stok);
     if(stockLabel) stockLabel.classList.remove('hidden');
-    if(stokError){stokError.textContent='';stokError.classList.add('hidden');}
+    if(stokError) { stokError.textContent = ''; stokError.classList.add('hidden'); }
     if(qtyEl){
-      qtyEl.disabled=stok<=0;
-      qtyEl.max=String(stok);
-      qtyEl.value='';
+      qtyEl.disabled = stok <= 0;
+      qtyEl.max      = String(stok);
+      qtyEl.value    = '';
       qtyEl.classList.remove('border-red-300');
     }
     syncSelectedOptions(tbody);
     markDirty(); recalcRow(tr); recalc();
   });
-  tbody.addEventListener('input',e=>{
-    const qtyInput=e.target.closest('[data-qty]');
-    if(!qtyInput||qtyInput.disabled)return;
-    const tr=qtyInput.closest('tr');
-    const max=Number(qtyInput.max||0);
-    let qty=Number(qtyInput.value||0);
-    if(max>0&&qty>max)qty=max;
-    if(qty<0)qty=0;
-    qtyInput.value=qty?String(qty):'';
-    const stokError=tr?.querySelector('[data-stok-error]');
-    if(stokError){stokError.textContent='';stokError.classList.add('hidden');}
+
+  tbody.addEventListener('input', e => {
+    const qtyInput = e.target.closest('[data-qty]');
+    if(!qtyInput || qtyInput.disabled) return;
+    const tr  = qtyInput.closest('tr');
+    const max = Number(qtyInput.max || 0);
+    let qty   = Number(qtyInput.value || 0);
+    if(max > 0 && qty > max) qty = max;
+    if(qty < 0) qty = 0;
+    qtyInput.value = qty ? String(qty) : '';
+    const stokError = tr?.querySelector('[data-stok-error]');
+    if(stokError) { stokError.textContent = ''; stokError.classList.add('hidden'); }
     qtyInput.classList.remove('border-red-300');
     recalcRow(tr); markDirty(); recalc();
   });
-  tbody.addEventListener('click',e=>{
-    const btn=e.target.closest('[data-remove]');
-    if(!btn)return;
+
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove]');
+    if(!btn) return;
     btn.closest('tr')?.remove();
     syncSelectedOptions(tbody);
     markDirty(); recalc();
   });
 }
 
-let barangIdx=0,jasaBarangIdx=0;
-function addBarangRow(){ tbodyBarang.insertAdjacentHTML('beforeend',rowHTML(barangIdx++,'barang')); markDirty(); syncSelectedOptions(tbodyBarang); }
-function addJasaBarangRow(){ tbodyJasaBarang.insertAdjacentHTML('beforeend',rowHTML(jasaBarangIdx++,'jasa_barang')); markDirty(); syncSelectedOptions(tbodyJasaBarang); }
+let barangIdx = 0, jasaBarangIdx = 0;
+function addBarangRow()    { tbodyBarang.insertAdjacentHTML('beforeend', rowHTML(barangIdx++, 'barang')); markDirty(); syncSelectedOptions(tbodyBarang); }
+function addJasaBarangRow(){ tbodyJasaBarang.insertAdjacentHTML('beforeend', rowHTML(jasaBarangIdx++, 'jasa_barang')); markDirty(); syncSelectedOptions(tbodyJasaBarang); }
 
-document.getElementById('btnAddBarang')?.addEventListener('click',addBarangRow);
-document.getElementById('btnAddJasaBarang')?.addEventListener('click',addJasaBarangRow);
+document.getElementById('btnAddBarang')?.addEventListener('click', addBarangRow);
+document.getElementById('btnAddJasaBarang')?.addEventListener('click', addJasaBarangRow);
 handleTableEvents(tbodyBarang);
 handleTableEvents(tbodyJasaBarang);
 
-const onlyDigits = (s) => (s || '').toString().replace(/[^\d]/g,'');
-const formatID   = (n) => (isFinite(n) ? n : 0).toLocaleString('id-ID');
+// ── Biaya Jasa formatting ────────────────────────────────────────────────────
+const onlyDigits = s => (s || '').toString().replace(/[^\d]/g, '');
+const formatID   = n => (isFinite(n) ? n : 0).toLocaleString('id-ID');
 
 function syncJasaBiayaFromDisplay(){
   if(!jasaBiayaDisplay || !jasaBiaya) return;
   const raw = onlyDigits(jasaBiayaDisplay.value);
   const num = raw ? parseInt(raw, 10) : 0;
-  jasaBiaya.value = String(num);
-  jasaBiayaDisplay.value = raw ? formatID(num) : '';
+  jasaBiaya.value         = String(num);
+  jasaBiayaDisplay.value  = raw ? formatID(num) : '';
   markDirty(); recalc();
 }
 jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
 jasaBiayaDisplay?.addEventListener('blur',  syncJasaBiayaFromDisplay);
-;[diskon,pajak].forEach(el=>el?.addEventListener('input',()=>{markDirty();recalc();}));
+;[diskon, pajak].forEach(el => el?.addEventListener('input', () => { markDirty(); recalc(); }));
 syncJasaBiayaFromDisplay();
 
+// ── Kalkulasi total ──────────────────────────────────────────────────────────
 function sumTable(tbody){
-  let sum=0;
-  tbody.querySelectorAll('[data-line-hidden]').forEach(h=>sum+=Number(h.value||0));
+  let sum = 0;
+  tbody.querySelectorAll('[data-line-hidden]').forEach(h => sum += Number(h.value || 0));
   return sum;
 }
 
 function recalc(){
-  const kat=kategoriEl.value;
-  const barangSum=sumTable(tbodyBarang);
-  const jasaBarangSum=sumTable(tbodyJasaBarang);
-  const jasa=Number(jasaBiaya?.value||0);
-  const subtotalBarangVal=kat==='barang'?barangSum:jasaBarangSum;
-  const jasaVal=kat==='jasa'?Math.max(0,jasa):0;
-  const subtotalVal=subtotalBarangVal+jasaVal;
-  const diskonVal=Math.max(0,Number(diskon?.value||0));
-  const pajakPct=Math.max(0,Number(pajak?.value||0));
-  const afterDisc=Math.max(0,subtotalVal-diskonVal);
-  const pajakVal=Math.round(afterDisc*(pajakPct/100));
-  const grand=afterDisc+pajakVal;
-  sumBarang.textContent=fmtID(subtotalBarangVal);
-  sumJasa.textContent=fmtID(jasaVal);
-  sumSubtotal.textContent=fmtID(subtotalVal);
-  sumGrand.textContent=fmtID(grand);
-  h_sub_barang.value=String(subtotalBarangVal);
-  h_sub_jasa.value=String(jasaVal);
-  h_subtotal.value=String(subtotalVal);
-  h_grand.value=String(grand);
+  const kat            = kategoriEl.value;
+  const barangSum      = sumTable(tbodyBarang);
+  const jasaBarangSum  = sumTable(tbodyJasaBarang);
+  const jasa           = Number(jasaBiaya?.value || 0);
+  const subtotalBarangVal = kat === 'barang' ? barangSum : jasaBarangSum;
+  const jasaVal           = kat === 'jasa'   ? Math.max(0, jasa) : 0;
+  const subtotalVal       = subtotalBarangVal + jasaVal;
+  const diskonVal         = Math.max(0, Number(diskon?.value || 0));
+  const pajakPct          = Math.max(0, Number(pajak?.value  || 0));
+  const afterDisc         = Math.max(0, subtotalVal - diskonVal);
+  const pajakVal          = Math.round(afterDisc * (pajakPct / 100));
+  const grand             = afterDisc + pajakVal;
+
+  sumBarang.textContent   = fmtID(subtotalBarangVal);
+  sumJasa.textContent     = fmtID(jasaVal);
+  sumSubtotal.textContent = fmtID(subtotalVal);
+  sumGrand.textContent    = fmtID(grand);
+
+  h_sub_barang.value = String(subtotalBarangVal);
+  h_sub_jasa.value   = String(jasaVal);
+  h_subtotal.value   = String(subtotalVal);
+  h_grand.value      = String(grand);
+  // Sync hidden diskon & pajak → dikirim ke server, disimpan di row ringkasan detail_invoice
+  h_diskon.value     = String(diskonVal);
+  h_pajak.value      = String(pajakPct);
 }
 
+// ── Collect items for stok check ─────────────────────────────────────────────
 function collectItems(tbody){
-  const rows=[];
-  tbody.querySelectorAll('tr').forEach(tr=>{
-    const barangId=tr.querySelector('[data-barang-select]')?.value;
-    const qty=Number(tr.querySelector('[data-qty]')?.value||0);
-    if(barangId&&qty>0)rows.push({barang_id:barangId,qty,tr});
+  const rows = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const barangId = tr.querySelector('[data-barang-select]')?.value;
+    const qty      = Number(tr.querySelector('[data-qty]')?.value || 0);
+    if(barangId && qty > 0) rows.push({ barang_id: barangId, qty, tr });
   });
   return rows;
 }
 
 async function cekStokServer(items){
   const payload = items.map(i => ({ barang_id: i.barang_id, qty: i.qty }));
-
   let res;
   try {
     res = await fetch(window.URL_CEK_STOK, {
@@ -732,173 +733,167 @@ async function cekStokServer(items){
       },
       body: JSON.stringify({ items: payload }),
     });
-  } catch (networkErr) {
-    console.error('[checkStok] Network error:', networkErr);
+  } catch(networkErr) {
     throw new Error('Tidak bisa terhubung ke server. Periksa koneksi internet.');
   }
-
-  if (res.redirected || res.status === 302) {
-    throw new Error('Sesi habis. Silakan refresh halaman dan login ulang.');
+  if(res.redirected || res.status === 302) throw new Error('Sesi habis. Silakan refresh halaman dan login ulang.');
+  if(!res.ok){
+    if(res.status === 419) throw new Error('Token CSRF tidak valid. Silakan refresh halaman (F5) lalu coba lagi.');
+    if(res.status === 401 || res.status === 403) throw new Error('Tidak punya akses. Silakan login ulang.');
+    throw new Error('Server error (' + res.status + ').');
   }
-
-  if (!res.ok) {
-    let errBody = '';
-    try { errBody = await res.text(); } catch(_){}
-    console.error('[checkStok] HTTP ' + res.status, errBody.substring(0, 500));
-    if (res.status === 419) throw new Error('Token CSRF tidak valid. Silakan refresh halaman (F5) lalu coba lagi.');
-    if (res.status === 401 || res.status === 403) throw new Error('Tidak punya akses. Silakan login ulang.');
-    throw new Error('Server error (' + res.status + '). Cek console browser untuk detail.');
-  }
-
   const contentType = res.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    const text = await res.text();
-    console.error('[checkStok] Bukan JSON:', text.substring(0, 500));
-    throw new Error('Response server tidak valid. Cek console browser atau hubungi admin.');
+  if(!contentType.includes('application/json')){
+    throw new Error('Response server tidak valid.');
   }
-
   return res.json();
 }
 
-function tandaiBarisProblem(items,errorMessages){
-  [...tbodyBarang.querySelectorAll('tr'),...tbodyJasaBarang.querySelectorAll('tr')].forEach(tr=>{
+function tandaiBarisProblem(items, errorMessages){
+  [...tbodyBarang.querySelectorAll('tr'), ...tbodyJasaBarang.querySelectorAll('tr')].forEach(tr => {
     tr.querySelector('[data-qty]')?.classList.remove('border-red-300');
-    const e=tr.querySelector('[data-stok-error]');
-    if(e){e.textContent='';e.classList.add('hidden');}
+    const e = tr.querySelector('[data-stok-error]');
+    if(e) { e.textContent = ''; e.classList.add('hidden'); }
   });
-  items.forEach(item=>{
-    const sel=item.tr.querySelector('[data-barang-select]');
-    const opt=sel?.options[sel.selectedIndex];
-    const namaOpt=opt?.text?.split(' (')[0]?.trim()??'';
-    const hasError=errorMessages.some(msg=>msg.includes(namaOpt));
+  items.forEach(item => {
+    const sel     = item.tr.querySelector('[data-barang-select]');
+    const opt     = sel?.options[sel.selectedIndex];
+    const namaOpt = opt?.text?.split(' (')[0]?.trim() ?? '';
+    const hasError = errorMessages.some(msg => msg.includes(namaOpt));
     if(hasError){
       item.tr.querySelector('[data-qty]')?.classList.add('border-red-300');
-      const e=item.tr.querySelector('[data-stok-error]');
-      if(e){e.innerHTML='Stok tidak cukup';e.classList.remove('hidden');}
+      const e = item.tr.querySelector('[data-stok-error]');
+      if(e) { e.innerHTML = 'Stok tidak cukup'; e.classList.remove('hidden'); }
     }
   });
 }
 
-// INIT
-setKategori(kategoriEl.value||'barang');
-if((kategoriEl.value||'barang')==='barang') addBarangRow();
+// ── INIT ─────────────────────────────────────────────────────────────────────
+setKategori(kategoriEl.value || 'barang');
+if((kategoriEl.value || 'barang') === 'barang') addBarangRow();
 else addJasaBarangRow();
 recalc();
 syncSelectedOptions(tbodyBarang);
 syncSelectedOptions(tbodyJasaBarang);
 
-// RESET
-document.getElementById('btnReset')?.addEventListener('click',async()=>{
-  const ok=await cm.open({title:'Reset form invoice?',message:'Semua data yang sudah kamu input akan dihapus.',
-    note:'Tindakan ini tidak bisa dibatalkan.',okText:'Ya, Reset',cancelText:'Batal',tone:'danger'});
-  if(!ok)return;
+// ── RESET ────────────────────────────────────────────────────────────────────
+document.getElementById('btnReset')?.addEventListener('click', async () => {
+  const ok = await cm.open({
+    title: 'Reset form invoice?', message: 'Semua data yang sudah kamu input akan dihapus.',
+    note: 'Tindakan ini tidak bisa dibatalkan.', okText: 'Ya, Reset', cancelText: 'Batal', tone: 'danger'
+  });
+  if(!ok) return;
   form.reset();
-  tbodyBarang.innerHTML='';tbodyJasaBarang.innerHTML='';
-  barangIdx=0;jasaBarangIdx=0;
-  setKategori('barang');addBarangRow();
-  isDirty=false;recalc();
+  tbodyBarang.innerHTML = ''; tbodyJasaBarang.innerHTML = '';
+  barangIdx = 0; jasaBarangIdx = 0;
+  setKategori('barang'); addBarangRow();
+  isDirty = false; recalc();
   syncSelectedOptions(tbodyBarang);
   syncSelectedOptions(tbodyJasaBarang);
-  showToast('Reset','Form dikosongkan.','success');
+  showToast('Reset', 'Form dikosongkan.', 'success');
 });
 
-// KELUAR
-document.getElementById('btnBack')?.addEventListener('click',async e=>{
-  if(!isDirty)return;
+// ── KELUAR ───────────────────────────────────────────────────────────────────
+document.getElementById('btnBack')?.addEventListener('click', async e => {
+  if(!isDirty) return;
   e.preventDefault();
-  const href=e.currentTarget.getAttribute('href')||'/tampilan_dashboard_staff';
-  const ok=await cm.open({title:'Keluar dari halaman?',
-    message:'Perubahan belum disimpan. Kalau keluar sekarang, data akan hilang.',
-    okText:'Ya, Keluar',cancelText:'Tetap di sini',tone:'neutral'});
-  if(ok)window.location.href=href;
+  const href = e.currentTarget.getAttribute('href') || '/tampilan_dashboard';
+  const ok = await cm.open({
+    title: 'Keluar dari halaman?',
+    message: 'Perubahan belum disimpan. Kalau keluar sekarang, data akan hilang.',
+    okText: 'Ya, Keluar', cancelText: 'Tetap di sini', tone: 'neutral'
+  });
+  if(ok) window.location.href = href;
 });
 
-// SUBMIT + CEK STOK
-form?.addEventListener('submit',async e=>{
-  if(form.dataset.confirmed==='1')return;
+// ── SUBMIT + CEK STOK ────────────────────────────────────────────────────────
+form?.addEventListener('submit', async e => {
+  if(form.dataset.confirmed === '1') return;
   e.preventDefault();
 
-  const kategori=kategoriEl.value;
-  const nama   = form.querySelector('[name="nama_pelanggan"]');
-  const kontak = form.querySelector('[name="kontak"]');
+  const kategori = kategoriEl.value;
+  const nama     = form.querySelector('[name="nama_pelanggan"]');
+  const kontak   = form.querySelector('[name="kontak"]');
 
   if(!nama?.value.trim()){
-    showToast('Gagal','Nama pelanggan wajib diisi.','error');
-    nama?.classList.add('border-red-300','shake');
-    setTimeout(()=>nama?.classList.remove('shake'),300);
+    showToast('Gagal', 'Nama pelanggan wajib diisi.', 'error');
+    nama?.classList.add('border-red-300', 'shake');
+    setTimeout(() => nama?.classList.remove('shake'), 300);
     return;
   }
   if(!kontak?.value.trim()){
-    showToast('Gagal','Kontak pelanggan wajib diisi.','error');
-    kontak?.classList.add('border-red-300','shake');
-    setTimeout(()=>kontak?.classList.remove('shake'),300);
+    showToast('Gagal', 'Kontak pelanggan wajib diisi.', 'error');
+    kontak?.classList.add('border-red-300', 'shake');
+    setTimeout(() => kontak?.classList.remove('shake'), 300);
     return;
   }
   if(!/^08[0-9]{8,13}$/.test(kontak.value.trim())){
-    showToast('Gagal','Kontak harus angka, diawali 08, panjang 10–15 digit.','error');
-    kontak.classList.add('border-red-300','shake');
-    setTimeout(()=>kontak.classList.remove('shake'),300);
+    showToast('Gagal', 'Kontak harus angka, diawali 08, panjang 10–15 digit.', 'error');
+    kontak.classList.add('border-red-300', 'shake');
+    setTimeout(() => kontak.classList.remove('shake'), 300);
     return;
   }
 
-  if(kategori==='barang'){
-    const rows=tbodyBarang.querySelectorAll('tr');
-    if(!rows.length){ showToast('Gagal','Tambahkan minimal 1 item barang.','error'); return; }
-    let valid=true;
-    rows.forEach(tr=>{
-      const sel=tr.querySelector('[data-barang-select]');
-      const qty=tr.querySelector('[data-qty]');
-      if(!sel?.value||!qty?.value||Number(qty.value)<=0) valid=false;
+  if(kategori === 'barang'){
+    const rows = tbodyBarang.querySelectorAll('tr');
+    if(!rows.length){ showToast('Gagal', 'Tambahkan minimal 1 item barang.', 'error'); return; }
+    let valid = true;
+    rows.forEach(tr => {
+      const sel = tr.querySelector('[data-barang-select]');
+      const qty = tr.querySelector('[data-qty]');
+      if(!sel?.value || !qty?.value || Number(qty.value) <= 0) valid = false;
     });
-    if(!valid){ showToast('Gagal','Pastikan semua item barang sudah dipilih dan qty diisi.','error'); return; }
+    if(!valid){ showToast('Gagal', 'Pastikan semua item barang sudah dipilih dan qty diisi.', 'error'); return; }
   }
 
-  if(kategori==='jasa'&&Number(jasaBiaya?.value||0)<=0){
-    jasaBiayaDisplay?.classList.add('border-red-300','shake');
-    setTimeout(()=>jasaBiayaDisplay?.classList.remove('shake'),300);
-    showToast('Gagal','Biaya jasa wajib diisi untuk kategori Jasa.','error'); return;
+  if(kategori === 'jasa' && Number(jasaBiaya?.value || 0) <= 0){
+    jasaBiayaDisplay?.classList.add('border-red-300', 'shake');
+    setTimeout(() => jasaBiayaDisplay?.classList.remove('shake'), 300);
+    showToast('Gagal', 'Biaya jasa wajib diisi untuk kategori Jasa.', 'error'); return;
   }
 
-  // CEK STOK
-  const activetbody=kategori==='barang'?tbodyBarang:tbodyJasaBarang;
-  const activeItems=collectItems(activetbody);
-  if(activeItems.length>0){
-    const btnSave=document.getElementById('btnSave');
-    const oriText=btnSave?.textContent??'Simpan';
-    try{
-      if(btnSave){btnSave.disabled=true;btnSave.textContent='Mengecek stok...';}
-      const result=await cekStokServer(activeItems);
+  // Cek stok server
+  const activetbody = kategori === 'barang' ? tbodyBarang : tbodyJasaBarang;
+  const activeItems  = collectItems(activetbody);
+  if(activeItems.length > 0){
+    const btnSave  = document.getElementById('btnSave');
+    const oriText  = btnSave?.textContent ?? 'Simpan';
+    try {
+      if(btnSave){ btnSave.disabled = true; btnSave.textContent = 'Mengecek stok...'; }
+      const result = await cekStokServer(activeItems);
       if(!result.ok){
-        tandaiBarisProblem(activeItems,result.errors);
-        showToast('Stok tidak cukup',result.errors.join('<br>'),'error');
-        if(btnSave){btnSave.disabled=false;btnSave.textContent=oriText;}
+        tandaiBarisProblem(activeItems, result.errors);
+        showToast('Stok tidak cukup', result.errors.join('<br>'), 'error');
+        if(btnSave){ btnSave.disabled = false; btnSave.textContent = oriText; }
         return;
       }
-      if(btnSave){btnSave.disabled=false;btnSave.textContent=oriText;}
-    }catch(err){
+      if(btnSave){ btnSave.disabled = false; btnSave.textContent = oriText; }
+    } catch(err) {
       console.error('[submit] checkStok error:', err);
       showToast('Error', err.message || 'Gagal mengecek stok. Coba lagi.', 'error');
-      const btnSave=document.getElementById('btnSave');
-      if(btnSave){btnSave.disabled=false;btnSave.textContent='Simpan';}
+      const btnSave = document.getElementById('btnSave');
+      if(btnSave){ btnSave.disabled = false; btnSave.textContent = 'Simpan'; }
       return;
     }
   }
 
-  const ok=await cm.open({title:'Simpan invoice?',
-    message:'Invoice akan disimpan sesuai data yang kamu input.',
-    note:'Pastikan item dan jumlah sudah benar.',
-    okText:'Ya, Simpan',cancelText:'Batal',tone:'neutral'});
-  if(!ok)return;
+  const ok = await cm.open({
+    title: 'Simpan invoice?',
+    message: 'Invoice akan disimpan sesuai data yang kamu input.',
+    note: 'Pastikan item dan jumlah sudah benar.',
+    okText: 'Ya, Simpan', cancelText: 'Batal', tone: 'neutral'
+  });
+  if(!ok) return;
 
-  form.dataset.confirmed='1';
-  isDirty=false;
+  form.dataset.confirmed = '1';
+  isDirty = false;
   form.submit();
 });
 </script>
 <script>
 document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
-    el.addEventListener('keydown', e => e.preventDefault());
-    el.addEventListener('mousedown', e => e.preventDefault());
+  el.addEventListener('keydown', e => e.preventDefault());
+  el.addEventListener('mousedown', e => e.preventDefault());
 });
 </script>
 @endpush

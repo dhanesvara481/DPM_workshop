@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nota - {{ $trx->kode_transaksi ?? 'INV-'.$trx->id }}</title>
+    <title>Nota - {{ $trx->kode_transaksi ?? 'INV-' . $trx->id }}</title>
     @vite('resources/js/app.js')
     <style>
         @media print {
@@ -15,9 +15,8 @@
 <div class="max-w-md mx-auto p-6">
 
     <div class="no-print flex items-center justify-between mb-4">
-        {{-- FIX: route yang benar untuk staff --}}
         <button onclick="window.close()"
-                style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;border-style:solid;">
+                style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;">
             ← Kembali
         </button>
         <button onclick="window.print()"
@@ -52,6 +51,7 @@
         </div>
     </div>
 
+    {{-- Tabel item --}}
     <div class="my-4 border-t border-b py-3">
         <table class="w-full text-sm">
             <thead class="text-slate-500">
@@ -64,11 +64,11 @@
             <tbody>
             @foreach(($items ?? collect()) as $it)
                 @php
-                    $namaItem    = $it->nama_barang ?? '-';
-                    $harga       = (int) $it->harga;
-                    $qty         = (int) $it->qty;
-                    $sub         = $harga * $qty;
-                    $isJasaMurni = empty($it->barang_id);
+                    $namaItem    = $it->nama_barang ?? $it->deskripsi ?? '-';
+                    $harga       = (int) ($it->harga ?? $it->total ?? 0);
+                    $qty         = (int) ($it->jumlah ?? $it->qty ?? 0);
+                    $sub         = (int) ($it->total ?? ($harga * $qty));
+                    $isJasaMurni = ($it->tipe_transaksi ?? '') === 'Jasa';
                 @endphp
                 <tr>
                     <td class="py-1 text-slate-900">
@@ -85,28 +85,59 @@
         </table>
     </div>
 
+    {{-- Ringkasan keuangan --}}
     @php
-        $subtotalBarang = (int)($trx->subtotal_barang ?? 0);
-        $biayaJasa      = (int)($trx->biaya_jasa ?? 0);
-        $total          = (int)($trx->total ?? 0);
+        $subtotalBarang = (int)   ($trx->subtotal_barang ?? 0);
+        $biayaJasa      = (int)   ($trx->biaya_jasa      ?? 0);
+        $subtotal       = (int)   ($trx->subtotal        ?? 0);
+        $diskon         = (float) ($trx->diskon          ?? 0);
+        $pajakPct       = (int)   ($trx->pajak           ?? 0);
+        $pajakNominal   = (int)   ($trx->pajak_nominal   ?? 0);
+        $grandTotal     = (int)   ($trx->grand_total     ?? $subtotal);
     @endphp
 
     <div class="text-sm space-y-1">
+        @if($subtotalBarang > 0)
         <div class="flex justify-between">
             <span class="text-slate-500">Subtotal Barang</span>
             <span>Rp{{ number_format($subtotalBarang, 0, ',', '.') }}</span>
         </div>
+        @endif
         @if($biayaJasa > 0)
         <div class="flex justify-between">
             <span class="text-slate-500">Biaya Jasa</span>
             <span>Rp{{ number_format($biayaJasa, 0, ',', '.') }}</span>
         </div>
         @endif
+        @if($diskon > 0 || $pajakPct > 0)
+        <div class="flex justify-between">
+            <span class="text-slate-500">Subtotal</span>
+            <span>Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
+        </div>
+        @endif
+        @if($diskon > 0)
+        <div class="flex justify-between">
+            <span class="text-slate-500">Diskon</span>
+            <span class="text-rose-600">− Rp{{ number_format($diskon, 0, ',', '.') }}</span>
+        </div>
+        @endif
+        @if($pajakPct > 0)
+        <div class="flex justify-between">
+            <span class="text-slate-500">Pajak ({{ $pajakPct }}%)</span>
+            <span>+ Rp{{ number_format($pajakNominal, 0, ',', '.') }}</span>
+        </div>
+        @endif
         <div class="flex justify-between font-bold text-base border-t pt-2 mt-2">
-            <span>Total</span>
-            <span>Rp{{ number_format($total, 0, ',', '.') }}</span>
+            <span>Grand Total</span>
+            <span>Rp{{ number_format($grandTotal, 0, ',', '.') }}</span>
         </div>
     </div>
+
+    @if(($trx->catatan ?? '-') !== '-')
+    <div class="mt-4 text-xs text-slate-500 border-t pt-3">
+        <span class="font-semibold text-slate-700">Catatan:</span> {{ $trx->catatan }}
+    </div>
+    @endif
 
     <p class="mt-6 text-center text-xs text-slate-500">Terima kasih telah menggunakan layanan kami 🙏</p>
 

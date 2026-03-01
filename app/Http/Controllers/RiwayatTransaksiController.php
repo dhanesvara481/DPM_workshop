@@ -11,11 +11,11 @@ class RiwayatTransaksiController extends Controller
 
     public function getRiwayatTransaksi(Request $request)
     {
-        $q        = $request->input('q');
-        $dari     = $request->input('dari');
-        $sampai   = $request->input('sampai');
-        $sort     = $request->input('sort', 'asc');
-        $perPage  = (int) $request->input('per_page', 15);
+        $q       = $request->input('q');
+        $dari    = $request->input('dari');
+        $sampai  = $request->input('sampai');
+        $sort    = $request->input('sort', 'asc');
+        $perPage = (int) $request->input('per_page', 15);
 
         $perPage = in_array($perPage, [10, 15, 25, 50]) ? $perPage : 15;
         $sortDir = $sort === 'desc' ? 'desc' : 'asc';
@@ -27,9 +27,9 @@ class RiwayatTransaksiController extends Controller
                 riwayat_transaksi.riwayat_transaksi_id                      AS id,
                 riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
                 riwayat_transaksi.invoice_id,
-                invoice.subtotal                                             AS total,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
+                invoice.subtotal,
                 invoice.status,
                 invoice.tanggal_invoice,
                 user.username                                                AS nama_pembuat,
@@ -38,6 +38,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di.nama_pelanggan
                     FROM detail_invoice di
                     WHERE di.invoice_id = invoice.invoice_id
+                      AND NOT (di.barang_id IS NULL AND di.jumlah = '0' AND di.total = 0)
                     ORDER BY di.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS nama_pengguna,
@@ -45,10 +46,28 @@ class RiwayatTransaksiController extends Controller
                     SELECT di2.tipe_transaksi
                     FROM detail_invoice di2
                     WHERE di2.invoice_id = invoice.invoice_id
-                    AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
+                      AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
                     ORDER BY di2.detail_invoice_id ASC
                     LIMIT 1
-                )                                                            AS kategori_invoice
+                )                                                            AS kategori_invoice,
+                (
+                    SELECT ring.diskon
+                    FROM detail_invoice ring
+                    WHERE ring.invoice_id = invoice.invoice_id
+                      AND ring.barang_id IS NULL
+                      AND ring.jumlah    = '0'
+                      AND ring.total     = 0
+                    LIMIT 1
+                )                                                            AS diskon,
+                (
+                    SELECT ring2.pajak
+                    FROM detail_invoice ring2
+                    WHERE ring2.invoice_id = invoice.invoice_id
+                      AND ring2.barang_id IS NULL
+                      AND ring2.jumlah    = '0'
+                      AND ring2.total     = 0
+                    LIMIT 1
+                )                                                            AS pajak
             ")
             ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi', $sortDir);
 
@@ -64,13 +83,8 @@ class RiwayatTransaksiController extends Controller
             });
         }
 
-        if ($dari) {
-            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
-        }
-
-        if ($sampai) {
-            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
-        }
+        if ($dari)   $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
+        if ($sampai) $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
 
         $rows = $query->paginate($perPage)->withQueryString();
 
@@ -86,24 +100,35 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        // Row catatan: tipe_transaksi=Jasa, barang_id=null, jumlah=0, total=0
-        // Dipakai untuk catatan, TIDAK ditampilkan di tabel item
-        $rowCatatan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0
+        // Row ringkasan: barang_id=null, jumlah='0', total=0
+        // Menyimpan diskon, pajak, dan catatan sekaligus
+        $rowRingkasan = $invoice->items->first(
+            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
         );
-        $catatan = $rowCatatan?->deskripsi ?? '-';
 
-        // Item real: semua kecuali row catatan
+        $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
+            ? $rowRingkasan->deskripsi
+            : '-';
+
+        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
+        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
+
+        // Item real: semua kecuali row ringkasan
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0)
+            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
-        $nama    = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
-        $kontak  = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
+        $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
+        $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
         $namaPembuat     = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
+
+        $subtotal    = (float) $invoice->subtotal;
+        $afterDisc   = max(0, $subtotal - $diskon);
+        $pajakNominal = round($afterDisc * ($pajakPct / 100));
+        $grandTotal   = $afterDisc + $pajakNominal;
 
         $trx = (object) [
             'id'               => $riwayat->riwayat_transaksi_id,
@@ -111,17 +136,19 @@ class RiwayatTransaksiController extends Controller
             'kode_transaksi'   => 'INV-' . $invoice->invoice_id,
             'nama_pengguna'    => $nama,
             'kontak'           => $kontak,
-            'total'            => (float) $invoice->subtotal,
+            'subtotal'         => $subtotal,
             'subtotal_barang'  => (float) $invoice->subtotal_barang,
             'biaya_jasa'       => (float) $invoice->biaya_jasa,
+            'diskon'           => $diskon,
+            'pajak'            => $pajakPct,
+            'pajak_nominal'    => $pajakNominal,
+            'grand_total'      => $grandTotal,
             'status'           => $invoice->status ?? 'Pending',
             'catatan'          => $catatan,
             'nama_pembuat'     => $namaPembuat,
             'kategori_invoice' => $kategoriInvoice,
         ];
 
-        // $items yang dikirim ke view: hanya item real, tanpa row catatan
-        // Kolom deskripsi tiap item berisi nama barang/jasa yang diinput
         $items = $itemsReal;
 
         return view('admin.riwayat_transaksi.detail_riwayat_transaksi', compact('trx', 'items'));
@@ -134,19 +161,30 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        $rowCatatan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0
+        $rowRingkasan = $invoice->items->first(
+            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
         );
-        $catatan = $rowCatatan?->deskripsi ?? '-';
+
+        $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
+            ? $rowRingkasan->deskripsi
+            : '-';
+
+        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
+        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0)
+            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
-        $nama    = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
-        $kontak  = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
+        $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
+        $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
         $namaPembuat = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+
+        $subtotal     = (float) $invoice->subtotal;
+        $afterDisc    = max(0, $subtotal - $diskon);
+        $pajakNominal = round($afterDisc * ($pajakPct / 100));
+        $grandTotal   = $afterDisc + $pajakNominal;
 
         $trx = (object) [
             'id'              => $riwayat->riwayat_transaksi_id,
@@ -154,9 +192,13 @@ class RiwayatTransaksiController extends Controller
             'kode_transaksi'  => 'INV-' . $invoice->invoice_id,
             'nama_pengguna'   => $nama,
             'kontak'          => $kontak,
-            'total'           => (float) $invoice->subtotal,
+            'subtotal'        => $subtotal,
             'subtotal_barang' => (float) $invoice->subtotal_barang,
             'biaya_jasa'      => (float) $invoice->biaya_jasa,
+            'diskon'          => $diskon,
+            'pajak'           => $pajakPct,
+            'pajak_nominal'   => $pajakNominal,
+            'grand_total'     => $grandTotal,
             'status'          => $invoice->status ?? 'Pending',
             'catatan'         => $catatan,
             'nama_pembuat'    => $namaPembuat,
@@ -171,11 +213,11 @@ class RiwayatTransaksiController extends Controller
 
     public function getRiwayatTransaksiStaff(Request $request)
     {
-        $q        = $request->input('q');
-        $dari     = $request->input('dari');
-        $sampai   = $request->input('sampai');
-        $sort     = $request->input('sort', 'desc');
-        $perPage  = (int) $request->input('per_page', 15);
+        $q       = $request->input('q');
+        $dari    = $request->input('dari');
+        $sampai  = $request->input('sampai');
+        $sort    = $request->input('sort', 'desc');
+        $perPage = (int) $request->input('per_page', 15);
 
         $perPage = in_array($perPage, [10, 15, 25, 50]) ? $perPage : 15;
         $sortDir = $sort === 'asc' ? 'asc' : 'desc';
@@ -187,9 +229,9 @@ class RiwayatTransaksiController extends Controller
                 riwayat_transaksi.riwayat_transaksi_id                      AS id,
                 riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
                 riwayat_transaksi.invoice_id,
-                invoice.subtotal                                             AS total,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
+                invoice.subtotal,
                 invoice.status,
                 invoice.tanggal_invoice,
                 user.username                                                AS nama_pembuat,
@@ -198,6 +240,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di.nama_pelanggan
                     FROM detail_invoice di
                     WHERE di.invoice_id = invoice.invoice_id
+                      AND NOT (di.barang_id IS NULL AND di.jumlah = '0' AND di.total = 0)
                     ORDER BY di.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS nama_pengguna,
@@ -205,10 +248,28 @@ class RiwayatTransaksiController extends Controller
                     SELECT di2.tipe_transaksi
                     FROM detail_invoice di2
                     WHERE di2.invoice_id = invoice.invoice_id
-                    AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
+                      AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
                     ORDER BY di2.detail_invoice_id ASC
                     LIMIT 1
-                )                                                            AS kategori_invoice
+                )                                                            AS kategori_invoice,
+                (
+                    SELECT ring.diskon
+                    FROM detail_invoice ring
+                    WHERE ring.invoice_id = invoice.invoice_id
+                      AND ring.barang_id IS NULL
+                      AND ring.jumlah    = '0'
+                      AND ring.total     = 0
+                    LIMIT 1
+                )                                                            AS diskon,
+                (
+                    SELECT ring2.pajak
+                    FROM detail_invoice ring2
+                    WHERE ring2.invoice_id = invoice.invoice_id
+                      AND ring2.barang_id IS NULL
+                      AND ring2.jumlah    = '0'
+                      AND ring2.total     = 0
+                    LIMIT 1
+                )                                                            AS pajak
             ")
             ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi', $sortDir)
             ->where('riwayat_transaksi.user_id', auth()->user()->user_id);
@@ -225,13 +286,8 @@ class RiwayatTransaksiController extends Controller
             });
         }
 
-        if ($dari) {
-            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
-        }
-
-        if ($sampai) {
-            $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
-        }
+        if ($dari)   $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari);
+        if ($sampai) $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $sampai);
 
         $rows = $query->paginate($perPage)->withQueryString();
 
@@ -248,21 +304,32 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        $rowCatatan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0
+        $rowRingkasan = $invoice->items->first(
+            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
         );
-        $catatan = $rowCatatan?->deskripsi ?? '-';
+
+        $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
+            ? $rowRingkasan->deskripsi
+            : '-';
+
+        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
+        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0)
+            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
-        $nama    = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
-        $kontak  = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
+        $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
+        $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
         $namaPembuat     = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
+
+        $subtotal     = (float) $invoice->subtotal;
+        $afterDisc    = max(0, $subtotal - $diskon);
+        $pajakNominal = round($afterDisc * ($pajakPct / 100));
+        $grandTotal   = $afterDisc + $pajakNominal;
 
         $trx = (object) [
             'id'               => $riwayat->riwayat_transaksi_id,
@@ -270,9 +337,13 @@ class RiwayatTransaksiController extends Controller
             'kode_transaksi'   => 'INV-' . $invoice->invoice_id,
             'nama_pengguna'    => $nama,
             'kontak'           => $kontak,
-            'total'            => (float) $invoice->subtotal,
+            'subtotal'         => $subtotal,
             'subtotal_barang'  => (float) $invoice->subtotal_barang,
             'biaya_jasa'       => (float) $invoice->biaya_jasa,
+            'diskon'           => $diskon,
+            'pajak'            => $pajakPct,
+            'pajak_nominal'    => $pajakNominal,
+            'grand_total'      => $grandTotal,
             'status'           => $invoice->status ?? 'Pending',
             'catatan'          => $catatan,
             'nama_pembuat'     => $namaPembuat,
@@ -292,19 +363,30 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        $rowCatatan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0
+        $rowRingkasan = $invoice->items->first(
+            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
         );
-        $catatan = $rowCatatan?->deskripsi ?? '-';
+
+        $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
+            ? $rowRingkasan->deskripsi
+            : '-';
+
+        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
+        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float)$i->total == 0 && (int)$i->jumlah == 0)
+            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
-        $nama    = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
-        $kontak  = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
+        $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
+        $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
         $namaPembuat = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+
+        $subtotal     = (float) $invoice->subtotal;
+        $afterDisc    = max(0, $subtotal - $diskon);
+        $pajakNominal = round($afterDisc * ($pajakPct / 100));
+        $grandTotal   = $afterDisc + $pajakNominal;
 
         $trx = (object) [
             'id'              => $riwayat->riwayat_transaksi_id,
@@ -312,9 +394,13 @@ class RiwayatTransaksiController extends Controller
             'kode_transaksi'  => 'INV-' . $invoice->invoice_id,
             'nama_pengguna'   => $nama,
             'kontak'          => $kontak,
-            'total'           => (float) $invoice->subtotal,
+            'subtotal'        => $subtotal,
             'subtotal_barang' => (float) $invoice->subtotal_barang,
             'biaya_jasa'      => (float) $invoice->biaya_jasa,
+            'diskon'          => $diskon,
+            'pajak'           => $pajakPct,
+            'pajak_nominal'   => $pajakNominal,
+            'grand_total'     => $grandTotal,
             'status'          => $invoice->status ?? 'Pending',
             'catatan'         => $catatan,
             'nama_pembuat'    => $namaPembuat,

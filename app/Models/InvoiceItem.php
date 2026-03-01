@@ -9,7 +9,6 @@ class InvoiceItem extends Model
     protected $table      = 'detail_invoice';
     protected $primaryKey = 'detail_invoice_id';
 
-    // PERBAIKAN: aktifkan timestamps karena migration pakai $table->timestamps()
     public $timestamps = true;
 
     protected $fillable = [
@@ -17,14 +16,18 @@ class InvoiceItem extends Model
         'barang_id',
         'nama_pelanggan',
         'kontak',
+        'deskripsi',
         'jumlah',
         'total',
-        'deskripsi',
         'tipe_transaksi',
+        'diskon', // Rp — hanya diisi di row ringkasan
+        'pajak',  // %  — hanya diisi di row ringkasan
     ];
 
     protected $casts = [
-        'total' => 'decimal:2',
+        'total'  => 'decimal:2',
+        'diskon' => 'decimal:2',
+        'pajak'  => 'integer',
     ];
 
     // ── Accessors ────────────────────────────────────────────────────────────
