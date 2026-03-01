@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
+use App\Models\DetailInvoice;
 use App\Models\Barang;
 use App\Models\RiwayatTransaksi;
 use App\Models\BarangKeluar;
@@ -244,7 +244,7 @@ class InvoiceController extends Controller
             // Satu row khusus di detail_invoice untuk menyimpan diskon, pajak,
             // dan/atau catatan. Selalu dibuat agar grand_total selalu bisa dihitung.
             // Diidentifikasi via: barang_id=null, jumlah='0', total=0.
-            InvoiceItem::create([
+            DetailInvoice::create([
                 'invoice_id'     => $invoice->invoice_id,
                 'barang_id'      => null,
                 'nama_pelanggan' => $namaPelanggan,
@@ -287,7 +287,7 @@ class InvoiceController extends Controller
         ?string $namaPelanggan,
         ?string $kontak
     ): void {
-        InvoiceItem::create([
+        DetailInvoice::create([
             'invoice_id'     => $invoiceId,
             'barang_id'      => null,
             'nama_pelanggan' => $namaPelanggan,
@@ -325,7 +325,7 @@ class InvoiceController extends Controller
                 );
             }
 
-            InvoiceItem::create([
+            DetailInvoice::create([
                 'invoice_id'     => $invoiceId,
                 'barang_id'      => $barang->barang_id,
                 'nama_pelanggan' => $namaPelanggan,

@@ -45,7 +45,7 @@ class Invoice extends Model
 
     public function items()
     {
-        return $this->hasMany(InvoiceItem::class, 'invoice_id', 'invoice_id');
+        return $this->hasMany(DetailInvoice::class, 'invoice_id', 'invoice_id');
     }
 
     public function riwayatTransaksi()
@@ -72,7 +72,7 @@ class Invoice extends Model
      * Row ringkasan = row dengan barang_id null, jumlah = '0', total = 0,
      * dan diskon/pajak terisi. Disimpan oleh controller saat store().
      */
-    public function getRingkasanAttribute(): ?InvoiceItem
+    public function getRingkasanAttribute(): ?DetailInvoice
     {
         return $this->items->first(
             fn($i) => is_null($i->barang_id)
