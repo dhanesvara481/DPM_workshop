@@ -143,31 +143,17 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [InvoiceController::class, 'getTampilanInvoice']
         )->name('tampilan_invoice');
 
-        // DIHAPUS dari sini: invoice.store & invoice.check-stok
-        // sudah dipindah ke grup auth di atas agar bisa dipakai admin & staff
-
-        Route::get('/invoice/{id}',
-            [InvoiceController::class, 'show']
-        )->name('invoice.show');
-
-        Route::delete('/invoice/{id}/hapus',
-            [InvoiceController::class, 'destroy']
-        )->name('invoice.destroy');
-
-        // Konfirmasi Invoice
-        Route::prefix('admin')->group(function () {
-            Route::get('/konfirmasi_invoice',
+        Route::get('/konfirmasi_invoice',
                 [InvoiceController::class, 'getTampilanKonfirmasi']
             )->name('tampilan_konfirmasi_invoice');
 
-            Route::patch('/konfirmasi_invoice/{invoice}/paid',
-                [InvoiceController::class, 'tandaKonfirmasi']
-            )->name('konfirmasi_invoice_tanda_konfirmasi');
+        Route::patch('/konfirmasi_invoice/{invoice}/paid',
+            [InvoiceController::class, 'tandaKonfirmasi']
+        )->name('konfirmasi_invoice_tanda_konfirmasi');
 
-            Route::delete('/konfirmasi-invoice/{id}/hapus',
-                [InvoiceController::class, 'hapusKonfirmasi']
-            )->name('hapus_konfirmasi_invoice');
-        });
+        Route::delete('/konfirmasi-invoice/{id}/hapus',
+            [InvoiceController::class, 'hapusKonfirmasi']
+        )->name('hapus_konfirmasi_invoice');
 
         //============== Laporan =================//
         Route::get('/laporan_penjualan',

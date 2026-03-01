@@ -205,12 +205,4 @@ class JadwalKerjaController extends Controller
             'MAX_EVENTS_PER_DAY' => 4,
         ]);
     }
-
-    public function destroy(string $id)
-    {
-        JadwalKerja::findOrFail($id)->delete();
-
-        return redirect()->route('kelola_jadwal_kerja')
-                         ->with('success', 'Jadwal berhasil dihapus.');
-    }
 }
