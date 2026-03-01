@@ -22,6 +22,8 @@ return new class extends Migration
             $table->decimal('total', 12,2);
             $table->string('deskripsi', 100);
             $table->enum('tipe_transaksi', ['Barang', 'Jasa']);
+            $table->unsignedTinyInteger('pajak')->nullable();
+            $table->decimal('diskon', 12,2)->nullable();
             $table->timestamps();
         });
     }
