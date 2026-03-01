@@ -115,7 +115,7 @@
               <th class="px-5 py-3 font-semibold text-left">Total</th>
               <th class="px-5 py-3 font-semibold text-left">Status</th>
               <th class="px-5 py-3 font-semibold text-left">Tanggal</th>
-              <th class="px-5 py-3 font-semibold text-right">Aksi</th>
+              <th class="px-24 py-3 font-semibold text-right">Aksi</th>
             </tr>
           </thead>
 
