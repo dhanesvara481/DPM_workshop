@@ -168,6 +168,7 @@ class InvoiceController extends Controller
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
 
+    
     public function store(Request $request)
     {
         $request->validate([

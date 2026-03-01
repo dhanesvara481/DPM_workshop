@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class LaporanPenjualanController extends Controller
 {
-    private function buildQuery(Request $request)
+    private function bangunQuery(Request $request)
     {
         $mode   = $request->input('mode', 'custom');
         $dari   = $request->input('dari');
@@ -64,7 +64,7 @@ class LaporanPenjualanController extends Controller
         return $query;
     }
 
-    private function filterParams(Request $request): array
+    private function ambilParameter(Request $request): array
     {
         return [
             'mode'   => $request->input('mode', 'custom'),
@@ -78,9 +78,9 @@ class LaporanPenjualanController extends Controller
 
     public function getLaporanPenjualan(Request $request)
     {
-        $rows = $this->buildQuery($request)->get();
+        $rows = $this->bangunQuery($request)->get();
 
-        extract($this->filterParams($request));
+        extract($this->ambilParameter($request));
 
         return view('admin.laporan_penjualan', compact(
             'rows', 'mode', 'dari', 'sampai', 'week', 'month', 'year'
@@ -89,9 +89,9 @@ class LaporanPenjualanController extends Controller
 
     public function print(Request $request)
     {
-        $rows = $this->buildQuery($request)->get();
+        $rows = $this->bangunQuery($request)->get();
 
-        extract($this->filterParams($request));
+        extract($this->ambilParameter($request));
 
         return view('admin.print.laporan_keuangan', compact(
             'rows', 'mode', 'dari', 'sampai', 'week', 'month', 'year'
