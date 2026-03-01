@@ -164,7 +164,7 @@ class RiwayatTransaksiController extends Controller
 
         $items = $itemsReal;
 
-        return view('admin.print.nota', compact('trx', 'items'));
+        return view('admin.riwayat_transaksi.print_transaksi', compact('trx', 'items'));
     }
 
     // ===================== STAFF =====================

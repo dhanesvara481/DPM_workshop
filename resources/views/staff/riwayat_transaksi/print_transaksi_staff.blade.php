@@ -16,10 +16,10 @@
 
     <div class="no-print flex items-center justify-between mb-4">
         {{-- FIX: route yang benar untuk staff --}}
-        <a href="{{ route('detail_riwayat_transaksi_staff', $trx->id ?? 0) }}"
-           class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition">
-            Kembali
-        </a>
+        <button onclick="window.close()"
+                style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;border-style:solid;">
+            ← Kembali
+        </button>
         <button onclick="window.print()"
                 class="px-3 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 transition">
             Print

@@ -82,10 +82,10 @@ tbody tr:hover{background:#f8fafc}
 
 {{-- BAR ATAS --}}
 <div class="no-print" style="display:flex;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
-  <a href="{{ url()->previous() }}"
-     style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;color:#0f172a;background:#fff;">
-     ← Kembali
-  </a>
+  <button onclick="window.close()"
+          style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;border-style:solid;">
+      ← Kembali
+  </button>
 
   <button onclick="window.print()"
           style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">

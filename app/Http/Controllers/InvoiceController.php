@@ -236,7 +236,7 @@ class InvoiceController extends Controller
                 );
 
                 $jasaBarang        = $request->jasa_barang ?? [];
-                $itemsDenganBarang = array_filter($jasaBarang, fn($i) => !empty($i['barang_id']));
+                $itemsDenganBarang = array_filter($jasaBarang, fn($i) => !empty($i['barang_id']));   
 
                 if (!empty($itemsDenganBarang)) {
                     $this->simpanItemBarang(
