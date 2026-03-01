@@ -169,7 +169,7 @@ class InvoiceController extends Controller
     }
 
     
-    public function store(Request $request)
+    public function simpanInvoice(Request $request)
     {
         $request->validate([
             'tanggal_invoice' => 'required|date',

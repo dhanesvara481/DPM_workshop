@@ -85,7 +85,7 @@
     @endif
 
     {{-- ===================== FORM ===================== --}}
-    <form id="formInvoice" method="POST" action="{{ route('invoice.store') }}"
+    <form id="formInvoice" method="POST" action="{{ route('invoice.simpan') }}"
           class="space-y-6" data-animate>
       @csrf
 
