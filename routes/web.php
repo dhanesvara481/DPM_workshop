@@ -46,8 +46,8 @@ Route::middleware(['auth', 'check.status'])->group(function () {
     // ADMIN dan STAFF sekaligus tanpa konflik nama route.
     // =========================================================
     Route::post('/invoice/simpan',
-        [InvoiceController::class, 'store']
-    )->name('invoice.store');
+        [InvoiceController::class, 'simpanInvoice']
+    )->name('invoice.simpan');
 
     Route::post('/invoice/cek-stok',
         [InvoiceController::class, 'checkStok']

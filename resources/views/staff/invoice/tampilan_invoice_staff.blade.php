@@ -78,14 +78,8 @@
       </div>
     @endif
 
-    @if(session('error'))
-      <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-        {{ session('error') }}
-      </div>
-    @endif
-
-    {{-- ===================== FORM ===================== --}}
-    <form id="formInvoice" method="POST" action="{{ route('invoice.store') }}"
+    {{-- FORM --}}
+    <form id="formInvoice" method="POST" action="{{ route('invoice.simpan') }}"
           class="space-y-6" data-animate>
       @csrf
 

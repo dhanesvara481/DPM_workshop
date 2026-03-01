@@ -168,7 +168,8 @@ class InvoiceController extends Controller
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
 
-    public function store(Request $request)
+    
+    public function simpanInvoice(Request $request)
     {
         $request->validate([
             'tanggal_invoice' => 'required|date',

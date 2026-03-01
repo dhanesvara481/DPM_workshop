@@ -170,7 +170,7 @@ class DashboardController extends Controller
             'year' => $this->queryKeluarKuartal(),
         ];
     }
-
+    
     private function queryKeluar(int $months): array
     {
         $rows = DB::table('barang_keluar')
@@ -188,7 +188,7 @@ class DashboardController extends Controller
             'keluar' => $rows->pluck('total')->map(fn ($v) => (int) $v)->toArray(),
         ];
     }
-
+    
     private function queryKeluarKuartal(): array
     {
         $year = now()->year;
@@ -213,7 +213,7 @@ class DashboardController extends Controller
     }
 
     // ── Events Jadwal (dipakai admin & staff) ───────────────────────────────
-
+    // Data jadwal kerja dari 30 hari ke belakang sampai 60 hari ke depan, diurutkan berdasarkan tanggal & jam.
     private function buildEvents(): array
     {
         try {
