@@ -184,7 +184,7 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::put('/ubah_jadwal_kerja/{id}',
             [JadwalKerjaController::class, 'perbaruiJadwalKerja']
         )->name('perbarui_jadwal_kerja');
-
+    
         Route::get('/hapus_jadwal_kerja',
             [JadwalKerjaController::class, 'getHapusJadwalKerja']
         )->name('hapus_jadwal_kerja');
