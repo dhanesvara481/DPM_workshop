@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id('notifikasi_id');
             $table->enum('jenis_notifikasi', ['info', 'jadwal', 'invoice', 'stok', 'peringatan']);
             $table->string('isi_pesan', 150);
-            $table->dateTime('tanggal_dibuat');
-            $table->dateTime('tanggal_dikirim');
+            $table->datetime('tanggal_dibuat');
+            $table->datetime('tanggal_dikirim');
             $table->string('judul_notif', 30);
             $table->timestamps();
         });

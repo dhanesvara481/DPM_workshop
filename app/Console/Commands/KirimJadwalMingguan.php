@@ -14,8 +14,8 @@ class KirimJadwalMingguan extends Command
 
     public function handle(JadwalNotifikasiService $notifService)
     {
-        $start = Carbon::now()->startOfWeek();
-        $end   = Carbon::now()->endOfWeek();
+        $start = Carbon::now('Asia/Makassar')->startOfWeek();
+        $end   = Carbon::now('Asia/Makassar')->endOfWeek();
 
         $jadwals = JadwalKerja::with('user')
             ->whereBetween('tanggal_kerja', [$start, $end])

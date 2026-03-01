@@ -9,7 +9,8 @@ class InvoiceItem extends Model
     protected $table      = 'detail_invoice';
     protected $primaryKey = 'detail_invoice_id';
 
-    public $timestamps = false;
+    // PERBAIKAN: aktifkan timestamps karena migration pakai $table->timestamps()
+    public $timestamps = true;
 
     protected $fillable = [
         'invoice_id',
@@ -26,6 +27,8 @@ class InvoiceItem extends Model
         'total' => 'decimal:2',
     ];
 
+    // ── Accessors ────────────────────────────────────────────────────────────
+
     public function getNamaBarangAttribute(): string
     {
         return $this->deskripsi ?? $this->barang?->nama_barang ?? '-';
@@ -41,6 +44,8 @@ class InvoiceItem extends Model
     {
         return (int) $this->jumlah;
     }
+
+    // ── Relasi ───────────────────────────────────────────────────────────────
 
     public function invoice()
     {

@@ -15,40 +15,34 @@ class BarangKeluarController extends Controller
     {
         $barangs = Barang::orderBy('kode_barang')->get();
 
-        $barangKeluar = BarangKeluar::with('barang')
+        $sortable = ['tanggal_keluar', 'kode_barang', 'nama_barang', 'jumlah_keluar', 'keterangan'];
+        $sort     = in_array($request->sort, $sortable) ? $request->sort : 'tanggal_keluar';
+        $dir      = $request->dir === 'asc' ? 'asc' : 'desc';
+
+        $barangKeluar = BarangKeluar::join('barang', 'barang.barang_id', '=', 'barang_keluar.barang_id')
             ->select(
                 'barang_keluar.*',
                 'barang.kode_barang',
                 'barang.nama_barang',
-                DB::raw("DATE_FORMAT(barang_keluar.tanggal_keluar, '%d-%m-%Y') as tanggal"),
+                DB::raw("DATE_FORMAT(barang_keluar.tanggal_keluar, '%d-%m-%Y %H:%i:%s') as tanggal"),
                 'barang_keluar.jumlah_keluar as qty_keluar',
             )
-            ->join('barang', 'barang.barang_id', '=', 'barang_keluar.barang_id')
-            ->latest('barang_keluar.created_at')
-            ->get();
+            ->when($request->search, function ($q) use ($request) {
+                $s = $request->search;
+                $q->where('barang.kode_barang', 'like', "%$s%")
+                  ->orWhere('barang.nama_barang', 'like', "%$s%")
+                  ->orWhere('barang_keluar.keterangan', 'like', "%$s%");
+            })
+            ->orderBy($sort === 'kode_barang' || $sort === 'nama_barang' ? 'barang.'.$sort : 'barang_keluar.'.$sort, $dir)
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('admin.barang_keluar', compact('barangs', 'barangKeluar'));
+        return view('admin.barang_keluar', compact('barangs', 'barangKeluar', 'sort', 'dir'));
     }
 
-    /**
-     * Simpan barang keluar dan kurangi stok.
-     *
-     * Aturan stok_awal & stok_akhir:
-     *
-     *   Hari 1  masuk  qty 100  => stok_awal 100, stok_akhir 100
-     *   Hari 1  masuk  qty  50  => stok_awal 100, stok_akhir 150
-     *   Hari 1  keluar qty  25  => stok_awal 100, stok_akhir 125
-     *   Hari 2  masuk  qty  55  => stok_awal 125, stok_akhir 180
-     *
-     * - stok_awal  = stok_awal record PERTAMA hari ini (tetap sepanjang hari)
-     *               Jika belum ada transaksi hari ini:
-     *                 ada riwayat sebelumnya  -> stok_awal = stok_akhir terakhir kemarin
-     *                 tidak ada riwayat sama sekali -> stok_awal = stok barang saat ini
-     *
-     * - stok_akhir = stok_akhir record TERAKHIR hari ini - qty
-     */
     public function simpanBarangKeluar(Request $request)
     {
+        // FIX: Enum keterangan hanya untuk input manual (tanpa 'Invoice' - itu dari sistem)
         $validated = $request->validate([
             'barang_id'  => ['required', 'exists:barang,barang_id'],
             'qty_keluar' => ['required', 'integer', 'min:1'],
@@ -75,23 +69,19 @@ class BarangKeluarController extends Controller
         }
 
         DB::transaction(function () use ($validated, $barang) {
-
             $tanggalInput = $validated['tanggal'];
             $qty          = (int) $validated['qty_keluar'];
 
-            // Record pertama hari ini -> untuk stok_awal awal hari (tidak berubah)
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
                 ->whereDate('tanggal_riwayat_stok', $tanggalInput)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
 
-            // Record terakhir hari ini -> untuk melanjutkan stok_akhir
             $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $validated['barang_id'])
                 ->whereDate('tanggal_riwayat_stok', $tanggalInput)
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
 
-            // Record terakhir sebelum hari ini -> menjadi stok_awal hari baru
             $riwayatSebelumnya = RiwayatStok::where('barang_id', $validated['barang_id'])
                 ->whereDate('tanggal_riwayat_stok', '<', $tanggalInput)
                 ->orderBy('tanggal_riwayat_stok', 'desc')
@@ -99,17 +89,12 @@ class BarangKeluarController extends Controller
                 ->first();
 
             if ($riwayatHariIniPertama) {
-                // Sudah ada transaksi hari ini
                 $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
                 $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir - $qty;
-
             } elseif ($riwayatSebelumnya) {
-                // Hari baru, ada riwayat kemarin
                 $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
                 $stokAkhir = $stokAwal - $qty;
-
             } else {
-                // Belum ada riwayat sama sekali (langsung keluar pertama kali)
                 $stokAwal  = (int) $barang->stok;
                 $stokAkhir = $stokAwal - $qty;
             }
@@ -121,7 +106,7 @@ class BarangKeluarController extends Controller
                 'barang_id'      => $validated['barang_id'],
                 'jumlah_keluar'  => $qty,
                 'tanggal_keluar' => $tanggalInput,
-                'keterangan'     => $validated['keterangan'],
+                'keterangan'     => $validated['keterangan'], // manual input: Barang Rusak, dll.
                 'ref_invoice'    => null,
             ]);
 

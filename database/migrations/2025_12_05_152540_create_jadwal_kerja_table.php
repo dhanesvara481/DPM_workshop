@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('jadwal_kerja', function (Blueprint $table) {
             $table->id('jadwal_id');
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
-            $table->date('tanggal_kerja');
-            $table->enum('waktu_shift', ['Pagi', 'Siang', 'Sore', 'Malam']);
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
+            $table->datetime('tanggal_kerja');
+            $table->enum('waktu_shift', ['Pagi', 'Siang', 'Sore', 'Malam'])->nullable();
+            $table->time('jam_mulai')->nullable();
+            $table->time('jam_selesai')->nullable();
             $table->string('deskripsi', 100)->nullable(); // ← tambah nullable()
             $table->enum('status', ['Aktif', 'Catatan', 'Tutup'])->default('Aktif'); // ← tambah default
             $table->timestamps();

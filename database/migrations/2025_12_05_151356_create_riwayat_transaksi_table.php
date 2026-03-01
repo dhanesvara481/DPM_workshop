@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('riwayat_transaksi_id');
             $table->foreignId('invoice_id')->constrained('invoice', 'invoice_id')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
-            $table->date('tanggal_riwayat_transaksi');
+            $table->datetime('tanggal_riwayat_transaksi');
             $table->timestamps();
         });
     }

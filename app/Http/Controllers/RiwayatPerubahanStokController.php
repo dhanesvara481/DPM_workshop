@@ -13,13 +13,20 @@ class RiwayatPerubahanStokController extends Controller
         $tipe   = $request->input('tipe');
         $dari   = $request->input('dari');
         $sampai = $request->input('sampai');
-
-        $query = RiwayatStok::with([
-                'barang',
-                'user',
-                'barangMasuk',
-                'barangKeluar',
-            ])
+    
+        // ── Sort ──────────────────────────────────────────────────────────────
+        $sortable = [ 'tanggal_riwayat_stok', 'kode_barang', 'nama_barang', 'nama_pengguna', 'stok_awal', 'stok_akhir'];
+        $sort     = in_array($request->input('sort'), $sortable) ? $request->input('sort') : 'tanggal_riwayat_stok';
+        $dir      = $request->input('dir') === 'desc' ? 'desc' : 'asc';
+    
+        // prefix tabel agar tidak ambigu
+        $sortColumn = match(true) {
+            in_array($sort, ['kode_barang', 'nama_barang']) => 'barang.' . $sort,
+            $sort === 'nama_pengguna'                       => 'user.username',
+            default                                         => 'riwayat_stok.' . $sort,
+        };
+    
+        $query = RiwayatStok::with(['barang', 'user', 'barangMasuk', 'barangKeluar'])
             ->join('barang', 'barang.barang_id', '=', 'riwayat_stok.barang_id')
             ->join('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
             ->select(
@@ -28,7 +35,7 @@ class RiwayatPerubahanStokController extends Controller
                 'barang.nama_barang',
                 'user.username as nama_pengguna',
             );
-
+    
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $like = "%{$q}%";
@@ -36,7 +43,7 @@ class RiwayatPerubahanStokController extends Controller
                     ->orWhere('barang.nama_barang', 'like', $like);
             });
         }
-
+    
         if ($tipe === 'masuk') {
             $query->whereNotNull('riwayat_stok.barang_masuk_id')
                   ->whereNull('riwayat_stok.barang_keluar_id');
@@ -44,21 +51,20 @@ class RiwayatPerubahanStokController extends Controller
             $query->whereNull('riwayat_stok.barang_masuk_id')
                   ->whereNotNull('riwayat_stok.barang_keluar_id');
         }
-
+    
         if ($dari) {
             $query->whereDate('riwayat_stok.tanggal_riwayat_stok', '>=', $dari);
         }
         if ($sampai) {
             $query->whereDate('riwayat_stok.tanggal_riwayat_stok', '<=', $sampai);
         }
-
-        // ✅ Pakai tanggal_riwayat_stok bukan created_at (timestamps = false)
+    
         $rows = $query
-            ->orderByDesc('riwayat_stok.tanggal_riwayat_stok')
-            ->orderByDesc('riwayat_stok.riwayat_stok_id')
+            ->orderBy($sortColumn, $dir)
+            ->orderByDesc('riwayat_stok.riwayat_stok_id') // tiebreaker
             ->paginate(20)
             ->withQueryString();
-
-        return view('admin.riwayat_perubahan_stok', compact('rows', 'q', 'tipe', 'dari', 'sampai'));
+    
+        return view('admin.riwayat_perubahan_stok', compact('rows', 'q', 'tipe', 'dari', 'sampai', 'sort', 'dir'));
     }
 }

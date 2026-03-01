@@ -40,7 +40,7 @@
 </header>
 
 {{-- CONTENT --}}
-<section class="relative p-4 sm:p-6">
+<section class="relative p-2 sm:p-2">
   <div class="max-w-[1120px] mx-auto w-full">
 
     {{-- ── TOOLBAR: Search + Filter + Reset ────────────────────────────────── --}}
@@ -131,19 +131,50 @@
                 shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
 
       <div class="overflow-x-auto">
-        <table class="min-w-[1050px] w-full text-sm">
+        <table class="min-w-[1200px] w-full text-sm">
+          @php
+            $colsRiwayat = [
+              'no'                   => ['label' => 'No',          'align' => 'text-left',   'sortable' => false],
+              'kode_barang'          => ['label' => 'Kode Barang', 'align' => 'text-left',   'sortable' => true],
+              'nama_barang'          => ['label' => 'Nama Barang', 'align' => 'text-left',   'sortable' => true],
+              'nama_pengguna'        => ['label' => 'Pengguna',    'align' => 'text-left',   'sortable' => true],
+              'masuk'                => ['label' => 'Masuk',       'align' => 'text-center', 'sortable' => false],
+              'keluar'               => ['label' => 'Keluar',      'align' => 'text-center', 'sortable' => false],
+              'stok_awal'            => ['label' => 'Stok Awal',   'align' => 'text-right',  'sortable' => true],
+              'stok_akhir'           => ['label' => 'Stok Akhir',  'align' => 'text-right',  'sortable' => true],
+              'keterangan'           => ['label' => 'Keterangan',  'align' => 'text-left',   'sortable' => false],
+              'tanggal_riwayat_stok' => ['label' => 'Tanggal',     'align' => 'text-left',   'sortable' => true],
+            ];
+          @endphp
+                  
           <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
             <tr class="text-left text-slate-600">
-              <th class="px-5 py-4 font-semibold w-[60px]">No</th>
-              <th class="px-5 py-4 font-semibold">Kode Barang</th>
-              <th class="px-5 py-4 font-semibold">Nama Barang</th>
-              <th class="px-5 py-4 font-semibold">Pengguna</th>
-              <th class="px-5 py-4 font-semibold text-center">Masuk</th>
-              <th class="px-5 py-4 font-semibold text-center">Keluar</th>
-              <th class="px-5 py-4 font-semibold text-right">Stok Awal</th>
-              <th class="px-5 py-4 font-semibold text-right">Stok Akhir</th>
-              <th class="px-5 py-4 font-semibold">Keterangan</th>
-              <th class="px-5 py-4 font-semibold">Tanggal</th>
+              @foreach ($colsRiwayat as $key => $col)
+                @php
+                  $isActive = $sort === $key;
+                  $nextDir  = ($isActive && $dir === 'asc') ? 'desc' : 'asc';
+                  $url      = request()->fullUrlWithQuery(['sort' => $key, 'dir' => $nextDir, 'page' => 1]);
+                @endphp
+          
+                <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap {{ $col['align'] }}
+                           {{ $key === 'no' ? 'w-[60px]' : '' }}">
+                  @if($col['sortable'])
+                    <a href="{{ $url }}"
+                       class="inline-flex items-center gap-1.5 group
+                              {{ $isActive ? 'text-blue-900' : 'text-slate-600 hover:text-slate-900' }} transition">
+                      {{ $col['label'] }}
+                      <span class="flex flex-col gap-[2px]">
+                        <svg class="h-2.5 w-2.5 {{ $isActive && $dir === 'asc'  ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                             viewBox="0 0 10 6" fill="currentColor"><path d="M5 0L10 6H0L5 0Z"/></svg>
+                        <svg class="h-2.5 w-2.5 {{ $isActive && $dir === 'desc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                             viewBox="0 0 10 6" fill="currentColor"><path d="M5 6L0 0H10L5 6Z"/></svg>
+                      </span>
+                    </a>
+                  @else
+                    {{ $col['label'] }}
+                  @endif
+                </th>
+              @endforeach
             </tr>
           </thead>
 

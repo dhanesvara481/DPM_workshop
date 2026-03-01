@@ -14,9 +14,9 @@
 <body class="bg-white text-slate-900">
 <div class="max-w-md mx-auto p-6">
 
-    {{-- TOMBOL NO-PRINT --}}
     <div class="no-print flex items-center justify-between mb-4">
-        <a href="{{ route('detail_riwayat_transaksi_staff', $trx->id) }}"
+        {{-- FIX: route yang benar untuk staff --}}
+        <a href="{{ route('detail_riwayat_transaksi_staff', $trx->id ?? 0) }}"
            class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-50 transition">
             Kembali
         </a>
@@ -26,11 +26,9 @@
         </button>
     </div>
 
-    {{-- HEADER --}}
     <h1 class="text-lg font-bold text-center">NOTA TRANSAKSI</h1>
     <p class="text-sm text-center text-slate-500">DPM Workshop</p>
 
-    {{-- INFO TRANSAKSI --}}
     <div class="mt-4 text-sm space-y-1">
         <div class="flex justify-between">
             <span class="text-slate-500">Kode</span>
@@ -45,12 +43,15 @@
             <span class="font-semibold">{{ $trx->nama_pengguna ?? '-' }}</span>
         </div>
         <div class="flex justify-between">
+            <span class="text-slate-500">Kontak</span>
+            <span>{{ $trx->kontak ?? '-' }}</span>
+        </div>
+        <div class="flex justify-between">
             <span class="text-slate-500">Status</span>
-            <span class="font-semibold uppercase">{{ $trx->status ?? 'paid' }}</span>
+            <span class="font-semibold uppercase">{{ $trx->status ?? 'Pending' }}</span>
         </div>
     </div>
 
-    {{-- ITEM TABLE --}}
     <div class="my-4 border-t border-b py-3">
         <table class="w-full text-sm">
             <thead class="text-slate-500">
@@ -61,18 +62,22 @@
                 </tr>
             </thead>
             <tbody>
-            @php $subtotalHitung = 0; @endphp
             @foreach(($items ?? collect()) as $it)
                 @php
-                    $namaItem  = $it->nama_barang ?? '-';
-                    $harga     = (int)$it->harga;
-                    $qty       = (int)$it->qty;
-                    $sub       = $harga * $qty;
-                    $subtotalHitung += $sub;
+                    $namaItem    = $it->nama_barang ?? '-';
+                    $harga       = (int) $it->harga;
+                    $qty         = (int) $it->qty;
+                    $sub         = $harga * $qty;
+                    $isJasaMurni = empty($it->barang_id);
                 @endphp
                 <tr>
-                    <td class="py-1 text-slate-900">{{ $namaItem }}</td>
-                    <td class="py-1 text-right text-slate-700">{{ $qty }}</td>
+                    <td class="py-1 text-slate-900">
+                        {{ $namaItem }}
+                        @if($isJasaMurni)
+                            <span class="text-xs text-slate-400">(Jasa)</span>
+                        @endif
+                    </td>
+                    <td class="py-1 text-right text-slate-700">{{ $isJasaMurni ? '-' : $qty }}</td>
                     <td class="py-1 text-right text-slate-700">Rp{{ number_format($sub, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
@@ -80,11 +85,10 @@
         </table>
     </div>
 
-    {{-- RINGKASAN BIAYA --}}
     @php
-        $subtotalBarang = (int)($trx->subtotal_barang ?? $subtotalHitung);
+        $subtotalBarang = (int)($trx->subtotal_barang ?? 0);
         $biayaJasa      = (int)($trx->biaya_jasa ?? 0);
-        $total          = (int)($trx->total ?? ($subtotalBarang + $biayaJasa));
+        $total          = (int)($trx->total ?? 0);
     @endphp
 
     <div class="text-sm space-y-1">
@@ -92,10 +96,12 @@
             <span class="text-slate-500">Subtotal Barang</span>
             <span>Rp{{ number_format($subtotalBarang, 0, ',', '.') }}</span>
         </div>
+        @if($biayaJasa > 0)
         <div class="flex justify-between">
             <span class="text-slate-500">Biaya Jasa</span>
             <span>Rp{{ number_format($biayaJasa, 0, ',', '.') }}</span>
         </div>
+        @endif
         <div class="flex justify-between font-bold text-base border-t pt-2 mt-2">
             <span>Total</span>
             <span>Rp{{ number_format($total, 0, ',', '.') }}</span>

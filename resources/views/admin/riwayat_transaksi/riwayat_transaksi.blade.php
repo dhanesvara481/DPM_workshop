@@ -46,12 +46,13 @@
   <div class="max-w-[980px] mx-auto w-full space-y-4">
 
     @php
-      $rowsCol    = collect($rows ?? []);
-      $totalMasuk = (int) $rowsCol->sum(fn($x) => (int)($x->total ?? 0));
-      $countTrx   = $rowsCol->count();
-      $avg        = $countTrx ? (int) round($totalMasuk / $countTrx) : 0;
+      $rowsCol    = collect($rows->items());
+      $totalMasuk = (int) $rows->sum(fn($x) => (int)($x->total ?? 0));
+      $countTrx   = $rows->total();
+      $avg        = $rows->count() ? (int) round($rowsCol->sum(fn($x)=>(int)($x->total??0)) / $rows->count()) : 0;
       $groups     = $rowsCol->groupBy(fn($r) => \Carbon\Carbon::parse($r->created_at)->toDateString());
       $fmt        = fn($n) => 'Rp ' . number_format((int)$n, 0, ',', '.');
+      $sortNext   = ($sort ?? 'asc') === 'asc' ? 'desc' : 'asc';
     @endphp
 
     {{-- SUMMARY CARDS --}}
@@ -76,6 +77,11 @@
     {{-- TOOLBAR --}}
     <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.10)]">
       <form method="GET" action="{{ route('riwayat_transaksi') }}" class="p-4 sm:p-5">
+
+        {{-- Hidden sort agar ikut submit --}}
+        <input type="hidden" name="sort"     value="{{ $sort ?? 'asc' }}">
+        <input type="hidden" name="per_page" value="{{ $perPage ?? 15 }}">
+
         <div class="flex flex-col sm:flex-row gap-3">
 
           {{-- Search --}}
@@ -96,7 +102,7 @@
           </div>
 
           {{-- Dari --}}
-          <div class="sm:w-44">
+          <div class="sm:w-40">
             <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-1.5">DARI</label>
             <input type="date" name="dari" value="{{ $dari ?? '' }}"
                    class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-sm
@@ -104,7 +110,7 @@
           </div>
 
           {{-- Sampai --}}
-          <div class="sm:w-44">
+          <div class="sm:w-40">
             <label class="block text-[11px] tracking-widest text-slate-500 font-semibold mb-1.5">SAMPAI</label>
             <input type="date" name="sampai" value="{{ $sampai ?? '' }}"
                    class="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-sm
@@ -126,10 +132,57 @@
           </div>
         </div>
 
-        <div class="mt-3 text-xs text-slate-400">
-          Menampilkan <span class="font-semibold text-slate-600">{{ $countTrx }}</span> invoice.
+        {{-- Second row: sort + per_page + count info --}}
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+
+          {{-- Sort toggle --}}
+          <a href="{{ route('riwayat_transaksi', array_merge(request()->except(['sort','page']), ['sort' => $sortNext, 'per_page' => $perPage])) }}"
+             class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold
+                    text-slate-700 hover:bg-slate-50 transition">
+            @if(($sort ?? 'asc') === 'asc')
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m10 4V8m0 0l-3 3m3-3 3 3"/>
+              </svg>
+              Terlama
+            @else
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m10 0v8m0 0l-3-3m3 3 3-3"/>
+              </svg>
+              Terbaru
+            @endif
+          </a>
+
+          {{-- Per page --}}
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-500">Tampilkan</span>
+            <select name="per_page" form="formFilter"
+                    onchange="document.getElementById('formFilter').submit()"
+                    class="rounded-xl border border-slate-200 bg-white text-xs px-2 py-1.5
+                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 transition">
+              @foreach([10, 15, 25, 50] as $pp)
+                <option value="{{ $pp }}" @selected(($perPage ?? 15) == $pp)>{{ $pp }}</option>
+              @endforeach
+            </select>
+            <span class="text-xs text-slate-500">/ halaman</span>
+          </div>
+
+          <div class="ml-auto text-xs text-slate-400">
+            Menampilkan <span class="font-semibold text-slate-600">{{ $rows->firstItem() }}–{{ $rows->lastItem() }}</span>
+            dari <span class="font-semibold text-slate-600">{{ $countTrx }}</span> invoice.
+          </div>
         </div>
+
       </form>
+
+      {{-- Re-expose form as named id for select onchange --}}
+      <form id="formFilter" method="GET" action="{{ route('riwayat_transaksi') }}" class="hidden">
+        <input type="hidden" name="q"       value="{{ $q ?? '' }}">
+        <input type="hidden" name="dari"    value="{{ $dari ?? '' }}">
+        <input type="hidden" name="sampai"  value="{{ $sampai ?? '' }}">
+        <input type="hidden" name="sort"    value="{{ $sort ?? 'asc' }}">
+        <input type="hidden" name="per_page" id="hiddenPerPage">
+      </form>
+
     </div>
 
     {{-- LIST --}}
@@ -216,6 +269,58 @@
 
       </div>
 
+      {{-- PAGINATION --}}
+      @if($rows->hasPages())
+        <div class="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+
+          <div class="text-xs text-slate-400">
+            Halaman {{ $rows->currentPage() }} dari {{ $rows->lastPage() }}
+          </div>
+
+          <div class="flex items-center gap-1">
+
+            {{-- Prev --}}
+            @if($rows->onFirstPage())
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-300 cursor-not-allowed text-sm">
+                ‹
+              </span>
+            @else
+              <a href="{{ $rows->previousPageUrl() }}"
+                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-slate-600 text-sm">
+                ‹
+              </a>
+            @endif
+
+            {{-- Page numbers --}}
+            @foreach($rows->getUrlRange(max(1, $rows->currentPage()-2), min($rows->lastPage(), $rows->currentPage()+2)) as $page => $url)
+              @if($page == $rows->currentPage())
+                <span class="inline-flex h-8 min-w-[2rem] px-2 items-center justify-center rounded-lg bg-blue-950 text-white text-xs font-semibold">
+                  {{ $page }}
+                </span>
+              @else
+                <a href="{{ $url }}"
+                   class="inline-flex h-8 min-w-[2rem] px-2 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-slate-600 text-xs">
+                  {{ $page }}
+                </a>
+              @endif
+            @endforeach
+
+            {{-- Next --}}
+            @if($rows->hasMorePages())
+              <a href="{{ $rows->nextPageUrl() }}"
+                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-slate-600 text-sm">
+                ›
+              </a>
+            @else
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-300 cursor-not-allowed text-sm">
+                ›
+              </span>
+            @endif
+
+          </div>
+        </div>
+      @endif
+
       <div class="px-6 py-4 border-t border-slate-100 text-xs text-slate-400">
         © DPM Workshop 2025
       </div>
@@ -239,4 +344,14 @@
   }
   .btn-shine:hover::after { transform: translateX(120%); }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+  // Per page select submits the hidden form with correct value
+  document.querySelector('[name="per_page"][form="formFilter"]')?.addEventListener('change', function() {
+    document.getElementById('hiddenPerPage').value = this.value;
+    document.getElementById('formFilter').submit();
+  });
+</script>
 @endpush

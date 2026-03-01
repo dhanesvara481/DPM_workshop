@@ -15,11 +15,24 @@ class BarangController extends Controller
      */
     public function getBarang()
     {
-        $barangs = Barang::orderBy('created_at', 'desc')->get();
+        $sortable = ['kode_barang', 'nama_barang', 'satuan', 'stok', 'harga_beli', 'harga_jual'];
+        $sort     = in_array(request('sort'), $sortable) ? request('sort') : 'created_at';
+        $dir      = request('dir') === 'desc' ? 'desc' : 'asc';
+
+        $barangs = Barang::when(request('search'), function($q) {
+                        $s = request('search');
+                        $q->where('kode_barang', 'like', "%$s%")
+                          ->orWhere('nama_barang', 'like', "%$s%");
+                    })
+                    ->orderBy($sort, $dir)
+                    ->paginate(10)
+                    ->withQueryString();
 
         return view('admin.mengelola_barang.tampilan_barang', [
             'barangs' => $barangs,
             'stokMin' => 25,
+            'sort'    => $sort,
+            'dir'     => $dir,
         ]);
     }
 

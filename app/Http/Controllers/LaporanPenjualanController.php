@@ -17,17 +17,27 @@ class LaporanPenjualanController extends Controller
         $month  = $request->input('month');
         $year   = $request->input('year');
 
+        // Gunakan subquery untuk nama_pelanggan agar tidak duplikat row
+        // saat 1 invoice punya banyak item di detail_invoice.
         $query = RiwayatTransaksi::query()
-            ->join('invoice',        'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
-            ->leftJoin('detail_invoice', 'invoice.invoice_id',       '=', 'detail_invoice.invoice_id')
+            ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
             ->selectRaw("
-                riwayat_transaksi.riwayat_transaksi_id                  AS id,
-                riwayat_transaksi.tanggal_riwayat_transaksi             AS created_at,
-                CONCAT('INV-', invoice.invoice_id)                      AS kode_transaksi,
-                invoice.subtotal                                         AS total,
-                COALESCE(detail_invoice.nama_pelanggan, 'Umum')         AS nama_pengguna
+                riwayat_transaksi.riwayat_transaksi_id                      AS id,
+                riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
+                CONCAT('INV-', invoice.invoice_id)                          AS kode_transaksi,
+                invoice.subtotal                                             AS total,
+                invoice.subtotal_barang,
+                invoice.biaya_jasa,
+                invoice.status,
+                (
+                    SELECT di.nama_pelanggan
+                    FROM detail_invoice di
+                    WHERE di.invoice_id = invoice.invoice_id
+                    ORDER BY di.detail_invoice_id ASC
+                    LIMIT 1
+                )                                                            AS nama_pengguna
             ")
-            ->orderByDesc('riwayat_transaksi.tanggal_riwayat_transaksi');
+            ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi');
 
         if ($mode === 'custom' && $dari && $sampai) {
             $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $dari)
@@ -35,8 +45,8 @@ class LaporanPenjualanController extends Controller
 
         } elseif ($mode === 'week' && $week) {
             [$yr, $wk] = explode('-W', $week);
-            $start = Carbon::now()->setISODate((int)$yr, (int)$wk)->startOfWeek()->toDateString();
-            $end   = Carbon::now()->setISODate((int)$yr, (int)$wk)->endOfWeek()->toDateString();
+            $start = Carbon::now('Asia/Makassar')->setISODate((int)$yr, (int)$wk)->startOfWeek()->toDateString();
+            $end   = Carbon::now('Asia/Makassar')->setISODate((int)$yr, (int)$wk)->endOfWeek()->toDateString();
             $query->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '>=', $start)
                   ->whereDate('riwayat_transaksi.tanggal_riwayat_transaksi', '<=', $end);
 
@@ -64,7 +74,6 @@ class LaporanPenjualanController extends Controller
             'year'   => $request->input('year'),
         ];
     }
-
 
     public function getLaporanPenjualan(Request $request)
     {

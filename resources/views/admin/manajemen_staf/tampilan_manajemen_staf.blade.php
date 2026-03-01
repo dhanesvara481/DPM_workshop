@@ -74,58 +74,117 @@
 
             {{-- Toolbar --}}
             <div class="p-5 sm:p-6 border-b border-slate-200">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                    <div class="min-w-0">
-                        <div class="text-lg font-semibold text-slate-900">Daftar Staf</div>
-                        <div class="text-xs text-slate-500 mt-1">Cari nama / filter status.</div>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <div class="relative">
-                            <input id="q" type="text" placeholder="Cari nama / no HP..."
-                                   class="h-10 w-full sm:w-64 rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm outline-none focus:ring-2 focus:ring-slate-200">
-                            <svg class="h-5 w-5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 18a8 8 0 100-16 8 8 0 000 16z"/>
-                            </svg>
+                <form method="GET" action="{{ route('tampilan_manajemen_staf') }}">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-lg font-semibold text-slate-900">Daftar Staf</div>
+                            <div class="text-xs text-slate-500 mt-1">Cari nama / filter status.</div>
                         </div>
 
-                        {{-- Filter status: value pakai lowercase sesuai DB --}}
-                        <select id="filterStatus" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">
-                            <option value="">Semua Status</option>
-                            <option value="aktif">Aktif</option>
-                            <option value="nonaktif">Nonaktif</option>
-                        </select>
+                        <div class="flex flex-col sm:flex-row gap-2 flex-wrap">
 
-                        <a href="{{ route('tambah_staf') }}"
-                           class="h-10 px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold inline-flex items-center gap-2">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
-                            </svg>
-                            Tambah Staf
-                        </a>
+                            {{-- Search --}}
+                            <div class="relative">
+                                <input name="q" id="q" type="text"
+                                       value="{{ request('q') }}"
+                                       placeholder="Cari nama / no HP..."
+                                       class="h-10 w-full sm:w-64 rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm outline-none focus:ring-2 focus:ring-slate-200">
+                                <svg class="h-5 w-5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 18a8 8 0 100-16 8 8 0 000 16z"/>
+                                </svg>
+                            </div>
+
+                            {{-- Filter status --}}
+                            <select name="status"
+                                    class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">
+                                <option value="">Semua Status</option>
+                                <option value="aktif"    {{ request('status') === 'aktif'    ? 'selected' : '' }}>Aktif</option>
+                                <option value="nonaktif" {{ request('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                            </select>
+
+                            {{-- Pertahankan sort & dir saat filter submit --}}
+                            <input type="hidden" name="sort" value="{{ request('sort', 'created_at') }}">
+                            <input type="hidden" name="dir"  value="{{ request('dir', 'desc') }}">
+
+                            {{-- Tombol Filter --}}
+                            <button type="submit"
+                                    class="h-10 px-4 rounded-xl bg-blue-950 text-white hover:bg-blue-900 transition text-sm font-semibold">
+                                Filter
+                            </button>
+
+                            {{-- Tombol Reset (hanya muncul kalau ada filter aktif) --}}
+                            @if(request('q') || request('status'))
+                                <a href="{{ route('tampilan_manajemen_staf', array_filter(['sort' => request('sort'), 'dir' => request('dir')])) }}"
+                                   class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    Reset
+                                </a>
+                            @endif
+
+                            <a href="{{ route('tambah_staf') }}"
+                               class="h-10 px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold inline-flex items-center gap-2">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+                                </svg>
+                                Tambah Staf
+                            </a>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
 
             {{-- Tabel --}}
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
+
+                    @php
+                        $colsStaf = [
+                            'username'   => ['label' => 'Username',  'align' => 'text-left',  'sortable' => true],
+                            'role_col'   => ['label' => 'Role',      'align' => 'text-left',  'sortable' => false],
+                            'kontak'     => ['label' => 'No HP',     'align' => 'text-left',  'sortable' => true],
+                            'status'     => ['label' => 'Status',    'align' => 'text-left',  'sortable' => true],
+                            'created_at' => ['label' => 'Tgl Gabung','align' => 'text-left',  'sortable' => true],
+                            'aksi_col'   => ['label' => 'Aksi',      'align' => 'text-right', 'sortable' => false],
+                        ];
+                    @endphp
+
                     <thead class="bg-slate-50 text-slate-600">
                         <tr>
-                            <th class="text-left font-semibold px-5 py-3">Username</th>
-                            <th class="text-left font-semibold px-5 py-3">Role</th>
-                            <th class="text-left font-semibold px-5 py-3">No HP</th>
-                            <th class="text-left font-semibold px-5 py-3">Status</th>
-                            <th class="text-left font-semibold px-5 py-3">Tgl Gabung</th>
-                            <th class="text-right font-semibold px-5 py-3">Aksi</th>
+                            @foreach($colsStaf as $key => $col)
+                                @php
+                                    $isSortable = $col['sortable'] ?? true;
+                                    $isActive   = $sort === $key;
+                                    $nextDir    = ($isActive && $dir === 'asc') ? 'desc' : 'asc';
+                                    $url        = request()->fullUrlWithQuery(['sort' => $key, 'dir' => $nextDir, 'page' => 1]);
+                                @endphp
+                                <th class="font-semibold px-5 py-3 whitespace-nowrap {{ $col['align'] }}">
+                                    @if($isSortable)
+                                        <a href="{{ $url }}"
+                                           class="inline-flex items-center gap-1.5 group
+                                                  {{ $isActive ? 'text-blue-900' : 'text-slate-600 hover:text-slate-900' }} transition">
+                                            {{ $col['label'] }}
+                                            <span class="flex flex-col gap-[2px]">
+                                                <svg class="h-2.5 w-2.5 {{ $isActive && $dir === 'asc'  ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                                                     viewBox="0 0 10 6" fill="currentColor"><path d="M5 0L10 6H0L5 0Z"/></svg>
+                                                <svg class="h-2.5 w-2.5 {{ $isActive && $dir === 'desc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                                                     viewBox="0 0 10 6" fill="currentColor"><path d="M5 6L0 0H10L5 6Z"/></svg>
+                                            </span>
+                                        </a>
+                                    @else
+                                        {{ $col['label'] }}
+                                    @endif
+                                </th>
+                            @endforeach
                         </tr>
                     </thead>
 
                     <tbody id="tbody" class="divide-y divide-slate-100">
                         @forelse($stafs as $staf)
                             @php
-                                // Bandingkan langsung dengan nilai DB (lowercase)
                                 $isAktif = $staf->status === 'aktif';
                                 $isStaff = $staf->role   === 'staff';
                             @endphp
@@ -133,27 +192,29 @@
 
                                 {{-- Username + email --}}
                                 <td class="px-5 py-4">
-                                    <div class="font-semibold text-slate-900 staff-nama">{{ $staf->username }}</div>
+                                    <div class="font-semibold text-slate-900">{{ $staf->username }}</div>
                                     <div class="text-xs text-slate-500">{{ $staf->email }}</div>
                                 </td>
 
-                                {{-- Role — data-value untuk filter JS --}}
+                                {{-- Role --}}
                                 <td class="px-5 py-4">
-                                    <span class="staff-role" data-value="{{ $staf->role }}">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border
+                                                 {{ $staf->role === 'admin'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                    : 'bg-slate-100 text-slate-600 border-slate-200' }}">
                                         {{ ucfirst($staf->role) }}
                                     </span>
                                 </td>
 
                                 {{-- No HP --}}
-                                <td class="px-5 py-4 staff-hp">{{ $staf->kontak }}</td>
+                                <td class="px-5 py-4 text-slate-700">{{ $staf->kontak }}</td>
 
-                                {{-- Status — data-value untuk filter JS --}}
+                                {{-- Status --}}
                                 <td class="px-5 py-4">
-                                    <span class="staff-status inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border
-                                            {{ $isAktif
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                : 'bg-slate-100 text-slate-500 border-slate-200' }}"
-                                          data-value="{{ $staf->status }}">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border
+                                                 {{ $isAktif
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-slate-100 text-slate-500 border-slate-200' }}">
                                         {{ $isAktif ? 'Aktif' : 'Nonaktif' }}
                                     </span>
                                 </td>
@@ -167,7 +228,7 @@
                                 <td class="px-5 py-4">
                                     <div class="flex items-center justify-end gap-2">
 
-                                        {{-- Detail popup — semua data di-pass via data-* --}}
+                                        {{-- Detail popup --}}
                                         <button type="button"
                                                 class="btnDetail inline-flex h-9 items-center justify-center px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold whitespace-nowrap"
                                                 data-id="{{ $staf->user_id }}"
@@ -188,7 +249,6 @@
                                             </a>
 
                                             @if($isAktif)
-                                                {{-- DB status = 'aktif' → tombol Nonaktifkan (merah) --}}
                                                 <button type="button"
                                                         class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
                                                                 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition
@@ -199,7 +259,6 @@
                                                     Nonaktifkan
                                                 </button>
                                             @else
-                                                {{-- DB status = 'nonaktif' → tombol Aktifkan (hijau) --}}
                                                 <button type="button"
                                                         class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
                                                                 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition
@@ -217,7 +276,19 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="px-5 py-10 text-center text-slate-500 text-sm">
-                                    Belum ada data staf.
+                                    @if(request('q') || request('status'))
+                                        <div class="flex flex-col items-center gap-2">
+                                            <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3m0 0A8 8 0 1116.7 4.3a8 8 0 010 12.4z"/>
+                                            </svg>
+                                            <div class="font-semibold text-slate-700">Tidak ada hasil</div>
+                                            <div class="text-xs text-slate-400">Coba ubah kata kunci atau filter.</div>
+                                            <a href="{{ route('tampilan_manajemen_staf') }}"
+                                               class="mt-1 text-xs text-blue-700 hover:underline">Hapus filter</a>
+                                        </div>
+                                    @else
+                                        Belum ada data staf.
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
@@ -225,13 +296,59 @@
                 </table>
             </div>
 
-            <div id="emptyState" class="hidden p-8 text-center text-slate-600">
-                <div class="text-sm font-semibold">Tidak ada hasil</div>
-                <div class="text-xs text-slate-500 mt-1">Coba ubah kata kunci / filter.</div>
-            </div>
+            {{-- Footer: info + pagination --}}
+            <div class="px-5 sm:px-6 py-4 border-t border-slate-200
+                        flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="text-xs text-slate-500">
+                    © DPM Workshop 2025
+                    @if($stafs->total() > 0)
+                        &nbsp;·&nbsp; Menampilkan
+                        <span class="font-semibold text-slate-700">{{ $stafs->firstItem() }}–{{ $stafs->lastItem() }}</span>
+                        dari <span class="font-semibold text-slate-700">{{ $stafs->total() }}</span> staf
+                    @endif
+                </div>
 
-            <div class="px-5 sm:px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-                © DPM Workshop 2025
+                @if($stafs->hasPages())
+                    <nav class="flex items-center gap-1">
+                        {{-- Prev --}}
+                        @if($stafs->onFirstPage())
+                            <span class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            </span>
+                        @else
+                            <a href="{{ $stafs->previousPageUrl() }}"
+                               class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            </a>
+                        @endif
+
+                        {{-- Page numbers --}}
+                        @foreach($stafs->getUrlRange(max(1, $stafs->currentPage()-2), min($stafs->lastPage(), $stafs->currentPage()+2)) as $page => $url)
+                            @if($page == $stafs->currentPage())
+                                <span class="h-9 w-9 grid place-items-center rounded-lg bg-blue-950 text-white text-xs font-semibold">
+                                    {{ $page }}
+                                </span>
+                            @else
+                                <a href="{{ $url }}"
+                                   class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition">
+                                    {{ $page }}
+                                </a>
+                            @endif
+                        @endforeach
+
+                        {{-- Next --}}
+                        @if($stafs->hasMorePages())
+                            <a href="{{ $stafs->nextPageUrl() }}"
+                               class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            </a>
+                        @else
+                            <span class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            </span>
+                        @endif
+                    </nav>
+                @endif
             </div>
         </div>
     </div>
@@ -437,52 +554,12 @@ function showConfirmModal({ title, message, confirmText, cancelText, note, tone 
 }
 
 // ============================================================
-// FILTER — membaca data-value (nilai DB lowercase)
-// ============================================================
-const q            = document.getElementById('q');
-const filterRole   = document.getElementById('filterRole');
-const filterStatus = document.getElementById('filterStatus');
-const tbody        = document.getElementById('tbody');
-const emptyState   = document.getElementById('emptyState');
-
-function applyFilter() {
-    if (!tbody) return;
-    const keyword = (q?.value || '').toLowerCase().trim();
-    const role    = (filterRole?.value   || '').toLowerCase();  // '' | 'admin' | 'staff'
-    const status  = (filterStatus?.value || '').toLowerCase();  // '' | 'aktif' | 'nonaktif'
-
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    let shown = 0;
-
-    rows.forEach(tr => {
-        const nama      = (tr.querySelector('.staff-nama')?.textContent || '').toLowerCase();
-        const hp        = (tr.querySelector('.staff-hp')?.textContent   || '').toLowerCase();
-        // Baca data-value bukan textContent agar tidak terpengaruh kapitalisasi tampilan
-        const roleVal   = (tr.querySelector('.staff-role')?.dataset.value   || '').toLowerCase();
-        const statusVal = (tr.querySelector('.staff-status')?.dataset.value || '').toLowerCase();
-
-        const ok = (!keyword || nama.includes(keyword) || hp.includes(keyword))
-                && (!role   || roleVal   === role)
-                && (!status || statusVal === status);
-
-        tr.classList.toggle('hidden', !ok);
-        if (ok) shown++;
-    });
-
-    emptyState?.classList.toggle('hidden', shown !== 0);
-}
-
-q?.addEventListener('input', applyFilter);
-filterRole?.addEventListener('change', applyFilter);
-filterStatus?.addEventListener('change', applyFilter);
-
-// ============================================================
 // TOGGLE STATUS — dari tombol di tabel
 // ============================================================
 document.querySelectorAll('.btnToggleStatus').forEach(btn => {
     btn.addEventListener('click', () => {
         const id       = btn.dataset.id;
-        const action   = btn.dataset.action;    // 'nonaktifkan' | 'aktifkan'
+        const action   = btn.dataset.action;
         const nama     = btn.dataset.nama;
         const isDanger = action === 'nonaktifkan';
 
@@ -507,26 +584,24 @@ document.querySelectorAll('.btnToggleStatus').forEach(btn => {
 });
 
 // ============================================================
-// DETAIL MODAL — data dari data-* attribute tombol Detail
+// DETAIL MODAL
 // ============================================================
 const detailModal   = document.getElementById('detailModal');
 const detailOverlay = document.getElementById('detailOverlay');
 
 function openDetail(btn) {
-    // Ambil semua nilai langsung dari DB via data-*
     const id       = btn.dataset.id;
     const username = btn.dataset.username;
     const email    = btn.dataset.email;
     const kontak   = btn.dataset.kontak;
-    const role     = btn.dataset.role;     // 'staff' | 'admin'
-    const status   = btn.dataset.status;   // 'aktif' | 'nonaktif'
+    const role     = btn.dataset.role;
+    const status   = btn.dataset.status;
     const catatan  = btn.dataset.catatan;
     const gabung   = btn.dataset.gabung;
 
     const isAktif = status === 'aktif';
     const isStaff = role   === 'staff';
 
-    // Isi teks modal
     document.getElementById('dmUsername').textContent       = username || '-';
     document.getElementById('dmId').textContent             = id       || '-';
     document.getElementById('dmRole').textContent           = role ? (role.charAt(0).toUpperCase() + role.slice(1)) : '-';
@@ -536,7 +611,6 @@ function openDetail(btn) {
     document.getElementById('dmGabung').textContent         = gabung    || '-';
     document.getElementById('dmCatatan').textContent        = catatan   || '—';
 
-    // Badge status — berdasarkan nilai DB
     const badge = document.getElementById('dmStatusBadge');
     badge.textContent = isAktif ? 'Aktif' : 'Nonaktif';
     badge.className   = 'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border '
@@ -548,22 +622,18 @@ function openDetail(btn) {
     const dmBtnToggle = document.getElementById('dmBtnToggle');
 
     if (isStaff) {
-        // Tombol Ubah
         dmLinkUbah.classList.remove('hidden');
         dmLinkUbah.href = `/ubah_staf/${id}`;
 
-        // Tombol Toggle Status — teks & warna sesuai status DB
         dmBtnToggle.classList.remove('hidden');
         dmBtnToggle.dataset.id     = id;
         dmBtnToggle.dataset.nama   = username;
         dmBtnToggle.dataset.action = isAktif ? 'nonaktifkan' : 'aktifkan';
 
         if (isAktif) {
-            // Status 'aktif' di DB → tampilkan "Nonaktifkan" (merah)
             dmBtnToggle.textContent = 'Nonaktifkan';
             dmBtnToggle.className   = 'inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition';
         } else {
-            // Status 'nonaktif' di DB → tampilkan "Aktifkan" (hijau)
             dmBtnToggle.textContent = 'Aktifkan';
             dmBtnToggle.className   = 'inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition';
         }

@@ -12,13 +12,28 @@ class ManajemenStafController extends Controller
      * Tampilan daftar semua staf (role = staff).
      * Kirim Eloquent collection langsung — view akses via $staf->status, $staf->role, dst.
      */
-    public function getTampilanManajemenStaf()
+    public function getTampilanManajemenStaf(Request $request)
     {
+        $sortable = ['username', 'email', 'kontak', 'status', 'created_at'];
+        $sort     = in_array($request->input('sort'), $sortable) ? $request->input('sort') : 'created_at';
+        $dir      = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+    
         $stafs = User::where('role', 'staff')
-                     ->orderBy('created_at', 'desc')
-                     ->get();
-
-        return view('admin.manajemen_staf.tampilan_manajemen_staf', compact('stafs'));
+                     ->when($request->input('q'), function ($query) use ($request) {
+                         $q = $request->input('q');
+                         $query->where(function ($sub) use ($q) {
+                             $sub->where('username', 'like', "%$q%")
+                                 ->orWhere('kontak', 'like', "%$q%");
+                         });
+                     })
+                     ->when($request->input('status'), function ($query) use ($request) {
+                         $query->where('status', $request->input('status'));
+                     })
+                     ->orderBy($sort, $dir)
+                     ->paginate(10)
+                     ->withQueryString();
+    
+        return view('admin.manajemen_staf.tampilan_manajemen_staf', compact('stafs', 'sort', 'dir'));
     }
 
     /**

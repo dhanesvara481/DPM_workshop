@@ -14,7 +14,7 @@ class ReminderJadwalHMinusSatu extends Command
 
     public function handle(JadwalNotifikasiService $notifService)
     {
-        $besok = Carbon::tomorrow();
+        $besok = Carbon::tomorrow('Asia/Makassar');
 
         $jadwals = JadwalKerja::with('user')
             ->whereDate('tanggal_kerja', $besok)

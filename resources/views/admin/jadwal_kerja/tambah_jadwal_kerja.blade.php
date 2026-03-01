@@ -65,7 +65,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="min-w-0">
             <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Form Tambah Jadwal</div>
-            <div class="text-xs text-slate-500 mt-1">Minimal isi: Nama, Tanggal, Jam Mulai & Jam Selesai.</div>
+            <div class="text-xs text-slate-500 mt-1">Minimal isi: Nama dan Tanggal. Jam & Shift wajib kecuali status Tutup.</div>
           </div>
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center gap-2 text-xs text-slate-600">
@@ -123,9 +123,11 @@
             <div>
               <label class="block text-sm font-semibold text-slate-800 mb-1">Tanggal Kerja</label>
               <input type="date" name="tanggal_kerja"
-                     value="{{ old('tanggal_kerja', $prefillDate) }}"
-                     class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
+                     value="{{ old('tanggal_kerja', $prefillDate ?? date('Y-m-d')) }}"
+                     readonly
+                     class="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-4
+                            text-slate-500 cursor-not-allowed
+                            focus:outline-none transition">
               <p class="text-[11px] text-slate-500 mt-1">Otomatis terisi jika datang dari kalender.</p>
             </div>
 
@@ -147,10 +149,10 @@
                             focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
             </div>
 
-            {{-- Shift --}}
-            <div class="md:col-span-2">
+            {{-- Shift — disembunyikan saat status Tutup --}}
+            <div class="md:col-span-2" id="shiftWrapper">
               <label class="block text-sm font-semibold text-slate-800 mb-1">Waktu Shift</label>
-              <select name="waktu_shift"
+              <select name="waktu_shift" id="shiftSelect"
                       class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
                              focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
                 <option value="">Pilih shift</option>
@@ -220,10 +222,10 @@
               </div>
             </div>
 
-            {{-- Deskripsi --}}
-            <div class="md:col-span-2">
+            {{-- Deskripsi — disembunyikan saat status Tutup --}}
+            <div class="md:col-span-2" id="descWrapper">
               <label class="block text-sm font-semibold text-slate-800 mb-1">Deskripsi</label>
-              <textarea name="deskripsi" rows="5"
+              <textarea name="deskripsi" id="descArea" rows="5"
                         placeholder="Contoh: Pekerjaan service rutin, booking pelanggan, dll..."
                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3
                                focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">{{ old('deskripsi') }}</textarea>
@@ -286,7 +288,7 @@
     opacity: 1 !important;
   }
 
-  /* ✅ Animasi smooth hide/show field jam */
+  /* ✅ Animasi smooth hide/show field */
   .field-hidden {
     display: none !important;
   }
@@ -301,13 +303,17 @@
   const defaultStatus = document.getElementById('defaultStatus')?.value ?? 'Aktif';
 
   // ─── Elemen ────────────────────────────────────────────────────────────────
-  const userSelect       = document.getElementById('userSelect');
-  const userSelectHint   = document.getElementById('userSelectHint');
-  const lockIcon         = document.getElementById('lockIcon');
-  const jamMulaiWrapper  = document.getElementById('jamMulaiWrapper');
-  const jamSelesaiWrapper= document.getElementById('jamSelesaiWrapper');
-  const jamMulaiInput    = document.getElementById('jamMulaiInput');
-  const jamSelesaiInput  = document.getElementById('jamSelesaiInput');
+  const userSelect        = document.getElementById('userSelect');
+  const userSelectHint    = document.getElementById('userSelectHint');
+  const lockIcon          = document.getElementById('lockIcon');
+  const jamMulaiWrapper   = document.getElementById('jamMulaiWrapper');
+  const jamSelesaiWrapper = document.getElementById('jamSelesaiWrapper');
+  const shiftWrapper      = document.getElementById('shiftWrapper');
+  const descWrapper       = document.getElementById('descWrapper');
+  const jamMulaiInput     = document.getElementById('jamMulaiInput');
+  const jamSelesaiInput   = document.getElementById('jamSelesaiInput');
+  const shiftSelect       = document.getElementById('shiftSelect');
+  const descArea          = document.getElementById('descArea');
 
   // ─── 1. Kunci / buka dropdown Nama ────────────────────────────────────────
   function filterUserDropdown(statusValue) {
@@ -329,9 +335,7 @@
       }
       h.value = authUserId;
 
-      if (userSelectHint) {
-        userSelectHint.textContent = '';
-      }
+      if (userSelectHint) userSelectHint.textContent = '';
     } else {
       userSelect.disabled = false;
       userSelect.classList.remove('is-locked');
@@ -345,17 +349,21 @@
     }
   }
 
-  // ─── 2. Sembunyikan / tampilkan field Jam saat status Tutup ───────────────
-  function filterTimeFields(statusValue) {
+  // ─── 2. Sembunyikan / tampilkan field saat status Tutup ───────────────────
+  function filterFields(statusValue) {
     const isTutup = statusValue === 'Tutup';
 
-    if (jamMulaiWrapper) jamMulaiWrapper.classList.toggle('field-hidden', isTutup);
-    if (jamSelesaiWrapper) jamSelesaiWrapper.classList.toggle('field-hidden', isTutup);
+    // Toggle semua field yang disembunyikan saat Tutup
+    [jamMulaiWrapper, jamSelesaiWrapper, shiftWrapper, descWrapper].forEach(el => {
+      if (el) el.classList.toggle('field-hidden', isTutup);
+    });
 
+    // Kosongkan value agar tidak ikut terkirim / tidak gagal validasi
     if (isTutup) {
-      // Kosongkan value agar tidak ikut terkirim / tidak gagal validasi
-      if (jamMulaiInput)  jamMulaiInput.value  = '';
-      if (jamSelesaiInput) jamSelesaiInput.value = '';
+      if (jamMulaiInput)   jamMulaiInput.value   = '';
+      if (jamSelesaiInput) jamSelesaiInput.value  = '';
+      if (shiftSelect)     shiftSelect.value      = '';
+      if (descArea)        descArea.value         = '';
     }
   }
 
@@ -364,7 +372,7 @@
     radio.addEventListener('change', () => {
       if (radio.checked) {
         filterUserDropdown(radio.value);
-        filterTimeFields(radio.value);
+        filterFields(radio.value);
       }
     });
   });
@@ -373,7 +381,7 @@
   const checkedStatus = document.querySelector('input[name="status"]:checked');
   if (checkedStatus) {
     filterUserDropdown(checkedStatus.value);
-    filterTimeFields(checkedStatus.value);
+    filterFields(checkedStatus.value);
   }
 
   // ─── Confirm modal ─────────────────────────────────────────────────────────
@@ -460,5 +468,12 @@
       onConfirm: () => window.location.href = go
     });
   });
+</script>
+
+<script>
+document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
+    el.addEventListener('keydown', e => e.preventDefault());
+    el.addEventListener('mousedown', e => e.preventDefault());
+});
 </script>
 @endpush

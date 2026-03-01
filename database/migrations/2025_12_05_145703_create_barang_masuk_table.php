@@ -16,7 +16,7 @@ public function up(): void
         $table->foreignId('barang_id')->constrained('barang', 'barang_id')->onDelete('cascade');
         $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
         $table->string('jumlah_masuk', 10);
-        $table->date('tanggal_masuk');
+        $table->datetime('tanggal_masuk');
         $table->timestamps();
     });
 }

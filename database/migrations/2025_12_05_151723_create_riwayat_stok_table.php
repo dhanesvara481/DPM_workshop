@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
             $table->foreignId('barang_masuk_id')->nullable()->constrained('barang_masuk', 'barang_masuk_id')->onDelete('cascade');
             $table->foreignId('barang_keluar_id')->nullable()->constrained('barang_keluar', 'barang_keluar_id')->onDelete('cascade');
-            $table->date('tanggal_riwayat_stok');
+            $table->datetime('tanggal_riwayat_stok');
             $table->integer('stok_awal')->default(0);
             $table->integer('stok_akhir')->default(0);
             $table->timestamps();

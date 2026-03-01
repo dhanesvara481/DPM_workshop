@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JadwalKerja;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -81,11 +82,16 @@ class DashboardController extends Controller
             ->count();
 
         // ── Ringkasan Transaksi ─────────────────────────────────────────────
+        $userId = Auth::id();
+
         $txTodayAll = DB::table('invoice')
             ->whereDate('created_at', today())
+            ->where('user_id', $userId)   // ← sesuaikan nama kolom
             ->count();
-
-        $txTotalAll = DB::table('invoice')->count();
+        
+        $txTotalAll = DB::table('invoice')
+            ->where('user_id', $userId)   // ← sesuaikan nama kolom
+            ->count();
 
         // ── Events Jadwal ───────────────────────────────────────────────────
         $events             = $this->buildEvents();

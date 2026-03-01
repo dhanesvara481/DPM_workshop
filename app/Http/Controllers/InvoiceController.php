@@ -10,6 +10,7 @@ use App\Models\Barang;
 use App\Models\RiwayatTransaksi;
 use App\Models\BarangKeluar;
 use App\Models\RiwayatStok;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -24,10 +25,129 @@ class InvoiceController extends Controller
         return view('admin.invoice.tampilan_invoice', compact('barangs'));
     }
 
+    public function getTampilanKonfirmasi(Request $request)
+    {
+        $q    = $request->input('q', '');
+        $from = $request->input('from');
+        $to   = $request->input('to');
+
+        $query = Invoice::with(['items' => fn($q) => $q->limit(1)])
+            ->orderByDesc('tanggal_invoice');
+
+        if ($from) $query->whereDate('tanggal_invoice', '>=', $from);
+        if ($to)   $query->whereDate('tanggal_invoice', '<=', $to);
+
+        if ($q) {
+            $query->where(function ($qb) use ($q) {
+                $numericId = ltrim(str_ireplace('INV-', '', $q), '0');
+                if (is_numeric($numericId)) {
+                    $qb->orWhere('invoice_id', $numericId);
+                }
+                $qb->orWhereHas('items', fn($qi) =>
+                    $qi->where('nama_pelanggan', 'like', "%{$q}%")
+                );
+            });
+        }
+
+        $invoices     = $query->paginate(15)->withQueryString();
+        $pendingCount = Invoice::where('status', 'Pending')->count();
+
+        return view('admin.invoice.konfirmasi_invoice', compact('invoices', 'q', 'pendingCount'));
+    }
+
+    public function tandaKonfirmasi(Request $request, $invoice)
+    {
+        $inv = Invoice::findOrFail($invoice);
+
+        if ($inv->status === 'Paid') {
+            return back()->with('error', 'Invoice sudah berstatus Paid.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $inv->update(['status' => 'Paid', 'tanggal_bayar' => now()]);
+            $this->prosesStokDariInvoice($inv);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Invoice INV-' . $inv->invoice_id . ' berhasil dikonfirmasi sebagai Paid.');
+    }
+
+    // ── Staff ────────────────────────────────────────────────────────────────
+
+    public function getTampilanInvoiceStaff()
+    {
+        $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
+            ->orderBy('barang_id')
+            ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
+
+        return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
+    }
+
+    public function getTampilanKonfirmasiStaff(Request $request)
+    {
+        $q    = $request->input('q', '');
+        $from = $request->input('from');
+        $to   = $request->input('to');
+
+        $query = Invoice::with(['items' => fn($q) => $q->limit(1)])
+            ->orderByDesc('tanggal_invoice');
+
+        if ($from) $query->whereDate('tanggal_invoice', '>=', $from);
+        if ($to)   $query->whereDate('tanggal_invoice', '<=', $to);
+
+        if ($q) {
+            $query->where(function ($qb) use ($q) {
+                $numericId = ltrim(str_ireplace('INV-', '', $q), '0');
+                if (is_numeric($numericId)) {
+                    $qb->orWhere('invoice_id', $numericId);
+                }
+                $qb->orWhereHas('items', fn($qi) =>
+                    $qi->where('nama_pelanggan', 'like', "%{$q}%")
+                );
+            });
+        }
+
+        $invoices     = $query->paginate(15)->withQueryString();
+        $pendingCount = Invoice::where('status', 'Pending')->count();
+
+        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'q', 'pendingCount'));
+    }
+
+    public function tandaKonfirmasiStaff(Request $request, $invoice)
+    {
+        $inv = Invoice::findOrFail($invoice);
+
+        if ($inv->status === 'Paid') {
+            return back()->with('error', 'Invoice sudah berstatus Paid.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $inv->update(['status' => 'Paid', 'tanggal_bayar' => now()]);
+            $this->prosesStokDariInvoice($inv);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Invoice INV-' . $inv->invoice_id . ' berhasil dikonfirmasi sebagai Paid.');
+    }
+
+    // ── Shared (admin & staff) ────────────────────────────────────────────────
+
     public function checkStok(Request $request)
     {
         $items  = $request->input('items', []);
         $errors = [];
+
+        if (empty($items) || !is_array($items)) {
+            return response()->json(['ok' => true, 'errors' => []]);
+        }
 
         foreach ($items as $item) {
             $barangId = $item['barang_id'] ?? null;
@@ -48,100 +168,12 @@ class InvoiceController extends Controller
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
 
-    public function getTampilanKonfirmasi(Request $request)
-    {
-        $q = $request->get('q');
-        $status = $request->get('status', 'Pending'); // default tampilkan Pending
-
-       $invoices = Invoice::query()
-        ->where('status', 'Pending') // FIX: hanya pending
-        ->when($q, function ($qq) use ($q) {
-            $qq->where(function ($sub) use ($q) {
-                $sub->where('invoice_number', 'like', "%{$q}%")
-                    ->orWhere('customer_name', 'like', "%{$q}%");
-            });
-        })
-        ->latest()
-        ->paginate(10)
-        ->withQueryString();
-
-        $pendingCount = Invoice::where('status', 'Pending')->count();
-
-        return view('admin.invoice.konfirmasi_invoice', compact('invoices', 'pendingCount', 'q', 'status'));
-    }
-
-    public function tandaKonfirmasi(Request $request, Invoice $invoice)
-    {
-        // Guard: hanya boleh dari Pending -> Paid
-        if ($invoice->status !== 'Pending') {
-            return back()->with('error', 'Invoice ini sudah dikonfirmasi / status bukan Pending.');
-        }
-
-        $invoice->status = 'Paid';
-        $invoice->paid_at = now(); // kalau kamu punya kolom paid_at (opsional)
-        $invoice->save();
-
-        return back()->with('success', 'Invoice berhasil dikonfirmasi.');
-    }
-
-
-    // ── Staff ────────────────────────────────────────────────────────────────
-
-    public function getTampilanInvoiceStaff()
-    {
-        $barangs = Barang::whereRaw('CAST(stok AS UNSIGNED) > 0')
-            ->orderBy('barang_id')
-            ->get(['barang_id', 'kode_barang', 'nama_barang', 'satuan', 'harga_jual', 'stok']);
-
-        return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
-    }
-
-    public function getTampilanKonfirmasiStaff(Request $request)
-    {
-        $q = $request->get('q');
-        $status = $request->get('status', 'Pending'); // default tampilkan Pending
-
-        $invoices = Invoice::query()
-            ->when($status, fn($qq) => $qq->where('status', $status))
-            ->when($q, function ($qq) use ($q) {
-                $qq->where(function ($sub) use ($q) {
-                    $sub->where('invoice_number', 'like', "%{$q}%")
-                        ->orWhere('customer_name', 'like', "%{$q}%");
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
-
-        $pendingCount = Invoice::where('status', 'Pending')->count();
-
-        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'pendingCount', 'q', 'status'));
-    }
-
-    public function tandaKonfirmasiStaff(Request $request, Invoice $invoice)
-    {
-        // Guard: hanya boleh dari Pending -> Paid
-        if ($invoice->status !== 'Pending') {
-            return back()->with('error', 'Invoice ini sudah dikonfirmasi / status bukan Pending.');
-        }
-
-        $invoice->status = 'Paid';
-        $invoice->paid_at = now(); // kalau kamu punya kolom paid_at (opsional)
-        $invoice->save();
-
-        return back()->with('success', 'Invoice berhasil dikonfirmasi menjadi Paid.');
-    }
-
-    // ── Store (dipakai admin & staff) ────────────────────────────────────────
-
     public function store(Request $request)
     {
         $request->validate([
             'tanggal_invoice' => 'required|date',
             'kategori'        => 'required|in:barang,jasa',
             'grand_total'     => 'required|numeric|min:0',
-            'nama_pelanggan'  => 'required|string|max:255',
-            'kontak'          => ['required','regex:/^08[0-9]{8,13}$/'],
         ]);
 
         DB::beginTransaction();
@@ -150,7 +182,8 @@ class InvoiceController extends Controller
             $kategori      = $request->kategori;
             $namaPelanggan = $request->nama_pelanggan ?? null;
             $kontak        = $request->kontak ?? null;
-            $userId        = auth()->user()->user_id;
+            $deskripsi     = trim($request->deskripsi ?? '');
+            $userId        = auth()->id();
 
             $invoice = Invoice::create([
                 'user_id'         => $userId,
@@ -158,6 +191,8 @@ class InvoiceController extends Controller
                 'subtotal_barang' => $request->subtotal_barang ?? 0,
                 'biaya_jasa'      => $kategori === 'jasa' ? ($request->subtotal_jasa ?? 0) : 0,
                 'subtotal'        => $request->grand_total ?? 0,
+                'status'          => 'Pending',
+                'tanggal_bayar'   => null,
             ]);
 
             if ($kategori === 'barang') {
@@ -166,13 +201,40 @@ class InvoiceController extends Controller
                     $request->barang ?? [],
                     'Barang',
                     $namaPelanggan,
-                    $kontak,
-                    $userId,
-                    $request->tanggal_invoice
+                    $kontak
                 );
+
+                // Catatan disimpan sebagai row Jasa dengan total=0 & jumlah=0
+                // Ini adalah satu-satunya cara menyimpan catatan di detail_invoice
+                // tanpa mengubah struktur tabel (ENUM hanya Barang/Jasa)
+                if ($deskripsi !== '') {
+                    InvoiceItem::create([
+                        'invoice_id'     => $invoice->invoice_id,
+                        'barang_id'      => null,
+                        'nama_pelanggan' => $namaPelanggan,
+                        'kontak'         => $kontak,
+                        'deskripsi'      => $deskripsi,
+                        'jumlah'         => '0',
+                        'total'          => 0,
+                        'tipe_transaksi' => 'Jasa',
+                    ]);
+                }
             }
 
             if ($kategori === 'jasa') {
+                // Untuk kategori jasa, catatan langsung masuk ke deskripsi item jasa
+                // Jika ada catatan, pakai catatan; jika tidak, pakai nama jasa
+                $jasaNama = $request->jasa_nama ?? 'Jasa';
+
+                $this->simpanItemJasa(
+                    $invoice->invoice_id,
+                    $jasaNama,
+                    (float) ($request->subtotal_jasa ?? 0),
+                    $namaPelanggan,
+                    $kontak,
+                    $deskripsi !== '' ? $deskripsi : $jasaNama  // ← catatan masuk ke deskripsi
+                );
+
                 $jasaBarang        = $request->jasa_barang ?? [];
                 $itemsDenganBarang = array_filter($jasaBarang, fn($i) => !empty($i['barang_id']));
 
@@ -182,9 +244,7 @@ class InvoiceController extends Controller
                         $itemsDenganBarang,
                         'Jasa',
                         $namaPelanggan,
-                        $kontak,
-                        $userId,
-                        $request->tanggal_invoice
+                        $kontak
                     );
                 }
             }
@@ -199,18 +259,13 @@ class InvoiceController extends Controller
 
             $role = auth()->user()->role;
 
-            if ($role === 'staff') {
-                return redirect()->route('tampilan_konfirmasi_invoice_staff')
-                    ->with('success', 'Invoice berhasil disimpan.')
-                    ->with('last_invoice', $invoice->invoice_number ?? ('INV-'.$invoice->invoice_id));
-            }
-
-            return redirect()->route('tampilan_konfirmasi_invoice')
-                ->with('success', 'Invoice berhasil disimpan.')
-                ->with('last_invoice', $invoice->invoice_number ?? ('INV-'.$invoice->invoice_id));
+            return $role === 'staff'
+                ? redirect()->route('riwayat_transaksi_staff')->with('success', 'Invoice berhasil disimpan.')
+                : redirect()->route('tampilan_konfirmasi_invoice')->with('success', 'Invoice berhasil disimpan.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Invoice store error: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
@@ -218,37 +273,41 @@ class InvoiceController extends Controller
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /**
-     * Simpan item barang ke invoice + catat riwayat stok.
-     *
-     * Aturan stok_awal & stok_akhir:
-     *
-     *   Hari 1  masuk    qty 100  => stok_awal 100, stok_akhir 100
-     *   Hari 1  masuk    qty  50  => stok_awal 100, stok_akhir 150
-     *   Hari 1  keluar   qty  25  => stok_awal 100, stok_akhir 125
-     *   Hari 2  masuk    qty  55  => stok_awal 125, stok_akhir 180
-     *   Hari 2  invoice  qty  20  => stok_awal 125, stok_akhir 160
-     *
-     * - stok_awal  = stok_awal record PERTAMA hari ini (tetap sepanjang hari)
-     *               Jika belum ada transaksi hari ini:
-     *                 ada riwayat sebelumnya       -> stok_awal = stok_akhir terakhir kemarin
-     *                 tidak ada riwayat sama sekali -> stok_awal = stok barang saat ini
-     *
-     * - stok_akhir = stok_akhir record TERAKHIR hari ini - qty
-     *
-     * PENTING: update stok barang pakai nilai stok_akhir yang sudah dihitung,
-     *          BUKAN decrement(), agar tidak terjadi double-kurang.
+     * Simpan 1 row jasa ke detail_invoice.
+     * $deskripsi: kalau ada catatan dari form → isi catatan, kalau tidak → nama jasa.
+     */
+    private function simpanItemJasa(
+        int     $invoiceId,
+        string  $jasaNama,
+        float   $biayaJasa,
+        ?string $namaPelanggan,
+        ?string $kontak,
+        ?string $deskripsi = null
+    ): void {
+        InvoiceItem::create([
+            'invoice_id'     => $invoiceId,
+            'barang_id'      => null,
+            'nama_pelanggan' => $namaPelanggan,
+            'kontak'         => $kontak,
+            'deskripsi'      => $jasaNama,
+            'jumlah'         => '1',
+            'total'          => $biayaJasa,
+            'tipe_transaksi' => 'Jasa',
+        ]);
+    }
+
+    /**
+     * Simpan item barang ke detail_invoice.
+     * deskripsi = nama barang dari database.
+     * Stok belum dikurangi — baru dikurangi saat Paid.
      */
     private function simpanItemBarang(
         int     $invoiceId,
         array   $items,
         string  $tipe = 'Barang',
         ?string $namaPelanggan = null,
-        ?string $kontak = null,
-        int     $userId = 0,
-        ?string $tanggal = null
+        ?string $kontak = null
     ): void {
-        $tanggalHari = $tanggal ?? now()->toDateString();
-
         foreach ($items as $item) {
             if (empty($item['barang_id'])) continue;
 
@@ -272,22 +331,46 @@ class InvoiceController extends Controller
                 'total'          => (float) ($item['total'] ?? 0),
                 'tipe_transaksi' => $tipe,
             ]);
+        }
+    }
 
-            // ── Tentukan stok_awal & stok_akhir ────────────────────────────
+    /**
+     * Dipanggil saat invoice dikonfirmasi Paid.
+     * Hanya item dengan barang_id yang mempengaruhi stok.
+     * Row catatan (barang_id=null, jumlah=0, total=0) dilewati otomatis.
+     */
+    private function prosesStokDariInvoice(Invoice $invoice): void
+    {
+        $userId      = $invoice->user_id;
+        $tanggalHari = $invoice->tanggal_invoice instanceof \Carbon\Carbon
+            ? $invoice->tanggal_invoice->toDateString()
+            : $invoice->tanggal_invoice;
 
-            // Record pertama hari ini → stok_awal awal hari (tidak berubah sepanjang hari)
+        // whereNotNull('barang_id') otomatis skip row catatan (barang_id=null)
+        $items = $invoice->items()->whereNotNull('barang_id')->get();
+
+        foreach ($items as $item) {
+            $barang = Barang::findOrFail($item->barang_id);
+            $qty    = (int) $item->jumlah;
+
+            if ($qty <= 0) continue;
+
+            if ((int) $barang->stok < $qty) {
+                throw new \Exception(
+                    "Stok {$barang->nama_barang} tidak cukup saat konfirmasi (tersedia: {$barang->stok})."
+                );
+            }
+
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $barang->barang_id)
                 ->whereDate('tanggal_riwayat_stok', $tanggalHari)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
 
-            // Record terakhir hari ini → titik lanjut stok_akhir
             $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $barang->barang_id)
                 ->whereDate('tanggal_riwayat_stok', $tanggalHari)
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
 
-            // Record terakhir sebelum hari ini → menjadi stok_awal hari baru
             $riwayatSebelumnya = RiwayatStok::where('barang_id', $barang->barang_id)
                 ->whereDate('tanggal_riwayat_stok', '<', $tanggalHari)
                 ->orderBy('tanggal_riwayat_stok', 'desc')
@@ -295,33 +378,25 @@ class InvoiceController extends Controller
                 ->first();
 
             if ($riwayatHariIniPertama) {
-                // Sudah ada transaksi hari ini
                 $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
                 $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir - $qty;
-
             } elseif ($riwayatSebelumnya) {
-                // Hari baru, ada riwayat kemarin
                 $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
                 $stokAkhir = $stokAwal - $qty;
-
             } else {
-                // Belum ada riwayat sama sekali
                 $stokAwal  = (int) $barang->stok;
                 $stokAkhir = $stokAwal - $qty;
             }
 
-            // ── Update stok barang dengan nilai yang sudah dihitung ─────────
-            // Gunakan update() langsung, BUKAN decrement(), agar konsisten
-            // dengan stok_akhir yang tercatat di riwayat_stok
             $barang->update(['stok' => (string) $stokAkhir]);
 
-            // ── Simpan barang_keluar & riwayat_stok ─────────────────────────
             $barangKeluar = BarangKeluar::create([
                 'user_id'        => $userId,
                 'barang_id'      => $barang->barang_id,
                 'jumlah_keluar'  => $qty,
                 'tanggal_keluar' => $tanggalHari,
-                'ref_invoice'    => $invoiceId,
+                'keterangan'     => 'Invoice',
+                'ref_invoice'    => $invoice->invoice_id,
             ]);
 
             RiwayatStok::create([
@@ -338,19 +413,13 @@ class InvoiceController extends Controller
 
     // ── Admin only ───────────────────────────────────────────────────────────
 
-    public function show(string $id)
-    {
-        $invoice = Invoice::with(['items.barang', 'user'])->findOrFail($id);
-        return view('admin.invoice.detail', compact('invoice'));
-    }
-
-    public function destroy(string $id)
+    public function hapusKonfirmasi(string $id)
     {
         $invoice = Invoice::findOrFail($id);
         $invoice->items()->delete();
         $invoice->delete();
 
-        return redirect()->route('tampilan_invoice')
+        return redirect()->route('tampilan_konfirmasi_invoice')
             ->with('success', 'Invoice berhasil dihapus.');
     }
 }

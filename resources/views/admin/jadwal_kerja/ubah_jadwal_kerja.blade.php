@@ -153,8 +153,8 @@
                               data-user_id="{{ $j['user_id'] ?? '' }}"
                               data-jam_mulai="{{ $st !== 'tutup' ? ($j['jam_mulai'] ?? '') : '' }}"
                               data-jam_selesai="{{ $st !== 'tutup' ? ($j['jam_selesai'] ?? '') : '' }}"
-                              data-waktu_shift="{{ $j['waktu_shift'] ?? '' }}"
-                              data-deskripsi="{{ $j['deskripsi'] ?? '' }}">
+                              data-waktu_shift="{{ $st !== 'tutup' ? ($j['waktu_shift'] ?? '') : '' }}"
+                              data-deskripsi="{{ $st !== 'tutup' ? ($j['deskripsi'] ?? '') : '' }}">
                         [{{ $badge }}] {{ $title }}{{ $rangeTxt }}
                       </option>
                     @endforeach
@@ -250,9 +250,11 @@
               <div>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Tanggal Kerja</label>
                 <input type="date" name="tanggal_kerja" id="tanggalInput" value="{{ $prefillDate }}"
-                       class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                              focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                <p class="text-[11px] text-slate-500 mt-1">Bisa diubah bila jadwal pindah hari.</p>
+                       readonly
+                       class="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-4
+                              text-slate-500 cursor-not-allowed
+                              focus:outline-none transition">
+                <p class="text-[11px] text-slate-500 mt-1">Tanggal mengikuti jadwal yang dipilih.</p>
               </div>
 
               {{-- Jam Mulai — disembunyikan saat status Tutup --}}
@@ -273,8 +275,8 @@
                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
               </div>
 
-              {{-- Shift --}}
-              <div class="md:col-span-2">
+              {{-- Shift — disembunyikan saat status Tutup --}}
+              <div class="md:col-span-2" id="shiftWrapper" @if(strtolower($prefillStatus) === 'tutup') style="display:none" @endif>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Waktu Shift</label>
                 <select name="waktu_shift" id="shiftSelect"
                         class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
@@ -345,13 +347,13 @@
                 </div>
               </div>
 
-              {{-- Deskripsi --}}
-              <div class="md:col-span-2">
+              {{-- Deskripsi — disembunyikan saat status Tutup --}}
+              <div class="md:col-span-2" id="descWrapper" @if(strtolower($prefillStatus) === 'tutup') style="display:none" @endif>
                 <label class="block text-sm font-semibold text-slate-800 mb-1">Deskripsi</label>
                 <textarea name="deskripsi" id="descArea" rows="5"
                           placeholder="Contoh: Pekerjaan service rutin, booking pelanggan, dll..."
                           class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3
-                                 focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">{{ $prefillDesc }}</textarea>
+                                 focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">{{ strtolower($prefillStatus) === 'tutup' ? '' : $prefillDesc }}</textarea>
               </div>
             </div>
 
@@ -426,8 +428,12 @@
   const lockIcon          = document.getElementById('lockIcon');
   const jamMulaiWrapper   = document.getElementById('jamMulaiWrapper');
   const jamSelesaiWrapper = document.getElementById('jamSelesaiWrapper');
+  const shiftWrapper      = document.getElementById('shiftWrapper');
+  const descWrapper       = document.getElementById('descWrapper');
   const jamMulaiInput     = document.getElementById('jamMulaiInput');
   const jamSelesaiInput   = document.getElementById('jamSelesaiInput');
+  const shiftSelect       = document.getElementById('shiftSelect');
+  const descArea          = document.getElementById('descArea');
 
   // ─── 1. Kunci / buka dropdown Nama ────────────────────────────────────────
   function filterUserDropdown(statusValue) {
@@ -448,9 +454,7 @@
       }
       h.value = authUserId;
 
-      if (userSelectHint) {
-        userSelectHint.textContent = '';
-      }
+      if (userSelectHint) userSelectHint.textContent = '';
     } else {
       userSelect.disabled = false;
       userSelect.classList.remove('is-locked');
@@ -464,16 +468,19 @@
     }
   }
 
-  // ─── 2. Sembunyikan / tampilkan field Jam saat status Tutup ───────────────
-  function filterTimeFields(statusValue) {
+  // ─── 2. Sembunyikan / tampilkan field saat status Tutup ───────────────────
+  function filterFields(statusValue) {
     const isTutup = statusValue === 'Tutup';
 
-    if (jamMulaiWrapper)   jamMulaiWrapper.style.display   = isTutup ? 'none' : '';
-    if (jamSelesaiWrapper) jamSelesaiWrapper.style.display = isTutup ? 'none' : '';
+    [jamMulaiWrapper, jamSelesaiWrapper, shiftWrapper, descWrapper].forEach(el => {
+      if (el) el.style.display = isTutup ? 'none' : '';
+    });
 
     if (isTutup) {
       if (jamMulaiInput)   jamMulaiInput.value   = '';
-      if (jamSelesaiInput) jamSelesaiInput.value = '';
+      if (jamSelesaiInput) jamSelesaiInput.value  = '';
+      if (shiftSelect)     shiftSelect.value      = '';
+      if (descArea)        descArea.value         = '';
     }
   }
 
@@ -482,7 +489,7 @@
     radio.addEventListener('change', () => {
       if (radio.checked) {
         filterUserDropdown(radio.value);
-        filterTimeFields(radio.value);
+        filterFields(radio.value);
       }
     });
   });
@@ -491,7 +498,7 @@
   const checkedStatus = document.querySelector('#editForm input[name="status"]:checked');
   if (checkedStatus) {
     filterUserDropdown(checkedStatus.value);
-    filterTimeFields(checkedStatus.value);
+    filterFields(checkedStatus.value);
   }
 
   // ─── Sinkronisasi dropdown pilih jadwal → form edit ───────────────────────
@@ -502,11 +509,9 @@
   const pvStatusCard    = document.getElementById('pvStatusCard');
   const jadwalIdHidden  = document.getElementById('jadwalIdHidden');
   const tanggalInput    = document.getElementById('tanggalInput');
-  const shiftSelect     = document.getElementById('shiftSelect');
-  const descArea        = document.getElementById('descArea');
   const editForm        = document.getElementById('editForm');
 
-  const routeBase = "{{ rtrim(url(route('perbarui_jadwal_kerja', 0, false)), '/0') }}/";
+  const routeBase  = "{{ rtrim(url(route('perbarui_jadwal_kerja', 0, false)), '/0') }}/";
   const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
   const setStatusPreview = (stRaw) => {
@@ -526,7 +531,7 @@
     if (radio) {
       radio.checked = true;
       filterUserDropdown(value);
-      filterTimeFields(value);
+      filterFields(value);
     }
   };
 
@@ -535,6 +540,8 @@
     const opt = sel.options[sel.selectedIndex];
     if (!opt) return;
 
+    const isTutup = (opt.dataset.status || '') === 'tutup';
+
     if (pvId)    pvId.textContent    = '#' + (opt.dataset.id || opt.value || '-');
     if (pvTitle) pvTitle.textContent = opt.dataset.title || '-';
     setStatusPreview(opt.dataset.status);
@@ -542,12 +549,14 @@
     if (jadwalIdHidden) jadwalIdHidden.value = opt.value || '';
     if (editForm && opt.value) editForm.setAttribute('action', routeBase + opt.value);
 
-    if (tanggalInput)    tanggalInput.value    = opt.dataset.tanggal     || tanggalInput.value || '';
-    if (jamMulaiInput)   jamMulaiInput.value   = opt.dataset.jam_mulai   || '';
-    if (jamSelesaiInput) jamSelesaiInput.value = opt.dataset.jam_selesai || '';
-    if (shiftSelect)     shiftSelect.value     = opt.dataset.waktu_shift || '';
-    if (descArea)        descArea.value        = opt.dataset.deskripsi   || '';
-    if (userSelect)      userSelect.value      = opt.dataset.user_id     || '';
+    if (tanggalInput)    tanggalInput.value    = opt.dataset.tanggal || tanggalInput.value || '';
+
+    // Field yang dikosongkan kalau Tutup
+    if (jamMulaiInput)   jamMulaiInput.value   = isTutup ? '' : (opt.dataset.jam_mulai   || '');
+    if (jamSelesaiInput) jamSelesaiInput.value  = isTutup ? '' : (opt.dataset.jam_selesai || '');
+    if (shiftSelect)     shiftSelect.value      = isTutup ? '' : (opt.dataset.waktu_shift || '');
+    if (descArea)        descArea.value         = isTutup ? '' : (opt.dataset.deskripsi   || '');
+    if (userSelect)      userSelect.value       = opt.dataset.user_id || '';
 
     setRadioStatus(opt.dataset.status);
   };
@@ -620,5 +629,12 @@
       onConfirm: () => window.location.href = go
     });
   });
+</script>
+
+<script>
+document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
+    el.addEventListener('keydown', e => e.preventDefault());
+    el.addEventListener('mousedown', e => e.preventDefault());
+});
 </script>
 @endpush

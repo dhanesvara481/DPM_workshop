@@ -22,7 +22,7 @@ class BarangKeluar extends Model
     ];
 
     protected $casts = [
-        'tanggal_keluar' => 'date',
+        'tanggal_keluar' => 'datetime',
     ];
 
     public function barang()

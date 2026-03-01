@@ -21,7 +21,7 @@ class BarangMasuk extends Model
     ];
 
     protected $casts = [
-        'tanggal_masuk' => 'date',
+        'tanggal_masuk' => 'datetime',
     ];
 
     public function barang()

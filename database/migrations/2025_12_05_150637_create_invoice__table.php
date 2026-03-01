@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('invoice', function (Blueprint $table) {
             $table->id('invoice_id');
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
-            $table->date('tanggal_invoice');
+            $table->datetime('tanggal_invoice');
             $table->decimal('subtotal', 12,2);
             $table->decimal('subtotal_barang', 12,2);
             $table->decimal('biaya_jasa', 12,2);
             $table->enum('status', ['Pending', 'Paid'])->default('Pending');
+            $table->datetime('tanggal_bayar')->nullable();
             $table->timestamps();
         });
     }

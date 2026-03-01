@@ -47,4 +47,14 @@ class User extends Authenticatable
     {
         return $this->role === 'staff';
     }
+
+    public function getAuthIdentifierName(): string
+    {
+        return 'user_id';
+    }
+    
+    public function getAuthIdentifier(): mixed
+    {
+        return $this->attributes['user_id'];  // pakai attributes[], BUKAN $this->user_id
+    }
 }

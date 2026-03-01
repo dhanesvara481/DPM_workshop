@@ -56,13 +56,13 @@ class JadwalKerjaController extends Controller
 
     public function simpanJadwalKerja(Request $request)
     {
-        // ✅ Jam Mulai & Jam Selesai tidak wajib saat status Tutup
+        // ✅ Field opsional saat status Tutup
         $isTutup = $request->status === 'Tutup';
 
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
-            'waktu_shift'   => 'required|in:Pagi,Siang,Sore,Malam',
+            'waktu_shift'   => $isTutup ? 'nullable|in:Pagi,Siang,Sore,Malam' : 'required|in:Pagi,Siang,Sore,Malam',
             'jam_mulai'     => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
             'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',
@@ -97,13 +97,13 @@ class JadwalKerjaController extends Controller
     {
         $jadwal = JadwalKerja::findOrFail($id);
 
-        // ✅ Jam Mulai & Jam Selesai tidak wajib saat status Tutup
+        // ✅ Field opsional saat status Tutup
         $isTutup = $request->status === 'Tutup';
 
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
-            'waktu_shift'   => 'required|in:Pagi,Siang,Sore,Malam',
+            'waktu_shift'   => $isTutup ? 'nullable|in:Pagi,Siang,Sore,Malam' : 'required|in:Pagi,Siang,Sore,Malam',
             'jam_mulai'     => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i',
             'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',

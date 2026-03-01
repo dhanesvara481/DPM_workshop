@@ -76,20 +76,30 @@
       </a>
 
       <div class="w-full sm:w-[380px]">
-        <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
-            </svg>
-          </span>
-
-          <input id="searchBarang"
-                 type="text"
-                 placeholder="Cari kode / nama barang..."
-                 class="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white/90
-                        text-sm placeholder:text-slate-400
-                        focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+        <div class="relative flex items-center gap-2">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.3-4.3"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+              </svg>
+            </span>
+            <input id="searchBarang"
+                   type="text"
+                   value="{{ request('search') }}"
+                   placeholder="Cari kode / nama barang..."
+                   class="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white/90
+                          text-sm placeholder:text-slate-400
+                          focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
+          </div>
+          {{-- Tombol Reset (hanya muncul kalau ada filter aktif) --}}
+          @if(request('search'))
+            <a href="{{ route('mengelola_barang') }}"
+               class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold
+                      border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap">
+              Reset
+            </a>
+          @endif
         </div>
       </div>
     </div>
@@ -101,15 +111,52 @@
       <div class="overflow-x-auto">
         <table class="w-full text-sm table-auto" id="tableBarang">
 
+          @php
+            $cols = [
+              'kode_barang' => 'Kode Barang',
+              'nama_barang' => 'Nama Barang',
+              'satuan'      => 'Satuan',
+              'stok'        => 'Stok',
+              'harga_beli'  => 'Harga Beli',
+              'harga_jual'  => 'Harga Jual',
+            ];
+          @endphp
+                  
           <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
             <tr class="text-slate-600">
               <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-left w-[64px]">No</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-left w-[160px]">Kode Barang</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-left">Nama Barang</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-left w-[120px]">Satuan</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-right w-[110px]">Stok</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-right w-[150px]">Harga Beli</th>
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-right w-[150px]">Harga Jual</th>
+            
+              @foreach ($cols as $key => $label)
+                @php
+                  $isActive  = $sort === $key;
+                  $nextDir   = ($isActive && $dir === 'asc') ? 'desc' : 'asc';
+                  $url       = request()->fullUrlWithQuery(['sort' => $key, 'dir' => $nextDir, 'page' => 1]);
+                  $align     = in_array($key, ['stok','harga_beli','harga_jual']) ? 'text-right' : 'text-left';
+                @endphp
+                <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap {{ $align }}">
+                  <a href="{{ $url }}"
+                     class="inline-flex items-center gap-1.5 group
+                            {{ $isActive ? 'text-blue-900' : 'text-slate-600 hover:text-slate-900' }} transition">
+                    {{ $label }}
+                
+                    <span class="flex flex-col gap-[2px]">
+                      {{-- Arrow up --}}
+                      <svg class="h-2.5 w-2.5 transition
+                                  {{ $isActive && $dir === 'asc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                           viewBox="0 0 10 6" fill="currentColor">
+                        <path d="M5 0L10 6H0L5 0Z"/>
+                      </svg>
+                      {{-- Arrow down --}}
+                      <svg class="h-2.5 w-2.5 transition
+                                  {{ $isActive && $dir === 'desc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
+                           viewBox="0 0 10 6" fill="currentColor">
+                        <path d="M5 6L0 0H10L5 6Z"/>
+                      </svg>
+                    </span>
+                  </a>
+                </th>
+              @endforeach
+              
               <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide whitespace-nowrap text-right w-[120px]">Aksi</th>
             </tr>
           </thead>
@@ -137,7 +184,7 @@
                 data-kode="{{ strtolower($b->kode_barang ?? '') }}"
                 data-nama="{{ strtolower($b->nama_barang ?? '') }}">
 
-              <td class="px-5 py-4 text-slate-600 tabular-nums">{{ $i + 1 }}</td>
+              <td class="px-5 py-4 text-slate-600 tabular-nums">{{ $barangs->firstItem() + $loop->index }}</td>
 
               <td class="px-5 py-4 font-mono text-sm font-semibold text-blue-900 whitespace-nowrap">
                 {{ $b->kode_barang ?? '-' }}
@@ -204,6 +251,56 @@
 
         </table>
       </div>
+
+      {{-- Pagination --}}
+      @if ($barangs->hasPages())
+        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-4 flex-wrap">
+          <p class="text-xs text-slate-500">
+            Menampilkan {{ $barangs->firstItem() }}–{{ $barangs->lastItem() }}
+            dari {{ $barangs->total() }} barang
+          </p>
+        
+          <nav class="flex items-center gap-1" aria-label="Pagination">
+            {{-- Prev --}}
+            @if ($barangs->onFirstPage())
+              <span class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </span>
+            @else
+              <a href="{{ $barangs->previousPageUrl() }}"
+                 class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </a>
+            @endif
+            
+            {{-- Page numbers --}}
+            @foreach ($barangs->getUrlRange(max(1, $barangs->currentPage()-2), min($barangs->lastPage(), $barangs->currentPage()+2)) as $page => $url)
+              @if ($page == $barangs->currentPage())
+                <span class="h-9 w-9 grid place-items-center rounded-lg bg-blue-950 text-white text-xs font-semibold">
+                  {{ $page }}
+                </span>
+              @else
+                <a href="{{ $url }}"
+                   class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition">
+                  {{ $page }}
+                </a>
+              @endif
+            @endforeach
+              
+            {{-- Next --}}
+            @if ($barangs->hasMorePages())
+              <a href="{{ $barangs->nextPageUrl() }}"
+                 class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </a>
+            @else
+              <span class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            @endif
+          </nav>
+        </div>
+      @endif
 
       {{-- No search results --}}
       <div id="noResults" class="hidden px-5 py-10 text-center text-slate-500">
@@ -357,11 +454,14 @@
       if (noResults) noResults.classList.toggle('hidden', visible > 0 || !q);
     };
 
-    searchInput.addEventListener('input', applySearch);
-    btn.addEventListener('click', () => {
-      searchInput.value = '';
-      searchInput.focus();
-      applySearch();
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = searchInput.value.trim();
+        const url = new URL(window.location.href);
+        url.searchParams.set('search', q);
+        url.searchParams.delete('page');
+        window.location.href = url.toString();
+      }
     });
 
     applySearch();

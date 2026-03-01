@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
             $table->foreignId('barang_id')->constrained('barang', 'barang_id')->onDelete('cascade');
             $table->string('jumlah_keluar', 10);
-            $table->date('tanggal_keluar');
+            $table->datetime('tanggal_keluar');
             $table->enum('keterangan', ['Barang Rusak', 'Barang Dikembalikan','Penyesuaian Stok', 'Invoice']);
             $table->string('ref_invoice')->nullable();
             $table->timestamps();

@@ -83,6 +83,11 @@
     <form id="formInvoice" method="POST" action="{{ route('invoice.store') }}"
           class="space-y-6" data-animate>
       @csrf
+      @if(session('error'))
+  <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 mb-4">
+    {{ session('error') }}
+  </div>
+@endif
 
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
                   shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
@@ -111,9 +116,11 @@
 
             <div class="space-y-1">
               <label class="text-xs font-semibold text-slate-700">Tanggal</label>
-              <input type="date" name="tanggal_invoice"
-                     value="{{ old('tanggal_invoice', now()->format('Y-m-d')) }}"
-                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10" />
+             <input type="hidden" name="tanggal_invoice" value="{{ date('Y-m-d') }}">
+              <input type="text"
+                     value="{{ \Carbon\Carbon::now('Asia/Makassar')->isoFormat('D MMMM YYYY') }}"
+                     readonly
+                     class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 cursor-not-allowed outline-none">
             </div>
 
             <div class="space-y-1">
@@ -889,6 +896,12 @@ form?.addEventListener('submit',async e=>{
   form.dataset.confirmed='1';
   isDirty=false;
   form.submit();
+});
+</script>
+<script>
+document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
+    el.addEventListener('keydown', e => e.preventDefault());
+    el.addEventListener('mousedown', e => e.preventDefault());
 });
 </script>
 @endpush

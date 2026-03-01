@@ -1,7 +1,8 @@
-{{-- resources/views/admin/invoice/tampilan_invoice.blade.php --}}
-@extends('admin.layout.app')
+{{-- resources/views/staff/invoice/tampilan_invoice_staff.blade.php --}}
+@extends('staff.layout.app')
 
-@section('title', 'DPM Workshop - Admin')
+@section('page_title', 'Invoice')
+@section('page_subtitle', 'Staff')
 
 @section('content')
 
@@ -59,7 +60,7 @@
           <div class="min-w-0">
             <div class="text-sm font-semibold">Invoice berhasil dibuat</div>
             <div class="text-xs text-emerald-800 mt-0.5">
-              Tekan <span class="font-semibold">Lanjut</span> untuk menuju halaman konfirmasi invoice.
+              Tekan <span class="font-semibold">Lanjut</span> untuk menuju halaman riwayat transaksi.
             </div>
           </div>
         </div>
@@ -74,6 +75,12 @@
             <li>{{ $err }}</li>
           @endforeach
         </ul>
+      </div>
+    @endif
+
+    @if(session('error'))
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+        {{ session('error') }}
       </div>
     @endif
 
@@ -109,9 +116,11 @@
 
             <div class="space-y-1">
               <label class="text-xs font-semibold text-slate-700">Tanggal</label>
-              <input type="date" name="tanggal_invoice"
-                     value="{{ old('tanggal_invoice', now()->format('Y-m-d')) }}"
-                     class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10" />
+              <input type="hidden" name="tanggal_invoice" value="{{ date('Y-m-d') }}">
+              <input type="text"
+                     value="{{ \Carbon\Carbon::now('Asia/Makassar')->isoFormat('D MMMM YYYY') }}"
+                     readonly
+                     class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 cursor-not-allowed outline-none">
             </div>
 
             <div class="space-y-1">
@@ -128,7 +137,8 @@
           {{-- Customer info --}}
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="space-y-1 lg:col-span-2">
-              <label class="text-xs font-semibold text-slate-700">Nama Pelanggan <span class="text-red-500">*</span>
+              <label class="text-xs font-semibold text-slate-700">
+                Nama Pelanggan <span class="text-red-500">*</span>
               </label>
               <input name="nama_pelanggan"
                     value="{{ old('nama_pelanggan') }}"
@@ -197,13 +207,12 @@
                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                        placeholder="Contoh: Service fan rusak" />
               </div>
-             {{-- Biaya Jasa (Rupiah formatted) --}}
+
+              {{-- Biaya Jasa (Rupiah formatted) --}}
               <div class="space-y-1">
                 <label class="text-xs font-semibold text-slate-700">Biaya Jasa</label>
-
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">Rp</span>
-
                   {{-- input tampilan --}}
                   <input
                     type="text"
@@ -214,7 +223,6 @@
                     placeholder="0"
                     autocomplete="off"
                   />
-
                   {{-- input asli yang dikirim --}}
                   <input
                     type="hidden"
@@ -314,7 +322,7 @@
               </div>
 
               <div class="grid grid-cols-2 gap-2">
-                <a href="/tampilan_dashboard" id="btnBack"
+                <a href="/tampilan_dashboard_staff" id="btnBack"
                    class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   Batal
                 </a>
@@ -382,9 +390,9 @@
 
 @push('scripts')
 <script>
-  window.BARANGS    = @json($barangs ?? []);
-  window.URL_CEK_STOK = "{{ route('invoice.check-stok') }}";
-  window.CSRF_TOKEN   = "{{ csrf_token() }}";
+  window.BARANGS       = @json($barangs ?? []);
+  window.URL_CEK_STOK  = "{{ route('invoice.check-stok') }}";
+  window.CSRF_TOKEN    = "{{ csrf_token() }}";
 </script>
 @endpush
 
@@ -474,8 +482,8 @@ const sectionBarang=document.getElementById('sectionBarang');
 const sectionJasa=document.getElementById('sectionJasa');
 const tbodyBarang=document.getElementById('tbodyBarang');
 const tbodyJasaBarang=document.getElementById('tbodyJasaBarang');
-const jasaBiaya = document.getElementById('jasaBiaya'); // hidden (angka asli)
-const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay'); // input tampilan Rp
+const jasaBiaya = document.getElementById('jasaBiaya');
+const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay');
 const diskon=document.getElementById('diskon');
 const pajak=document.getElementById('pajak');
 const sumBarang=document.getElementById('sumBarang');
@@ -533,13 +541,12 @@ function rowHTML(idx,prefix){
       <input name="${prefix}[${idx}][satuan]" data-satuan
              class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none" readonly/>
     </td>
-   <td class="px-4 py-3 align-middle">
+    <td class="px-4 py-3 align-middle">
       <div class="flex items-center gap-3">
         <input type="number" min="1" step="1" data-qty disabled
               name="${prefix}[${idx}][qty]"
               class="h-10 w-[120px] rounded-xl border border-slate-200 bg-white px-3 text-sm text-center outline-none focus:ring-2 focus:ring-slate-900/10 appearance-none"
               placeholder="0"/>
-
         <span class="text-[11px] text-slate-500 hidden" data-stock-label>
           Tersedia: <span data-max>0</span>
         </span>
@@ -580,20 +587,14 @@ function recalcRow(tr){
   tr.querySelector('[data-line-hidden]').value=String(total);
 }
 
-/**
- * NEW: Disable option yang sudah dipilih di row lain (per tbody).
- * - Item yang sudah kepilih di row lain => option jadi disabled
- * - Row yang sedang memegang value itu sendiri tetap boleh (tidak di-disable)
- */
 function syncSelectedOptions(tbody){
   const selects = Array.from(tbody.querySelectorAll('select[data-barang-select]'));
   const picked = new Set(selects.map(s => s.value).filter(v => v && v !== ''));
-
   selects.forEach(sel => {
     const myValue = sel.value;
     Array.from(sel.options).forEach(opt => {
       const v = opt.value;
-      if(!v) return; // skip placeholder/empty
+      if(!v) return;
       opt.disabled = picked.has(v) && v !== myValue;
     });
   });
@@ -605,39 +606,30 @@ function handleTableEvents(tbody){
     if(!sel)return;
     const tr=sel.closest('tr');
     const opt=sel.options[sel.selectedIndex];
-
     const stok  =Number(opt.getAttribute('data-stok')||0);
     const harga =Number(opt.getAttribute('data-harga')||0);
     const kode  =opt.getAttribute('data-kode')||'';
     const satuan=opt.getAttribute('data-satuan')||'';
-
     tr.querySelector('input[data-kode]').value   =kode;
     tr.querySelector('input[data-satuan]').value =satuan;
-
     const priceEl   =tr.querySelector('[data-price]');
     const qtyEl     =tr.querySelector('[data-qty]');
     const maxEl     =tr.querySelector('[data-max]');
     const stockLabel=tr.querySelector('[data-stock-label]');
     const stokError =tr.querySelector('[data-stok-error]');
-
     if(priceEl) priceEl.value=String(harga);
     if(maxEl)   maxEl.textContent=String(stok);
     if(stockLabel) stockLabel.classList.remove('hidden');
     if(stokError){stokError.textContent='';stokError.classList.add('hidden');}
-
     if(qtyEl){
       qtyEl.disabled=stok<=0;
       qtyEl.max=String(stok);
       qtyEl.value='';
       qtyEl.classList.remove('border-red-300');
     }
-
-    // NEW: update disable option setelah memilih
     syncSelectedOptions(tbody);
-
     markDirty(); recalcRow(tr); recalc();
   });
-
   tbody.addEventListener('input',e=>{
     const qtyInput=e.target.closest('[data-qty]');
     if(!qtyInput||qtyInput.disabled)return;
@@ -652,62 +644,38 @@ function handleTableEvents(tbody){
     qtyInput.classList.remove('border-red-300');
     recalcRow(tr); markDirty(); recalc();
   });
-
   tbody.addEventListener('click',e=>{
     const btn=e.target.closest('[data-remove]');
     if(!btn)return;
     btn.closest('tr')?.remove();
-
-    // NEW: update disable option setelah remove row
     syncSelectedOptions(tbody);
-
     markDirty(); recalc();
   });
 }
 
 let barangIdx=0,jasaBarangIdx=0;
-
-function addBarangRow(){
-  tbodyBarang.insertAdjacentHTML('beforeend',rowHTML(barangIdx++,'barang'));
-  markDirty();
-
-  // NEW
-  syncSelectedOptions(tbodyBarang);
-}
-
-function addJasaBarangRow(){
-  tbodyJasaBarang.insertAdjacentHTML('beforeend',rowHTML(jasaBarangIdx++,'jasa_barang'));
-  markDirty();
-
-  // NEW
-  syncSelectedOptions(tbodyJasaBarang);
-}
+function addBarangRow(){ tbodyBarang.insertAdjacentHTML('beforeend',rowHTML(barangIdx++,'barang')); markDirty(); syncSelectedOptions(tbodyBarang); }
+function addJasaBarangRow(){ tbodyJasaBarang.insertAdjacentHTML('beforeend',rowHTML(jasaBarangIdx++,'jasa_barang')); markDirty(); syncSelectedOptions(tbodyJasaBarang); }
 
 document.getElementById('btnAddBarang')?.addEventListener('click',addBarangRow);
 document.getElementById('btnAddJasaBarang')?.addEventListener('click',addJasaBarangRow);
 handleTableEvents(tbodyBarang);
 handleTableEvents(tbodyJasaBarang);
+
 const onlyDigits = (s) => (s || '').toString().replace(/[^\d]/g,'');
-const formatID = (n) => (isFinite(n) ? n : 0).toLocaleString('id-ID');
+const formatID   = (n) => (isFinite(n) ? n : 0).toLocaleString('id-ID');
 
 function syncJasaBiayaFromDisplay(){
   if(!jasaBiayaDisplay || !jasaBiaya) return;
   const raw = onlyDigits(jasaBiayaDisplay.value);
   const num = raw ? parseInt(raw, 10) : 0;
-
-  jasaBiaya.value = String(num);                  // yang dikirim ke server
-  jasaBiayaDisplay.value = raw ? formatID(num) : ''; // yang kelihatan di UI
-  markDirty();
-  recalc();
+  jasaBiaya.value = String(num);
+  jasaBiayaDisplay.value = raw ? formatID(num) : '';
+  markDirty(); recalc();
 }
-
 jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
-jasaBiayaDisplay?.addEventListener('blur', syncJasaBiayaFromDisplay);
-
-// diskon & pajak tetap seperti biasa
+jasaBiayaDisplay?.addEventListener('blur',  syncJasaBiayaFromDisplay);
 ;[diskon,pajak].forEach(el=>el?.addEventListener('input',()=>{markDirty();recalc();}));
-
-// init kalau ada old value
 syncJasaBiayaFromDisplay();
 
 function sumTable(tbody){
@@ -750,13 +718,45 @@ function collectItems(tbody){
 }
 
 async function cekStokServer(items){
-  const payload=items.map(i=>({barang_id:i.barang_id,qty:i.qty}));
-  const res=await fetch(window.URL_CEK_STOK,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-CSRF-TOKEN':window.CSRF_TOKEN,'Accept':'application/json'},
-    body:JSON.stringify({items:payload}),
-  });
-  if(!res.ok)throw new Error('Gagal menghubungi server.');
+  const payload = items.map(i => ({ barang_id: i.barang_id, qty: i.qty }));
+
+  let res;
+  try {
+    res = await fetch(window.URL_CEK_STOK, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': window.CSRF_TOKEN,
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ items: payload }),
+    });
+  } catch (networkErr) {
+    console.error('[checkStok] Network error:', networkErr);
+    throw new Error('Tidak bisa terhubung ke server. Periksa koneksi internet.');
+  }
+
+  if (res.redirected || res.status === 302) {
+    throw new Error('Sesi habis. Silakan refresh halaman dan login ulang.');
+  }
+
+  if (!res.ok) {
+    let errBody = '';
+    try { errBody = await res.text(); } catch(_){}
+    console.error('[checkStok] HTTP ' + res.status, errBody.substring(0, 500));
+    if (res.status === 419) throw new Error('Token CSRF tidak valid. Silakan refresh halaman (F5) lalu coba lagi.');
+    if (res.status === 401 || res.status === 403) throw new Error('Tidak punya akses. Silakan login ulang.');
+    throw new Error('Server error (' + res.status + '). Cek console browser untuk detail.');
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    console.error('[checkStok] Bukan JSON:', text.substring(0, 500));
+    throw new Error('Response server tidak valid. Cek console browser atau hubungi admin.');
+  }
+
   return res.json();
 }
 
@@ -784,8 +784,6 @@ setKategori(kategoriEl.value||'barang');
 if((kategoriEl.value||'barang')==='barang') addBarangRow();
 else addJasaBarangRow();
 recalc();
-
-// NEW: pastikan state option sync sejak awal
 syncSelectedOptions(tbodyBarang);
 syncSelectedOptions(tbodyJasaBarang);
 
@@ -799,11 +797,8 @@ document.getElementById('btnReset')?.addEventListener('click',async()=>{
   barangIdx=0;jasaBarangIdx=0;
   setKategori('barang');addBarangRow();
   isDirty=false;recalc();
-
-  // NEW
   syncSelectedOptions(tbodyBarang);
   syncSelectedOptions(tbodyJasaBarang);
-
   showToast('Reset','Form dikosongkan.','success');
 });
 
@@ -811,7 +806,7 @@ document.getElementById('btnReset')?.addEventListener('click',async()=>{
 document.getElementById('btnBack')?.addEventListener('click',async e=>{
   if(!isDirty)return;
   e.preventDefault();
-  const href=e.currentTarget.getAttribute('href')||'/tampilan_dashboard';
+  const href=e.currentTarget.getAttribute('href')||'/tampilan_dashboard_staff';
   const ok=await cm.open({title:'Keluar dari halaman?',
     message:'Perubahan belum disimpan. Kalau keluar sekarang, data akan hilang.',
     okText:'Ya, Keluar',cancelText:'Tetap di sini',tone:'neutral'});
@@ -824,8 +819,7 @@ form?.addEventListener('submit',async e=>{
   e.preventDefault();
 
   const kategori=kategoriEl.value;
-
-  const nama = form.querySelector('[name="nama_pelanggan"]');
+  const nama   = form.querySelector('[name="nama_pelanggan"]');
   const kontak = form.querySelector('[name="kontak"]');
 
   if(!nama?.value.trim()){
@@ -834,14 +828,12 @@ form?.addEventListener('submit',async e=>{
     setTimeout(()=>nama?.classList.remove('shake'),300);
     return;
   }
-
   if(!kontak?.value.trim()){
     showToast('Gagal','Kontak pelanggan wajib diisi.','error');
     kontak?.classList.add('border-red-300','shake');
     setTimeout(()=>kontak?.classList.remove('shake'),300);
     return;
   }
-
   if(!/^08[0-9]{8,13}$/.test(kontak.value.trim())){
     showToast('Gagal','Kontak harus angka, diawali 08, panjang 10–15 digit.','error');
     kontak.classList.add('border-red-300','shake');
@@ -849,31 +841,25 @@ form?.addEventListener('submit',async e=>{
     return;
   }
 
-  // ---- Validasi kategori BARANG ----
   if(kategori==='barang'){
     const rows=tbodyBarang.querySelectorAll('tr');
-    if(!rows.length){
-      showToast('Gagal','Tambahkan minimal 1 item barang.','error'); return;
-    }
+    if(!rows.length){ showToast('Gagal','Tambahkan minimal 1 item barang.','error'); return; }
     let valid=true;
     rows.forEach(tr=>{
       const sel=tr.querySelector('[data-barang-select]');
       const qty=tr.querySelector('[data-qty]');
       if(!sel?.value||!qty?.value||Number(qty.value)<=0) valid=false;
     });
-    if(!valid){
-      showToast('Gagal','Pastikan semua item barang sudah dipilih dan qty diisi.','error'); return;
-    }
+    if(!valid){ showToast('Gagal','Pastikan semua item barang sudah dipilih dan qty diisi.','error'); return; }
   }
 
-  // ---- Validasi kategori JASA ----
   if(kategori==='jasa'&&Number(jasaBiaya?.value||0)<=0){
-    jasaBiaya?.classList.add('border-red-300','shake');
-    setTimeout(()=>jasaBiaya?.classList.remove('shake'),300);
+    jasaBiayaDisplay?.classList.add('border-red-300','shake');
+    setTimeout(()=>jasaBiayaDisplay?.classList.remove('shake'),300);
     showToast('Gagal','Biaya jasa wajib diisi untuk kategori Jasa.','error'); return;
   }
 
-  // ---- CEK STOK (hanya jika ada item barang) ----
+  // CEK STOK
   const activetbody=kategori==='barang'?tbodyBarang:tbodyJasaBarang;
   const activeItems=collectItems(activetbody);
   if(activeItems.length>0){
@@ -890,12 +876,14 @@ form?.addEventListener('submit',async e=>{
       }
       if(btnSave){btnSave.disabled=false;btnSave.textContent=oriText;}
     }catch(err){
-      if(btnSave){btnSave.disabled=false;btnSave.textContent=oriText;}
-      showToast('Error','Gagal mengecek stok. Coba lagi.','error'); return;
+      console.error('[submit] checkStok error:', err);
+      showToast('Error', err.message || 'Gagal mengecek stok. Coba lagi.', 'error');
+      const btnSave=document.getElementById('btnSave');
+      if(btnSave){btnSave.disabled=false;btnSave.textContent='Simpan';}
+      return;
     }
   }
 
-  // ---- KONFIRMASI ----
   const ok=await cm.open({title:'Simpan invoice?',
     message:'Invoice akan disimpan sesuai data yang kamu input.',
     note:'Pastikan item dan jumlah sudah benar.',
@@ -905,6 +893,12 @@ form?.addEventListener('submit',async e=>{
   form.dataset.confirmed='1';
   isDirty=false;
   form.submit();
+});
+</script>
+<script>
+document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
+    el.addEventListener('keydown', e => e.preventDefault());
+    el.addEventListener('mousedown', e => e.preventDefault());
 });
 </script>
 @endpush
