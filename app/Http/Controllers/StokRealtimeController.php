@@ -80,7 +80,7 @@ class StokRealtimeController extends Controller
      * @param  int  $stok
      * @return array{ label: string, class: string }
      */
-    public static function resolveStokStatus(int $stok): array
+    public static function tentukanStatusStok(int $stok): array
     {
         if ($stok <= 0) {
             return [
