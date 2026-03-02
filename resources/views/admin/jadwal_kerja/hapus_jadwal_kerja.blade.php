@@ -23,9 +23,12 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="{{ route('kelola_jadwal_kerja') }}"
-         class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold
-                border border-slate-200 bg-white hover:bg-slate-50 transition">
+       <a href="{{ route('kelola_jadwal_kerja') }}"
+         id="btnBackBarang"
+         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 py-2 text-sm">
+        <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
         Kembali
       </a>
 
@@ -110,6 +113,25 @@
       </div>
 
       <div class="p-5 sm:p-6">
+        {{-- flash messages --}}
+        @if(session('success'))
+          <div class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 text-sm">
+            {{ session('success') }}
+          </div>
+        @endif
+        @if(session('error'))
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            {{ session('error') }}
+          </div>
+        @endif
+        @if($errors->any())
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            <ul class="list-disc pl-5 space-y-1">
+              @foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach
+            </ul>
+          </div>
+        @endif
+
         <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
           <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="min-w-0">

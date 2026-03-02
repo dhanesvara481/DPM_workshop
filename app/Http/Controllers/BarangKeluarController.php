@@ -19,12 +19,11 @@ class BarangKeluarController extends Controller
         $sort     = in_array($request->sort, $sortable) ? $request->sort : 'tanggal_keluar';
         $dir      = $request->dir === 'asc' ? 'asc' : 'desc';
 
-        $barangKeluar = BarangKeluar::join('barang', 'barang.barang_id', '=', 'barang_keluar.barang_id')
+        $barangKeluar = BarangKeluar::leftJoin('barang', 'barang.barang_id', '=', 'barang_keluar.barang_id')
             ->select(
                 'barang_keluar.*',
-                'barang.kode_barang',
-                'barang.nama_barang',
-                DB::raw("DATE_FORMAT(barang_keluar.tanggal_keluar, '%d-%m-%Y %H:%i:%s') as tanggal"),
+                DB::raw("COALESCE(barang.kode_barang, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
                 'barang_keluar.jumlah_keluar as qty_keluar',
             )
             ->when($request->search, function ($q) use ($request) {

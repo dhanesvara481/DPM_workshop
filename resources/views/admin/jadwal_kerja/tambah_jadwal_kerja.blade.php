@@ -82,6 +82,25 @@
       </div>
 
       <div class="p-5 sm:p-6">
+        {{-- flash messages --}}
+        @if(session('success'))
+          <div class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 text-sm">
+            {{ session('success') }}
+          </div>
+        @endif
+        @if(session('error'))
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            {{ session('error') }}
+          </div>
+        @endif
+        @if($errors->any())
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            <ul class="list-disc pl-5 space-y-1">
+              @foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach
+            </ul>
+          </div>
+        @endif
+
         <form id="createForm" action="{{ route('simpan_jadwal_kerja') }}" method="POST" class="space-y-5">
           @csrf
 

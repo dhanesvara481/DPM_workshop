@@ -59,6 +59,16 @@ class JadwalKerjaController extends Controller
         // ✅ Field opsional saat status Tutup
         $isTutup = $request->status === 'Tutup';
 
+        // custom messages in Bahasa Indonesia
+        $messages = [
+            'user_id.required'      => 'User wajib dipilih.',
+            'user_id.exists'        => 'User yang dipilih tidak valid.',
+            'waktu_shift.required'  => 'Waktu shift wajib diisi.',
+            'jam_mulai.required'    => 'Jam mulai wajib diisi.',
+            'jam_selesai.required'  => 'Jam selesai wajib diisi.',
+            'jam_selesai.after'     => 'Jam selesai harus lebih besar (setelah) jam mulai.',
+        ];
+
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
@@ -67,7 +77,7 @@ class JadwalKerjaController extends Controller
             'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',
             'status'        => 'required|in:Aktif,Catatan,Tutup',
-        ]);
+        ], $messages);
 
         JadwalKerja::create($data);
 
@@ -100,6 +110,16 @@ class JadwalKerjaController extends Controller
         // ✅ Field opsional saat status Tutup
         $isTutup = $request->status === 'Tutup';
 
+        // custom messages in Bahasa Indonesia
+        $messages = [
+            'user_id.required'      => 'User wajib dipilih.',
+            'user_id.exists'        => 'User yang dipilih tidak valid.',
+            'waktu_shift.required'  => 'Waktu shift wajib diisi.',
+            'jam_mulai.required'    => 'Jam mulai wajib diisi.',
+            'jam_selesai.required'  => 'Jam selesai wajib diisi.',
+            'jam_selesai.after'     => 'Jam selesai harus lebih besar (setelah) jam mulai.',
+        ];
+
         $data = $request->validate([
             'user_id'       => 'required|exists:user,user_id',
             'tanggal_kerja' => 'required|date',
@@ -108,7 +128,7 @@ class JadwalKerjaController extends Controller
             'jam_selesai'   => $isTutup ? 'nullable|date_format:H:i' : 'required|date_format:H:i|after:jam_mulai',
             'deskripsi'     => 'nullable|string|max:100',
             'status'        => 'required|in:Aktif,Catatan,Tutup',
-        ]);
+        ], $messages);
 
         $jadwal->update($data);
 
@@ -136,8 +156,8 @@ class JadwalKerjaController extends Controller
     {
         JadwalKerja::findOrFail($id)->delete();
 
-        return redirect()->route('kelola_jadwal_kerja')
-                         ->with('success', 'Jadwal berhasil dihapus.');
+        // kembali ke halaman hapus agar pesan muncul di situ
+        return back()->with('success', 'Jadwal berhasil dihapus.');
     }
 
     public function hapusBatch(Request $request)
@@ -148,7 +168,8 @@ class JadwalKerjaController extends Controller
 
         JadwalKerja::whereIn('jadwal_id', $ids)->delete();
 
-        return redirect()->route('kelola_jadwal_kerja')
+        $date = $request->input('date');
+        return redirect()->route('hapus_jadwal_kerja', ['date' => $date])
                          ->with('success', count($ids) . ' jadwal berhasil dihapus.');
     }
 
@@ -158,7 +179,7 @@ class JadwalKerjaController extends Controller
 
         JadwalKerja::whereDate('tanggal_kerja', $date)->delete();
 
-        return redirect()->route('kelola_jadwal_kerja')
+        return redirect()->route('hapus_jadwal_kerja', ['date' => $date])
                          ->with('success', 'Semua jadwal tanggal ' . $date . ' berhasil dihapus.');
     }
 
