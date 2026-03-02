@@ -27,7 +27,7 @@ class BarangObserver
         }
 
         $wa     = app(FonnteService::class);
-        $admins = User::where('role', 'admin')
+        $admins = User::whereIn('role', ['admin', 'staff'])
                       ->where('status', 'aktif')
                       ->whereNotNull('kontak')
                       ->get();

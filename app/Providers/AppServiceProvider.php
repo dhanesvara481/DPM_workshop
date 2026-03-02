@@ -9,6 +9,8 @@ use App\Models\Barang;
 use App\Models\JadwalKerja;
 use App\Observers\BarangObserver;
 use App\Observers\JadwalKerjaObserver;
+use App\Observers\BarangGmailObserver;
+use App\Observers\JadwalKerjaGmailObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
         JadwalKerja::observe(JadwalKerjaObserver::class);
         Barang::observe(BarangObserver::class);
 
+        JadwalKerja::observe(JadwalKerjaGmailObserver::class);
+        Barang::observe(BarangGmailObserver::class);
         View::composer(
             [
                 'staff.sidebar.sidebar',
