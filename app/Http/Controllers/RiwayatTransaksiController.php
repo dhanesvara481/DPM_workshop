@@ -29,7 +29,7 @@ class RiwayatTransaksiController extends Controller
                 riwayat_transaksi.invoice_id,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
-                invoice.subtotal                                            AS total,
+                invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
                 user.username                                                AS nama_pembuat,
@@ -67,7 +67,29 @@ class RiwayatTransaksiController extends Controller
                       AND ring2.jumlah    = '0'
                       AND ring2.total     = 0
                     LIMIT 1
-                )                                                            AS pajak
+                )                                                            AS pajak,
+                /* ── GRAND TOTAL = subtotal - diskon + pajak% ── */
+                ROUND(
+                    GREATEST(0, invoice.subtotal - COALESCE((
+                        SELECT ring3.diskon
+                        FROM detail_invoice ring3
+                        WHERE ring3.invoice_id = invoice.invoice_id
+                          AND ring3.barang_id IS NULL
+                          AND ring3.jumlah    = '0'
+                          AND ring3.total     = 0
+                        LIMIT 1
+                    ), 0))
+                    *
+                    (1 + COALESCE((
+                        SELECT ring4.pajak
+                        FROM detail_invoice ring4
+                        WHERE ring4.invoice_id = invoice.invoice_id
+                          AND ring4.barang_id IS NULL
+                          AND ring4.jumlah    = '0'
+                          AND ring4.total     = 0
+                        LIMIT 1
+                    ), 0) / 100)
+                )                                                            AS total
             ")
             ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi', $sortDir);
 
@@ -113,7 +135,6 @@ class RiwayatTransaksiController extends Controller
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         // Item real: semua kecuali row ringkasan (jumlah=0 & total=0)
-        // Ini termasuk item barang yang barang_id-nya sudah null (barang dihapus)
         $itemsReal = $invoice->items->filter(
             fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
@@ -231,7 +252,7 @@ class RiwayatTransaksiController extends Controller
                 riwayat_transaksi.invoice_id,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
-                invoice.subtotal                                            AS total,
+                invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
                 user.username                                                AS nama_pembuat,
@@ -269,7 +290,29 @@ class RiwayatTransaksiController extends Controller
                       AND ring2.jumlah    = '0'
                       AND ring2.total     = 0
                     LIMIT 1
-                )                                                            AS pajak
+                )                                                            AS pajak,
+                /* ── GRAND TOTAL = subtotal - diskon + pajak% ── */
+                ROUND(
+                    GREATEST(0, invoice.subtotal - COALESCE((
+                        SELECT ring3.diskon
+                        FROM detail_invoice ring3
+                        WHERE ring3.invoice_id = invoice.invoice_id
+                          AND ring3.barang_id IS NULL
+                          AND ring3.jumlah    = '0'
+                          AND ring3.total     = 0
+                        LIMIT 1
+                    ), 0))
+                    *
+                    (1 + COALESCE((
+                        SELECT ring4.pajak
+                        FROM detail_invoice ring4
+                        WHERE ring4.invoice_id = invoice.invoice_id
+                          AND ring4.barang_id IS NULL
+                          AND ring4.jumlah    = '0'
+                          AND ring4.total     = 0
+                        LIMIT 1
+                    ), 0) / 100)
+                )                                                            AS total
             ")
             ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi', $sortDir)
             ->where('riwayat_transaksi.user_id', auth()->user()->user_id);

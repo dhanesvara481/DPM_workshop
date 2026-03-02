@@ -17,17 +17,15 @@ class LaporanPenjualanController extends Controller
         $month  = $request->input('month');
         $year   = $request->input('year');
 
-        // Gunakan subquery untuk nama_pelanggan agar tidak duplikat row
-        // saat 1 invoice punya banyak item di detail_invoice.
         $query = RiwayatTransaksi::query()
             ->join('invoice', 'riwayat_transaksi.invoice_id', '=', 'invoice.invoice_id')
-            ->where('invoice.status', 'Paid') // ✅ FIX: hanya invoice yang sudah dibayar
+            ->where('invoice.status', 'Paid')
             ->selectRaw("
                 riwayat_transaksi.riwayat_transaksi_id                      AS id,
                 riwayat_transaksi.tanggal_riwayat_transaksi                 AS created_at,
-                invoice.tanggal_invoice                                     AS tanggal_invoice, 
+                invoice.tanggal_invoice                                     AS tanggal_invoice,
                 CONCAT('INV-', invoice.invoice_id)                          AS kode_transaksi,
-                invoice.subtotal                                             AS total,
+                invoice.subtotal                                             AS subtotal_asli,
                 invoice.subtotal_barang,
                 invoice.biaya_jasa,
                 invoice.status,
@@ -37,7 +35,29 @@ class LaporanPenjualanController extends Controller
                     WHERE di.invoice_id = invoice.invoice_id
                     ORDER BY di.detail_invoice_id ASC
                     LIMIT 1
-                )                                                            AS nama_pengguna
+                )                                                            AS nama_pengguna,
+                /* ── GRAND TOTAL = subtotal - diskon + pajak% ── */
+                ROUND(
+                    GREATEST(0, invoice.subtotal - COALESCE((
+                        SELECT ring.diskon
+                        FROM detail_invoice ring
+                        WHERE ring.invoice_id = invoice.invoice_id
+                          AND ring.barang_id IS NULL
+                          AND ring.jumlah    = '0'
+                          AND ring.total     = 0
+                        LIMIT 1
+                    ), 0))
+                    *
+                    (1 + COALESCE((
+                        SELECT ring2.pajak
+                        FROM detail_invoice ring2
+                        WHERE ring2.invoice_id = invoice.invoice_id
+                          AND ring2.barang_id IS NULL
+                          AND ring2.jumlah    = '0'
+                          AND ring2.total     = 0
+                        LIMIT 1
+                    ), 0) / 100)
+                )                                                            AS total
             ")
             ->orderBy('riwayat_transaksi.tanggal_riwayat_transaksi');
 
