@@ -21,18 +21,13 @@ class BarangMasukController extends Controller
         $sort     = in_array($request->sort, $sortable) ? $request->sort : 'tanggal_masuk';
         $dir      = $request->dir === 'asc' ? 'asc' : 'desc';
 
-        $barangMasuk = BarangMasuk::join('barang', 'barang_masuk.barang_id', '=', 'barang.barang_id')
+        $barangMasuk = BarangMasuk::leftJoin('barang', 'barang_masuk.barang_id', '=', 'barang.barang_id')
             ->select(
-                'barang_masuk.barang_masuk_id',
-                'barang_masuk.barang_id',
-                'barang_masuk.user_id',
-                'barang_masuk.jumlah_masuk',
-                'barang_masuk.tanggal_masuk',
-                'barang_masuk.created_at',
-                'barang.kode_barang',
-                'barang.nama_barang',
-                'barang.satuan',
-                'barang.stok'
+                'barang_masuk.*',
+                DB::raw("COALESCE(barang.kode_barang, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
+                DB::raw("COALESCE(barang.satuan, '-') as satuan"),
+                DB::raw("COALESCE(barang.stok, '-') as stok"),
             )
             ->when($request->search, function ($q) use ($request) {
                 $s = $request->search;

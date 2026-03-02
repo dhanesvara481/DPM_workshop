@@ -114,6 +114,25 @@
 
       <div class="p-5 sm:p-6 space-y-5">
 
+        {{-- flash messages --}}
+        @if(session('success'))
+          <div class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 text-sm">
+            {{ session('success') }}
+          </div>
+        @endif
+        @if(session('error'))
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            {{ session('error') }}
+          </div>
+        @endif
+        @if($errors->any())
+          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+            <ul class="list-disc pl-5 space-y-1">
+              @foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach
+            </ul>
+          </div>
+        @endif
+
         {{-- STEP 1: PILIH JADWAL --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">

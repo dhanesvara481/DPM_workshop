@@ -27,8 +27,9 @@ class RiwayatPerubahanStokController extends Controller
         };
     
         $query = RiwayatStok::with(['barang', 'user', 'barangMasuk', 'barangKeluar'])
-            ->join('barang', 'barang.barang_id', '=', 'riwayat_stok.barang_id')
-            ->join('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
+            // ✅ LEFT JOIN — row tetap muncul walau barang sudah dihapus
+            ->leftJoin('barang', 'barang.barang_id', '=', 'riwayat_stok.barang_id')
+            ->leftJoin('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
             ->select(
                 'riwayat_stok.*',
                 'barang.kode_barang',
