@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('laporan_penjualan', function (Blueprint $table) {
-            $table->id('laporan__penjualan_id');
+            $table->id('laporan_penjualan_id');
             $table->foreignId('invoice_id')->constrained('invoice', 'invoice_id')->onDelete('cascade');
             $table->datetime('tanggal_cetak');
             $table->timestamps();
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('laporan');
+        Schema::dropIfExists('laporan_penjualan');
     }
 };
