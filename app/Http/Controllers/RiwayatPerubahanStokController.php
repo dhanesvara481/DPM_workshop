@@ -33,8 +33,8 @@ class RiwayatPerubahanStokController extends Controller
             ->leftJoin('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
             ->select(
                 'riwayat_stok.*',
-                DB::raw("COALESCE(barang.kode_barang, riwayat_stok.kode_barang_snapshot, '[Dihapus]') as kode_barang"),
-                DB::raw("COALESCE(barang.nama_barang, riwayat_stok.nama_barang_snapshot, '[Barang Dihapus]') as nama_barang"),
+                DB::raw("COALESCE(riwayat_stok.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(riwayat_stok.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
                 'user.username as nama_pengguna',
             );
     

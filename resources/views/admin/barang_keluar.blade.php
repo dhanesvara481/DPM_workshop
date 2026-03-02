@@ -308,7 +308,7 @@
             <tr class="row-lift hover:bg-slate-50/70 transition"
                 data-row-text="{{ strtolower(($k->kode_barang ?? '').' '.($k->nama_barang ?? '').' '.($k->keterangan ?? '')) }}">
               <td class="px-5 py-4 text-slate-600">{{ $barangKeluar->firstItem() + $loop->index }}</td>
-              <td class="px-5 py-4 text-slate-700">{{ $k->tanggal ?? '-' }}</td>
+              <td class="px-5 py-4 text-slate-700">{{ $k->tanggal_keluar ?? '-' }}</td>
               <td class="px-5 py-4 font-semibold text-slate-900">{{ $k->kode_barang ?? '-' }}</td>
               <td class="px-5 py-4 text-slate-700">{{ $k->nama_barang ?? '-' }}</td>
               <td class="px-5 py-4 text-slate-700">{{ $k->keterangan ?? '-' }}</td>

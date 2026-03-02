@@ -24,9 +24,10 @@ class BarangMasukController extends Controller
         $barangMasuk = BarangMasuk::leftJoin('barang', 'barang_masuk.barang_id', '=', 'barang.barang_id')
             ->select(
                 'barang_masuk.*',
-                DB::raw("COALESCE(barang.kode_barang, '[Dihapus]') as kode_barang"),
-                DB::raw("COALESCE(barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
-                DB::raw("COALESCE(barang.satuan, '-') as satuan"),
+                // SESUDAH
+                DB::raw("COALESCE(barang_masuk.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(barang_masuk.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
+                DB::raw("COALESCE(barang_masuk.satuan_snapshot, barang.satuan, '-') as satuan"),
                 DB::raw("COALESCE(barang.stok, '-') as stok"),
             )
             ->when($request->search, function ($q) use ($request) {
