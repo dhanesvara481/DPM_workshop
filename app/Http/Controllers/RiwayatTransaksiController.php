@@ -38,7 +38,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di.nama_pelanggan
                     FROM detail_invoice di
                     WHERE di.invoice_id = invoice.invoice_id
-                      AND NOT (di.barang_id IS NULL AND di.jumlah = '0' AND di.total = 0)
+                      AND NOT (di.jumlah = '0' AND di.total = 0)
                     ORDER BY di.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS nama_pengguna,
@@ -46,7 +46,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di2.tipe_transaksi
                     FROM detail_invoice di2
                     WHERE di2.invoice_id = invoice.invoice_id
-                      AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
+                      AND NOT (di2.jumlah = '0' AND di2.total = 0)
                     ORDER BY di2.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS kategori_invoice,
@@ -100,10 +100,9 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        // Row ringkasan: barang_id=null, jumlah='0', total=0
-        // Menyimpan diskon, pajak, dan catatan sekaligus
+        // Row ringkasan: jumlah='0' DAN total=0 (terlepas barang_id null atau tidak)
         $rowRingkasan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
@@ -113,9 +112,10 @@ class RiwayatTransaksiController extends Controller
         $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
-        // Item real: semua kecuali row ringkasan
+        // Item real: semua kecuali row ringkasan (jumlah=0 & total=0)
+        // Ini termasuk item barang yang barang_id-nya sudah null (barang dihapus)
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
@@ -125,8 +125,8 @@ class RiwayatTransaksiController extends Controller
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
 
-        $subtotal    = (float) $invoice->subtotal;
-        $afterDisc   = max(0, $subtotal - $diskon);
+        $subtotal     = (float) $invoice->subtotal;
+        $afterDisc    = max(0, $subtotal - $diskon);
         $pajakNominal = round($afterDisc * ($pajakPct / 100));
         $grandTotal   = $afterDisc + $pajakNominal;
 
@@ -162,7 +162,7 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
@@ -173,7 +173,7 @@ class RiwayatTransaksiController extends Controller
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
@@ -240,7 +240,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di.nama_pelanggan
                     FROM detail_invoice di
                     WHERE di.invoice_id = invoice.invoice_id
-                      AND NOT (di.barang_id IS NULL AND di.jumlah = '0' AND di.total = 0)
+                      AND NOT (di.jumlah = '0' AND di.total = 0)
                     ORDER BY di.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS nama_pengguna,
@@ -248,7 +248,7 @@ class RiwayatTransaksiController extends Controller
                     SELECT di2.tipe_transaksi
                     FROM detail_invoice di2
                     WHERE di2.invoice_id = invoice.invoice_id
-                      AND NOT (di2.barang_id IS NULL AND di2.jumlah = '0' AND di2.total = 0)
+                      AND NOT (di2.jumlah = '0' AND di2.total = 0)
                     ORDER BY di2.detail_invoice_id ASC
                     LIMIT 1
                 )                                                            AS kategori_invoice,
@@ -305,7 +305,7 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
@@ -316,7 +316,7 @@ class RiwayatTransaksiController extends Controller
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
@@ -364,7 +364,7 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
@@ -375,7 +375,7 @@ class RiwayatTransaksiController extends Controller
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !(is_null($i->barang_id) && (float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';

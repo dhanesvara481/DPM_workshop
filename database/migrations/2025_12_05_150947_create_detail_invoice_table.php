@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreign('barang_id')->references('barang_id')->on('barang')->onDelete('cascade');
             $table->foreignId('invoice_id')->constrained('invoice', 'invoice_id')->onDelete('cascade');
             $table->string('nama_pelanggan', 100)->nullable();
-            $table->string('kontak', 12)->nullable();
+            $table->string('kontak', 15)->nullable();
             $table->string('jumlah', 10);
             $table->decimal('total', 12,2);
             $table->string('deskripsi', 100);

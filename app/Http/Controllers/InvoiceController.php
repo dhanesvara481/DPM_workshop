@@ -168,7 +168,6 @@ class InvoiceController extends Controller
         return response()->json(['ok' => empty($errors), 'errors' => $errors]);
     }
 
-    
     public function simpanInvoice(Request $request)
     {
         $request->validate([
@@ -186,14 +185,12 @@ class InvoiceController extends Controller
             $deskripsi     = trim($request->deskripsi ?? '');
             $userId        = auth()->id();
 
-            // Nilai keuangan dari form
             $subtotalBarang = (float) ($request->subtotal_barang ?? 0);
             $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
             $subtotal       = $subtotalBarang + $biayaJasa;
 
-            // Diskon & pajak dari form — akan disimpan di row ringkasan detail_invoice
             $diskon    = max(0, (float) ($request->diskon ?? 0));
-            $pajak     = max(0, (int)   ($request->pajak  ?? 0)); // dalam persen (%)
+            $pajak     = max(0, (int)   ($request->pajak  ?? 0));
 
             $invoice = Invoice::create([
                 'user_id'         => $userId,
@@ -240,19 +237,17 @@ class InvoiceController extends Controller
                 }
             }
 
-            // ── Row ringkasan ────────────────────────────────────────────────
-            // Satu row khusus di detail_invoice untuk menyimpan diskon, pajak,
-            // dan/atau catatan. Selalu dibuat agar grand_total selalu bisa dihitung.
-            // Diidentifikasi via: barang_id=null, jumlah='0', total=0.
+            // Row ringkasan — menyimpan diskon, pajak, catatan
             DetailInvoice::create([
                 'invoice_id'     => $invoice->invoice_id,
                 'barang_id'      => null,
                 'nama_pelanggan' => $namaPelanggan,
                 'kontak'         => $kontak,
-                'deskripsi'      => $deskripsi !== '' ? $deskripsi : '-', // '-' jika tidak ada catatan
+                'deskripsi'      => $deskripsi !== '' ? $deskripsi : '-',
                 'jumlah'         => '0',
+                'harga_satuan'   => 0,
                 'total'          => 0,
-                'tipe_transaksi' => 'Jasa', // enum hanya Barang/Jasa
+                'tipe_transaksi' => 'Jasa',
                 'diskon'         => $diskon > 0 ? $diskon : null,
                 'pajak'          => $pajak  > 0 ? $pajak  : null,
             ]);
@@ -293,7 +288,8 @@ class InvoiceController extends Controller
             'nama_pelanggan' => $namaPelanggan,
             'kontak'         => $kontak,
             'deskripsi'      => $jasaNama,
-            'jumlah'         => '1', // jumlah > 0 → jasa asli, bukan row ringkasan
+            'jumlah'         => '1',
+            'harga_satuan'   => $biayaJasa,
             'total'          => $biayaJasa,
             'tipe_transaksi' => 'Jasa',
             'diskon'         => null,
@@ -302,7 +298,7 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Simpan item barang ke detail_invoice.
+     * Simpan item barang ke detail_invoice dengan snapshot nama & harga.
      * Stok belum dikurangi — baru dikurangi saat Paid.
      */
     private function simpanItemBarang(
@@ -325,14 +321,20 @@ class InvoiceController extends Controller
                 );
             }
 
+            $totalItem    = (float) ($item['total'] ?? 0);
+            $hargaSatuan  = $qty > 0 ? $totalItem / $qty : (float) $barang->harga_jual;
+
             DetailInvoice::create([
                 'invoice_id'     => $invoiceId,
-                'barang_id'      => $barang->barang_id,
+                'barang_id'      => $barang->barang_id,   // FK — set null jika barang dihapus
                 'nama_pelanggan' => $namaPelanggan,
                 'kontak'         => $kontak,
-                'deskripsi'      => $barang->nama_barang,
+                // ── SNAPSHOT — tidak hilang walau barang dihapus ──
+                'deskripsi'      => $barang->nama_barang, // snapshot nama barang
+                'harga_satuan'   => $hargaSatuan,         // snapshot harga per satuan
+                // ─────────────────────────────────────────────────
                 'jumlah'         => (string) $qty,
-                'total'          => (float) ($item['total'] ?? 0),
+                'total'          => $totalItem,
                 'tipe_transaksi' => $tipe,
                 'diskon'         => null,
                 'pajak'          => null,
@@ -342,8 +344,8 @@ class InvoiceController extends Controller
 
     /**
      * Dipanggil saat invoice dikonfirmasi Paid.
-     * Hanya item dengan barang_id yang mempengaruhi stok.
-     * Row ringkasan (barang_id=null, jumlah=0) dilewati otomatis.
+     * Gunakan snapshot jumlah dari kolom `jumlah` (tidak bergantung relasi barang).
+     * Jika barang sudah dihapus (barang_id null), skip pengurangan stok.
      */
     private function prosesStokDariInvoice(Invoice $invoice): void
     {
@@ -354,12 +356,19 @@ class InvoiceController extends Controller
 
         $waktuKeluar = $invoice->tanggal_bayar;
 
-        $items = $invoice->items()->whereNotNull('barang_id')->get();
+        // Ambil semua item yang punya barang_id (barang masih ada) dan qty > 0
+        $items = $invoice->items()
+            ->whereNotNull('barang_id')
+            ->where('jumlah', '>', '0')
+            ->get();
 
         foreach ($items as $item) {
-            $barang = Barang::findOrFail($item->barang_id);
-            $qty    = (int) $item->jumlah;
+            $barang = Barang::find($item->barang_id);
 
+            // Barang sudah dihapus setelah invoice dibuat — skip stok, data sudah tersimpan di snapshot
+            if (!$barang) continue;
+
+            $qty = (int) $item->jumlah;
             if ($qty <= 0) continue;
 
             if ((int) $barang->stok < $qty) {
