@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RiwayatStok;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RiwayatPerubahanStokController extends Controller
 {
@@ -32,8 +33,8 @@ class RiwayatPerubahanStokController extends Controller
             ->leftJoin('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
             ->select(
                 'riwayat_stok.*',
-                'barang.kode_barang',
-                'barang.nama_barang',
+                DB::raw("COALESCE(barang.kode_barang, riwayat_stok.kode_barang_snapshot, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(barang.nama_barang, riwayat_stok.nama_barang_snapshot, '[Barang Dihapus]') as nama_barang"),
                 'user.username as nama_pengguna',
             );
     

@@ -22,6 +22,9 @@ class RiwayatStok extends Model
         'tanggal_riwayat_stok',
         'stok_awal',
         'stok_akhir',
+         // ── snapshot (ditambah) ──
+        'kode_barang_snapshot',
+        'nama_barang_snapshot',
     ];
 
     protected $casts = [

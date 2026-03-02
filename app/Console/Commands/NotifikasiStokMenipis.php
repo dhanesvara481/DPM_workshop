@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Barang;
 use App\Models\Notifikasi;
 use App\Models\User;
-use App\Services\FonnteService;
+// use App\Services\FonnteService;
 use Illuminate\Console\Command;
 
 class NotifikasiStokMenipis extends Command

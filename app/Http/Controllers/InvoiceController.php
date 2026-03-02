@@ -413,6 +413,9 @@ class InvoiceController extends Controller
                 'tanggal_keluar' => $waktuKeluar,
                 'keterangan'     => 'Invoice',
                 'ref_invoice'    => $invoice->invoice_id,
+                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
+                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
+                'satuan_snapshot'      => $barang->satuan,       // ← tambah
             ]);
 
             RiwayatStok::create([
@@ -423,6 +426,8 @@ class InvoiceController extends Controller
                 'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
+                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
+                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
             ]);
         }
     }

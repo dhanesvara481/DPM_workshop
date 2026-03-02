@@ -115,6 +115,9 @@ class BarangMasukController extends Controller
                 'user_id'       => $userId,
                 'jumlah_masuk'  => $qty,
                 'tanggal_masuk' => $tanggalInput,
+                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
+                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
+                'satuan_snapshot'      => $barang->satuan,       // ← tambah
             ]);
 
             $barang->update(['stok' => (string) $stokAkhir]);
@@ -127,6 +130,8 @@ class BarangMasukController extends Controller
                 'tanggal_riwayat_stok' => $tanggalInput,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
+                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
+                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
             ]);
 
             DB::commit();

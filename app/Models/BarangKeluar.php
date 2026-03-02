@@ -19,6 +19,10 @@ class BarangKeluar extends Model
         'tanggal_keluar',
         'keterangan',
         'ref_invoice',
+         // ── snapshot (ditambah) ──
+        'kode_barang_snapshot',
+        'nama_barang_snapshot',
+        'satuan_snapshot',
     ];
 
     protected $casts = [

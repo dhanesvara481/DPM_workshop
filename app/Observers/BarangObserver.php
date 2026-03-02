@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Models\Barang;
 use App\Models\User;
 use App\Models\Notifikasi;
-use App\Services\FonnteService;
+// use App\Services\FonnteService;
 
 class BarangObserver
 {
@@ -26,7 +26,7 @@ class BarangObserver
             return;
         }
 
-        $wa     = app(FonnteService::class);
+        // $wa     = app(FonnteService::class);
         $admins = User::whereIn('role', ['admin', 'staff'])
                       ->where('status', 'aktif')
                       ->whereNotNull('kontak')

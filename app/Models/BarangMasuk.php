@@ -18,6 +18,10 @@ class BarangMasuk extends Model
         'user_id',
         'jumlah_masuk',
         'tanggal_masuk',
+         // ── snapshot (ditambah) ──
+        'kode_barang_snapshot',
+        'nama_barang_snapshot',
+        'satuan_snapshot',
     ];
 
     protected $casts = [
