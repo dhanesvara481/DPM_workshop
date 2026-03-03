@@ -214,41 +214,45 @@
                 @endforelse
               </tbody>
 
+              {{-- ── TFOOT: semua baris selalu ditampilkan meski nilainya 0 ── --}}
               <tfoot class="bg-slate-50 text-sm divide-y divide-slate-200">
-                @if($subtotalBarang > 0)
+
+                {{-- Subtotal Barang --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal Barang</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotalBarang) }}</td>
                 </tr>
-                @endif
-                @if($biayaJasa > 0)
+
+                {{-- Biaya Jasa --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Biaya Jasa</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($biayaJasa) }}</td>
                 </tr>
-                @endif
-                @if($diskon > 0 || $pajakPct > 0)
+
+                {{-- Subtotal sebelum diskon/pajak --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotal) }}</td>
                 </tr>
-                @endif
-                @if($diskon > 0)
+
+                {{-- Diskon — selalu tampil --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Diskon</td>
                   <td class="px-4 py-2 text-right text-rose-600">− {{ $fmt($diskon) }}</td>
                 </tr>
-                @endif
-                @if($pajakPct > 0)
+
+                {{-- Pajak — selalu tampil --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Pajak ({{ $pajakPct }}%)</td>
                   <td class="px-4 py-2 text-right text-slate-700">+ {{ $fmt($pajakNominal) }}</td>
                 </tr>
-                @endif
+
+                {{-- Grand Total --}}
                 <tr>
                   <td colspan="4" class="px-4 py-3 font-bold text-slate-900">Grand Total</td>
                   <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $fmt($grandTotal) }}</td>
                 </tr>
+
               </tfoot>
             </table>
           </div>

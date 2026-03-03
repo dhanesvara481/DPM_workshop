@@ -72,13 +72,13 @@
     $catatan         = $trx->catatan ?? '-';
 
     // Nilai keuangan dari controller
-    $subtotalBarang = (int) ($trx->subtotal_barang ?? 0);
-    $biayaJasa      = (int) ($trx->biaya_jasa      ?? 0);
-    $subtotal       = (int) ($trx->subtotal        ?? 0);
-    $diskon         = (float) ($trx->diskon        ?? 0);
-    $pajakPct       = (int)   ($trx->pajak         ?? 0);
-    $pajakNominal   = (int)   ($trx->pajak_nominal ?? 0);
-    $grandTotal     = (int)   ($trx->grand_total   ?? $subtotal);
+    $subtotalBarang = (int)   ($trx->subtotal_barang ?? 0);
+    $biayaJasa      = (int)   ($trx->biaya_jasa      ?? 0);
+    $subtotal       = (int)   ($trx->subtotal        ?? 0);
+    $diskon         = (float) ($trx->diskon          ?? 0);
+    $pajakPct       = (int)   ($trx->pajak           ?? 0);
+    $pajakNominal   = (int)   ($trx->pajak_nominal   ?? 0);
+    $grandTotal     = (int)   ($trx->grand_total     ?? $subtotal);
   @endphp
 
   <div class="max-w-5xl mx-auto w-full">
@@ -199,47 +199,45 @@
                 @endforelse
               </tbody>
 
+              {{-- ── TFOOT: semua baris selalu ditampilkan meski nilainya 0 ── --}}
               <tfoot class="bg-slate-50 text-sm divide-y divide-slate-200">
+
                 {{-- Subtotal Barang --}}
-                @if($subtotalBarang > 0)
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal Barang</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotalBarang) }}</td>
                 </tr>
-                @endif
+
                 {{-- Biaya Jasa --}}
-                @if($biayaJasa > 0)
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Biaya Jasa</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($biayaJasa) }}</td>
                 </tr>
-                @endif
+
                 {{-- Subtotal sebelum diskon/pajak --}}
-                @if($diskon > 0 || $pajakPct > 0)
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Subtotal</td>
                   <td class="px-4 py-2 text-right text-slate-700">{{ $fmt($subtotal) }}</td>
                 </tr>
-                @endif
-                {{-- Diskon --}}
-                @if($diskon > 0)
+
+                {{-- Diskon — selalu tampil --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Diskon</td>
                   <td class="px-4 py-2 text-right text-rose-600">− {{ $fmt($diskon) }}</td>
                 </tr>
-                @endif
-                {{-- Pajak --}}
-                @if($pajakPct > 0)
+
+                {{-- Pajak — selalu tampil --}}
                 <tr>
                   <td class="px-4 py-2 text-slate-500" colspan="4">Pajak ({{ $pajakPct }}%)</td>
                   <td class="px-4 py-2 text-right text-slate-700">+ {{ $fmt($pajakNominal) }}</td>
                 </tr>
-                @endif
+
                 {{-- Grand Total --}}
                 <tr>
                   <td class="px-4 py-3 font-bold text-slate-900" colspan="4">Grand Total</td>
                   <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $fmt($grandTotal) }}</td>
                 </tr>
+
               </tfoot>
             </table>
           </div>

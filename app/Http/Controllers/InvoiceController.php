@@ -31,8 +31,15 @@ class InvoiceController extends Controller
         $from = $request->input('from');
         $to   = $request->input('to');
 
+        // ── Sort ──────────────────────────────────────────────────────────────
+        $allowedSorts = ['invoice_id', 'subtotal', 'status', 'tanggal_invoice'];
+        $sort = in_array($request->input('sort'), $allowedSorts)
+            ? $request->input('sort')
+            : 'tanggal_invoice';
+        $dir  = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+
         $query = Invoice::with(['items' => fn($q) => $q->limit(1)])
-            ->orderByDesc('tanggal_invoice');
+            ->orderBy($sort, $dir);
 
         if ($from) $query->whereDate('tanggal_invoice', '>=', $from);
         if ($to)   $query->whereDate('tanggal_invoice', '<=', $to);
@@ -52,7 +59,7 @@ class InvoiceController extends Controller
         $invoices     = $query->paginate(15)->withQueryString();
         $pendingCount = Invoice::where('status', 'Pending')->count();
 
-        return view('admin.invoice.konfirmasi_invoice', compact('invoices', 'q', 'pendingCount'));
+        return view('admin.invoice.konfirmasi_invoice', compact('invoices', 'q', 'pendingCount', 'sort', 'dir'));
     }
 
     public function tandaKonfirmasi(Request $request, $invoice)
@@ -93,8 +100,15 @@ class InvoiceController extends Controller
         $from = $request->input('from');
         $to   = $request->input('to');
 
+        // ── Sort ──────────────────────────────────────────────────────────────
+        $allowedSorts = ['invoice_id', 'subtotal', 'status', 'tanggal_invoice'];
+        $sort = in_array($request->input('sort'), $allowedSorts)
+            ? $request->input('sort')
+            : 'tanggal_invoice';
+        $dir  = $request->input('dir') === 'asc' ? 'asc' : 'desc';
+
         $query = Invoice::with(['items' => fn($q) => $q->limit(1)])
-            ->orderByDesc('tanggal_invoice');
+            ->orderBy($sort, $dir);
 
         if ($from) $query->whereDate('tanggal_invoice', '>=', $from);
         if ($to)   $query->whereDate('tanggal_invoice', '<=', $to);
@@ -114,7 +128,7 @@ class InvoiceController extends Controller
         $invoices     = $query->paginate(15)->withQueryString();
         $pendingCount = Invoice::where('status', 'Pending')->count();
 
-        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'q', 'pendingCount'));
+        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'q', 'pendingCount', 'sort', 'dir'));
     }
 
     public function tandaKonfirmasiStaff(Request $request, $invoice)
@@ -189,8 +203,9 @@ class InvoiceController extends Controller
             $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
             $subtotal       = $subtotalBarang + $biayaJasa;
 
-            $diskon    = max(0, (float) ($request->diskon ?? 0));
-            $pajak     = max(0, (int)   ($request->pajak  ?? 0));
+            // ── FIX: selalu ambil nilai diskon & pajak, meski 0 ──
+            $diskon = max(0, (float) ($request->diskon ?? 0));
+            $pajak  = max(0, (int)   ($request->pajak  ?? 0));
 
             $invoice = Invoice::create([
                 'user_id'         => $userId,
@@ -237,7 +252,7 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Row ringkasan — menyimpan diskon, pajak, catatan
+            // ── Row ringkasan — selalu simpan diskon & pajak (meski 0) ──
             DetailInvoice::create([
                 'invoice_id'     => $invoice->invoice_id,
                 'barang_id'      => null,
@@ -248,8 +263,8 @@ class InvoiceController extends Controller
                 'harga_satuan'   => 0,
                 'total'          => 0,
                 'tipe_transaksi' => 'Jasa',
-                'diskon'         => $diskon > 0 ? $diskon : null,
-                'pajak'          => $pajak  > 0 ? $pajak  : null,
+                'diskon'         => $diskon, // ── FIX: simpan 0 bukan null
+                'pajak'          => $pajak,  // ── FIX: simpan 0 bukan null
             ]);
 
             RiwayatTransaksi::create([
@@ -321,18 +336,16 @@ class InvoiceController extends Controller
                 );
             }
 
-            $totalItem    = (float) ($item['total'] ?? 0);
-            $hargaSatuan  = $qty > 0 ? $totalItem / $qty : (float) $barang->harga_jual;
+            $totalItem   = (float) ($item['total'] ?? 0);
+            $hargaSatuan = $qty > 0 ? $totalItem / $qty : (float) $barang->harga_jual;
 
             DetailInvoice::create([
                 'invoice_id'     => $invoiceId,
-                'barang_id'      => $barang->barang_id,   // FK — set null jika barang dihapus
+                'barang_id'      => $barang->barang_id,
                 'nama_pelanggan' => $namaPelanggan,
                 'kontak'         => $kontak,
-                // ── SNAPSHOT — tidak hilang walau barang dihapus ──
-                'deskripsi'      => $barang->nama_barang, // snapshot nama barang
-                'harga_satuan'   => $hargaSatuan,         // snapshot harga per satuan
-                // ─────────────────────────────────────────────────
+                'deskripsi'      => $barang->nama_barang,
+                'harga_satuan'   => $hargaSatuan,
                 'jumlah'         => (string) $qty,
                 'total'          => $totalItem,
                 'tipe_transaksi' => $tipe,
@@ -356,7 +369,6 @@ class InvoiceController extends Controller
 
         $waktuKeluar = $invoice->tanggal_bayar;
 
-        // Ambil semua item yang punya barang_id (barang masih ada) dan qty > 0
         $items = $invoice->items()
             ->whereNotNull('barang_id')
             ->where('jumlah', '>', '0')
@@ -365,7 +377,6 @@ class InvoiceController extends Controller
         foreach ($items as $item) {
             $barang = Barang::find($item->barang_id);
 
-            // Barang sudah dihapus setelah invoice dibuat — skip stok, data sudah tersimpan di snapshot
             if (!$barang) continue;
 
             $qty = (int) $item->jumlah;
@@ -407,15 +418,15 @@ class InvoiceController extends Controller
             $barang->update(['stok' => (string) $stokAkhir]);
 
             $barangKeluar = BarangKeluar::create([
-                'user_id'        => $userId,
-                'barang_id'      => $barang->barang_id,
-                'jumlah_keluar'  => $qty,
-                'tanggal_keluar' => $waktuKeluar,
-                'keterangan'     => 'Invoice',
-                'ref_invoice'    => $invoice->invoice_id,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
-                'satuan_snapshot'      => $barang->satuan,       // ← tambah
+                'user_id'              => $userId,
+                'barang_id'            => $barang->barang_id,
+                'jumlah_keluar'        => $qty,
+                'tanggal_keluar'       => $waktuKeluar,
+                'keterangan'           => 'Invoice',
+                'ref_invoice'          => $invoice->invoice_id,
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
+                'satuan_snapshot'      => $barang->satuan,
             ]);
 
             RiwayatStok::create([
@@ -426,8 +437,8 @@ class InvoiceController extends Controller
                 'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
             ]);
         }
     }

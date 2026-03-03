@@ -27,7 +27,7 @@ class BarangGmailObserver
 
         $notif  = app(GmailNotifikasiService::class);
 
-        $admins = User::where('role', 'admin')
+        $admins = User::whereIn('role',['admin', 'staff'])
             ->where('status', 'aktif')
             ->whereNotNull('email')
             ->get();

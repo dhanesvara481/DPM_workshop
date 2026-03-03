@@ -1,17 +1,12 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('jadwal:weekly-digest')
+        ->weeklyOn(1, '07:00')
+        ->timezone('Asia/Makassar');
 
-Schedule::command('notifikasi:stok-menipis')
-    ->dailyAt('08:00')
-    ->withoutOverlapping();
-
-Schedule::command('notifikasi:jadwal-kerja')
-    ->dailyAt('20:00')
-    ->withoutOverlapping();
+// Reminder H-1: setiap hari jam 18:00
+Schedule::command('jadwal:reminder-h1')
+        ->dailyAt('23:10')
+        ->timezone('Asia/Makassar');
