@@ -614,7 +614,7 @@
     }
 
     showConfirmModal({
-      title: "Simpan transaksi?",
+      title: "Simpan Perubahan?",
       message: "Stok barang akan bertambah sesuai jumlah masuk.",
       confirmText: "Ya, Simpan",
       cancelText: "Batal",

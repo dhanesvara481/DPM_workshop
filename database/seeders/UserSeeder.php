@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
                 'username' => 'Yudha',
                 'password' => Hash::make('admin123'),
                 'role'     => 'admin',
-                'kontak'   => '081234567890',
+                'kontak'   => '081805481158',
                 'email'    => 'admin@dpwworkshop.com',
                 'status'   => 'aktif',
                 'catatan'  => 'Super Admin',
