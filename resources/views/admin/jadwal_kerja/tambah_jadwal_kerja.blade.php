@@ -862,23 +862,36 @@ document.getElementById('qfApply').addEventListener('click', () => {
     const cb = document.getElementById('check_'+key);
     if (cb && !cb.checked) { cb.checked = true; if(!document.getElementById('dayForm_'+key)) renderDayBlock(key); }
 
-    // Prefill: copy dari slot pertama, ganti user_id ke yang dipilih
-    const data = window._agendaData?.[key];
-    let prefill = { user_id: qfUserId, username: getUserName(qfUserId) };
-    if (data && data.length > 0) {
-      const first = data[0];
-      const stVal = first.status || 'Aktif';
-      prefill = {
-        user_id:     qfUserId,
-        username:    getUserName(qfUserId),
-        waktu_shift: stVal==='Tutup' ? '' : (first.waktu_shift||''),
-        jam_mulai:   stVal==='Tutup' ? '' : (first.jam_mulai||''),
-        jam_selesai: stVal==='Tutup' ? '' : (first.jam_selesai||''),
-        status:      stVal,
-        deskripsi:   stVal==='Tutup' ? '' : (first.deskripsi||''),
-      };
+    const data = window._agendaData?.[key] || [];
+
+    // Cari bubble yang masih kosong (belum ada user_id) — isi itu, jangan tambah baru
+    const emptyIdx = data.findIndex(ag => !ag.user_id);
+
+    // Prefill: copy setting dari slot pertama yang sudah terisi (sebagai template)
+    const template = data.find(ag => ag.user_id && ag.status !== 'Tutup');
+    const prefill = {
+      user_id:     qfUserId,
+      username:    getUserName(qfUserId),
+      waktu_shift: template?.waktu_shift || '',
+      jam_mulai:   template?.jam_mulai   || '',
+      jam_selesai: template?.jam_selesai || '',
+      status:      template?.status      || 'Aktif',
+      deskripsi:   template?.deskripsi   || '',
+    };
+
+    if (emptyIdx !== -1) {
+      // Isi bubble yang sudah ada tapi masih kosong
+      Object.assign(data[emptyIdx], prefill);
+      data[emptyIdx].filled = true;
+      if (!window._activeSlot) window._activeSlot = {};
+      window._activeSlot[key] = emptyIdx;
+      renderBubbleRow(key);
+      renderActiveForm(key, emptyIdx);
+      updateAgendaCount(key);
+    } else {
+      // Semua bubble sudah terisi — tambah baru
+      addAgenda(key, prefill);
     }
-    addAgenda(key, prefill);
   });
 
   updateSubmitSection();
@@ -948,6 +961,24 @@ function validateAndSubmit(form) {
           validationErrors.push({ key, si: i, fieldId: isActive ? 'js_'+key+'_'+i : null, msg: 'Jam selesai belum diisi — '+label });
         if (ag.jam_mulai && ag.jam_selesai && ag.jam_selesai <= ag.jam_mulai)
           validationErrors.push({ key, si: i, fieldId: isActive ? 'js_'+key+'_'+i : null, msg: 'Jam selesai harus setelah jam mulai — '+label });
+      }
+    });
+
+    // Cek duplikat dalam hari yang sama (user + jam_mulai sama)
+    const seen = new Map();
+    data.forEach((ag, i) => {
+      if (ag.status === 'Tutup' || !ag.user_id || !ag.jam_mulai) return;
+      const dupKey = ag.user_id + '|' + ag.jam_mulai;
+      if (seen.has(dupKey)) {
+        const prevIdx   = seen.get(dupKey);
+        const activeIdx = window._activeSlot?.[key] ?? 0;
+        validationErrors.push({
+          key, si: i,
+          fieldId: i === activeIdx ? 'uSel_'+key+'_'+i : null,
+          msg: 'Duplikat dengan agenda '+(prevIdx+1)+' — '+DAY_LABELS[key]+' agenda '+(i+1)
+        });
+      } else {
+        seen.set(dupKey, i);
       }
     });
   });

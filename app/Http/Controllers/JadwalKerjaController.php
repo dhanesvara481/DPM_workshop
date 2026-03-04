@@ -55,7 +55,7 @@ class JadwalKerjaController extends Controller
         ]);
     }
 
-    public function simpanJadwalKerja(Request $request)
+   public function simpanJadwalKerja(Request $request)
     {
         $jadwalInput = $request->input('jadwal', []);
 
@@ -78,29 +78,28 @@ class JadwalKerjaController extends Controller
         foreach ($dayKeys as $key) {
             if (!isset($jadwalInput[$key])) continue;
 
-            $agendas = $jadwalInput[$key]; // array of agendas: [0 => [...], 1 => [...], ...]
-
-            // Pastikan format array berindeks (bukan flat lama)
+            $agendas = $jadwalInput[$key];
             if (!is_array($agendas) || empty($agendas)) continue;
+
+            // ── Cek duplikat dalam input hari ini (user + jam sama) ──────────
+            // sekaligus cek duplikat dengan data yang sudah ada di DB
+            $seenInInput = []; // "user_id|jam_mulai|tanggal" => label
 
             foreach ($agendas as $i => $item) {
                 $isTutup = ($item['status'] ?? '') === 'Tutup';
                 $label   = $dayLabel[$key] . ' agenda ke-' . ($i + 1);
                 $prefix  = "jadwal.{$key}.{$i}";
 
-                // ── Validasi ──────────────────────────────────────────────────
+                // ── Validasi field wajib ──────────────────────────────────────
                 if (empty($item['user_id'])) {
                     $errors["{$prefix}.user_id"] = "Nama wajib dipilih untuk {$label}.";
                 }
-
                 if (empty($item['tanggal_kerja'])) {
                     $errors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk {$label}.";
                 }
-
                 if (empty($item['status'])) {
                     $errors["{$prefix}.status"] = "Status wajib dipilih untuk {$label}.";
                 }
-
                 if (!$isTutup) {
                     if (empty($item['waktu_shift'])) {
                         $errors["{$prefix}.waktu_shift"] = "Waktu shift wajib diisi untuk {$label}.";
@@ -125,6 +124,25 @@ class JadwalKerjaController extends Controller
                         ->exists();
                     if (!$userExists) {
                         $errors["{$prefix}.user_id"] = "User tidak valid atau tidak aktif untuk {$label}.";
+                    }
+                }
+
+                // ── Cek duplikat antar agenda dalam input ini ─────────────────
+                if (!$isTutup && !empty($item['user_id']) && !empty($item['jam_mulai']) && !empty($item['tanggal_kerja'])) {
+                    $dupKey = $item['user_id'] . '|' . $item['jam_mulai'] . '|' . $item['tanggal_kerja'];
+                    if (isset($seenInInput[$dupKey])) {
+                        $errors["{$prefix}.user_id"] = "Duplikat: {$label} punya user & jam mulai yang sama dengan {$seenInInput[$dupKey]}.";
+                    } else {
+                        $seenInInput[$dupKey] = $label;
+                    }
+
+                    // ── Cek duplikat dengan data yang sudah ada di DB ─────────
+                    $alreadyExists = \App\Models\JadwalKerja::where('user_id', $item['user_id'])
+                        ->where('tanggal_kerja', $item['tanggal_kerja'])
+                        ->where('jam_mulai', $item['jam_mulai'])
+                        ->exists();
+                    if ($alreadyExists) {
+                        $errors["{$prefix}.user_id"] = "Jadwal untuk user ini dengan jam mulai yang sama di tanggal tersebut sudah ada ({$label}).";
                     }
                 }
 
