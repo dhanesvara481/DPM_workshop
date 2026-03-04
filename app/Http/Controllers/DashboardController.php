@@ -240,7 +240,9 @@ class DashboardController extends Controller
 
                 $events[$key][] = [
                     'id'     => $row->jadwal_id,
-                    'title'  => ($row->waktu_shift ?? 'Jadwal') . ' - ' . ($row->user->username ?? 'Staf'),
+                    'title'  => strtolower($row->status ?? '') === 'tutup'
+                                ? 'Hari Libur'
+                                : (($row->waktu_shift ?? 'Jadwal') . ' - ' . ($row->user->username ?? 'Staf')),
                     'status' => strtolower($row->status ?? 'aktif'),
                     'time'   => $time,
                     'desc'   => $row->deskripsi ?? '',
