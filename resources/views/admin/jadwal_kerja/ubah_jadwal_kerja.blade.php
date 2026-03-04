@@ -95,6 +95,28 @@
       $prefillShift   = $selected['waktu_shift'] ?? old('waktu_shift')      ?? '';
       $prefillStatus  = $selected['status']      ?? old('status', 'aktif')  ?? 'aktif';
       $prefillDesc    = $selected['deskripsi']   ?? old('deskripsi')        ?? '';
+
+      // Hardcoded bubble class map — Tailwind tidak bisa generate dynamic class seperti bg-{col}-50
+      $bubbleActiveMap = [
+        'aktif'   => 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200/60 scale-105',
+        'catatan' => 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-200/60 scale-105',
+        'tutup'   => 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-200/60 scale-105',
+      ];
+      $bubbleInactiveMap = [
+        'aktif'   => 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100 hover:scale-[1.03]',
+        'catatan' => 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 hover:scale-[1.03]',
+        'tutup'   => 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100 hover:scale-[1.03]',
+      ];
+      $numActiveMap = [
+        'aktif'   => 'bg-white/20',
+        'catatan' => 'bg-white/20',
+        'tutup'   => 'bg-white/20',
+      ];
+      $numInactiveMap = [
+        'aktif'   => 'bg-emerald-200',
+        'catatan' => 'bg-amber-200',
+        'tutup'   => 'bg-rose-200',
+      ];
     @endphp
 
     {{-- hidden auth refs untuk JS --}}
@@ -181,16 +203,18 @@
               <div class="flex items-center gap-2 flex-wrap" id="bubbleRow">
                 @foreach($jadwals as $idx => $j)
                   @php
-                    $st  = strtolower($j['status']);
-                    $col = $st === 'tutup' ? 'rose' : ($st === 'catatan' ? 'amber' : 'emerald');
+                    $st       = strtolower($j['status']);
                     $isActive = (string)$j['id'] === (string)$selectedId;
-                    $activeClass = $isActive
-                      ? "bg-{$col}-600 border-{$col}-600 text-white shadow-lg shadow-{$col}-200/60 scale-105"
-                      : "bg-{$col}-50 border-{$col}-300 text-{$col}-800 hover:bg-{$col}-100 hover:scale-[1.03]";
+                    $activeClass   = $bubbleActiveMap[$st]   ?? $bubbleActiveMap['aktif'];
+                    $inactiveClass = $bubbleInactiveMap[$st] ?? $bubbleInactiveMap['aktif'];
+                    $numActive     = $numActiveMap[$st]      ?? 'bg-white/20';
+                    $numInactive   = $numInactiveMap[$st]    ?? 'bg-emerald-200';
+                    $bubbleClass   = $isActive ? $activeClass : $inactiveClass;
+                    $numClass      = $isActive ? $numActive   : $numInactive;
                   @endphp
                   <button type="button"
                           class="agenda-bubble inline-flex items-center gap-2 h-10 px-4 rounded-full border text-xs font-bold
-                                 transition-all duration-150 cursor-pointer {{ $activeClass }}"
+                                 transition-all duration-150 cursor-pointer {{ $bubbleClass }}"
                           data-id="{{ $j['id'] }}"
                           data-idx="{{ $idx }}"
                           data-status="{{ $st }}"
@@ -201,7 +225,7 @@
                           data-jam_selesai="{{ $j['jam_selesai'] }}"
                           data-waktu_shift="{{ $j['waktu_shift'] ?? '' }}"
                           data-deskripsi="{{ $j['deskripsi'] ?? '' }}">
-                    <span class="agenda-bubble-num h-5 w-5 rounded-full {{ $isActive ? 'bg-white/20' : "bg-{$col}-200" }} grid place-items-center text-[10px] font-black">{{ $idx + 1 }}</span>
+                    <span class="agenda-bubble-num h-5 w-5 rounded-full {{ $numClass }} grid place-items-center text-[10px] font-black">{{ $idx + 1 }}</span>
                     <span class="max-w-[100px] truncate">{{ $j['username'] }}</span>
                     @if($st === 'tutup')
                       <span class="opacity-70">✕</span>
@@ -255,7 +279,6 @@
               </div>
               <div id="editingBadge"
                    class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold">
-                {{-- dinamis via JS --}}
               </div>
             </div>
 
@@ -273,20 +296,17 @@
                 {{-- Nama --}}
                 <div>
                   <label class="block text-[11px] font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Nama</label>
-                  <div class="relative">
-                    <select name="user_id" id="userSelect"
-                            class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm
-                                   focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition appearance-none">
-                      <option value="">Pilih user</option>
-                      @foreach(($users ?? []) as $u)
-                        <option value="{{ $u->user_id }}"
-                                @selected((string)$prefillUser === (string)$u->user_id)>
-                          {{ $u->username }}
-                        </option>
-                      @endforeach
-                    </select>
-
-                  </div>
+                  <select name="user_id" id="userSelect"
+                          class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm
+                                 focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition appearance-none">
+                    <option value="">Pilih user</option>
+                    @foreach(($users ?? []) as $u)
+                      <option value="{{ $u->user_id }}"
+                              @selected((string)$prefillUser === (string)$u->user_id)>
+                        {{ $u->username }}
+                      </option>
+                    @endforeach
+                  </select>
                 </div>
 
                 {{-- Tanggal --}}
@@ -312,7 +332,6 @@
                   </select>
                 </div>
 
-                {{-- Placeholder agar grid tetap 2 kolom kalau shift hidden --}}
                 <div id="shiftSpacer" @if(strtolower($prefillStatus) !== 'tutup') style="display:none" @endif></div>
 
                 {{-- Jam Mulai --}}
@@ -433,8 +452,6 @@
   }
 
   .agenda-bubble { user-select: none; }
-
-  /* Smooth bubble active transition */
   .agenda-bubble.is-active { transform: scale(1.06); }
 
   @keyframes formSlide {
@@ -447,13 +464,10 @@
 
 @push('scripts')
 <script>
-  // ─── Data dari PHP ─────────────────────────────────────────────────────────
-  const JADWALS     = @json($jadwals);
+  const JADWALS      = @json($jadwals);
   const AUTH_USER_ID = document.getElementById('authUserId')?.value ?? '';
 
-  // ─── Elemen ────────────────────────────────────────────────────────────────
   const userSelect        = document.getElementById('userSelect');
-  const lockIcon          = document.getElementById('lockIcon');
   const tanggalInput      = document.getElementById('tanggalInput');
   const jamMulaiWrapper   = document.getElementById('jamMulaiWrapper');
   const jamSelesaiWrapper = document.getElementById('jamSelesaiWrapper');
@@ -468,7 +482,6 @@
   const jadwalIdHidden    = document.getElementById('jadwalIdHidden');
   const editingBadge      = document.getElementById('editingBadge');
 
-  // Preview strip elements
   const pvId     = document.getElementById('pvId');
   const pvNama   = document.getElementById('pvNama');
   const pvShift  = document.getElementById('pvShift');
@@ -476,121 +489,101 @@
 
   const routeBase = "{{ rtrim(url(route('perbarui_jadwal_kerja', 0, false)), '/0') }}/";
 
-  // ─── Helpers ───────────────────────────────────────────────────────────────
-  const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
-
-  function setStatusColorClass(el, st, palette) {
-    // Tailwind dynamic classes tidak bisa dipakai langsung — pakai hardcoded map
-    const map = {
-      emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800' },
-      amber:   { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-800'   },
-      rose:    { bg: 'bg-rose-50',    border: 'border-rose-200',    text: 'text-rose-800'     },
-      slate:   { bg: 'bg-slate-50',   border: 'border-slate-200',   text: 'text-slate-800'    },
-    };
-    const c = map[palette] || map.slate;
-    ['bg-emerald-50','bg-amber-50','bg-rose-50','bg-slate-50',
-     'border-emerald-200','border-amber-200','border-rose-200','border-slate-200',
-     'text-emerald-800','text-amber-800','text-rose-800','text-slate-800'].forEach(cls => el.classList.remove(cls));
-    el.classList.add(c.bg, c.border, c.text);
-  }
-
-  function colorForStatus(st) {
-    return st === 'tutup' ? 'rose' : (st === 'catatan' ? 'amber' : 'emerald');
-  }
-
-  // ─── Bubble active style maps (karena Tailwind dynamic class tidak work) ───
+  // Hardcoded maps — sama dengan PHP agar konsisten
   const BUBBLE_ACTIVE = {
-    emerald: 'bg-emerald-600 border-emerald-600 text-white shadow-lg',
-    amber:   'bg-amber-500   border-amber-500   text-white shadow-lg',
-    rose:    'bg-rose-500    border-rose-500    text-white shadow-lg',
+    aktif:   'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200/60 scale-105',
+    catatan: 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-200/60 scale-105',
+    tutup:   'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-200/60 scale-105',
   };
   const BUBBLE_INACTIVE = {
-    emerald: 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100',
-    amber:   'bg-amber-50   border-amber-300   text-amber-800   hover:bg-amber-100',
-    rose:    'bg-rose-50    border-rose-300    text-rose-800    hover:bg-rose-100',
+    aktif:   'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100 hover:scale-[1.03]',
+    catatan: 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 hover:scale-[1.03]',
+    tutup:   'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100 hover:scale-[1.03]',
   };
-  const NUM_ACTIVE   = { emerald:'bg-white/20', amber:'bg-white/20', rose:'bg-white/20' };
-  const NUM_INACTIVE = { emerald:'bg-emerald-200', amber:'bg-amber-200', rose:'bg-rose-200' };
+  const NUM_ACTIVE   = { aktif: 'bg-white/20',    catatan: 'bg-white/20',    tutup: 'bg-white/20'    };
+  const NUM_INACTIVE = { aktif: 'bg-emerald-200', catatan: 'bg-amber-200',   tutup: 'bg-rose-200'    };
 
+  const BADGE_CLASSES = {
+    aktif:   ['bg-emerald-50', 'border-emerald-200', 'text-emerald-800'],
+    catatan: ['bg-amber-50',   'border-amber-200',   'text-amber-800'  ],
+    tutup:   ['bg-rose-50',    'border-rose-200',    'text-rose-800'   ],
+  };
+
+  const capitalize = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+
+  // ─── Update semua bubble styling ─────────────────────────────────────────
   function updateBubbleStyles(activeId) {
     document.querySelectorAll('.agenda-bubble').forEach(btn => {
-      const st  = btn.dataset.status || 'aktif';
-      const col = colorForStatus(st);
+      const st    = btn.dataset.status || 'aktif';
       const isAct = String(btn.dataset.id) === String(activeId);
+      const activeClasses   = (BUBBLE_ACTIVE[st]   || BUBBLE_ACTIVE.aktif).split(' ');
+      const inactiveClasses = (BUBBLE_INACTIVE[st] || BUBBLE_INACTIVE.aktif).split(' ');
 
-      // Strip all dynamic bubble classes
-      Object.values(BUBBLE_ACTIVE).concat(Object.values(BUBBLE_INACTIVE)).forEach(cls =>
-        cls.split(' ').forEach(c => btn.classList.remove(c))
-      );
-      btn.classList.remove('scale-105','scale-100');
+      // Strip semua kemungkinan class bubble
+      [...activeClasses, ...inactiveClasses].forEach(c => btn.classList.remove(c));
+      (isAct ? activeClasses : inactiveClasses).forEach(c => btn.classList.add(c));
 
-      const classes = (isAct ? BUBBLE_ACTIVE[col] : BUBBLE_INACTIVE[col]).split(' ');
-      classes.forEach(c => btn.classList.add(c));
-      if (isAct) btn.classList.add('scale-105');
-
-      // Update number pill bg
       const numEl = btn.querySelector('.agenda-bubble-num');
       if (numEl) {
-        [NUM_ACTIVE[col], NUM_INACTIVE[col]].forEach(cls => numEl.classList.remove(cls));
-        numEl.classList.add(isAct ? NUM_ACTIVE[col] : NUM_INACTIVE[col]);
+        const na = NUM_ACTIVE[st]   || 'bg-white/20';
+        const ni = NUM_INACTIVE[st] || 'bg-emerald-200';
+        numEl.classList.remove(na, ni);
+        numEl.classList.add(isAct ? na : ni);
       }
     });
   }
 
-  // ─── Load jadwal data ke form ───────────────────────────────────────────────
+  // ─── Load jadwal ke form ──────────────────────────────────────────────────
   function loadJadwal(j) {
-    const st     = (j.status || 'aktif').toLowerCase();
+    const st      = (j.status || 'aktif').toLowerCase();
     const isTutup = st === 'tutup';
-    const col    = colorForStatus(st);
 
-    // Update form action
-    if (editForm) editForm.setAttribute('action', routeBase + j.id);
-    if (jadwalIdHidden) jadwalIdHidden.value = j.id;
-
-    // Fill fields
-    if (tanggalInput)    tanggalInput.value    = j.tanggal || '';
-    if (userSelect)      userSelect.value      = j.user_id || '';
-    if (jamMulaiInput)   jamMulaiInput.value   = isTutup ? '' : (j.jam_mulai   || '');
-    if (jamSelesaiInput) jamSelesaiInput.value  = isTutup ? '' : (j.jam_selesai || '');
-    if (shiftSelect)     shiftSelect.value      = isTutup ? '' : (j.waktu_shift || '');
-    if (descInput)       descInput.value        = isTutup ? '' : (j.deskripsi   || '');
+    if (editForm)        editForm.setAttribute('action', routeBase + j.id);
+    if (jadwalIdHidden)  jadwalIdHidden.value   = j.id;
+    if (tanggalInput)    tanggalInput.value      = j.tanggal     || '';
+    if (userSelect)      userSelect.value        = j.user_id     || '';
+    if (jamMulaiInput)   jamMulaiInput.value     = isTutup ? '' : (j.jam_mulai   || '');
+    if (jamSelesaiInput) jamSelesaiInput.value   = isTutup ? '' : (j.jam_selesai || '');
+    if (shiftSelect)     shiftSelect.value       = isTutup ? '' : (j.waktu_shift || '');
+    if (descInput)       descInput.value         = isTutup ? '' : (j.deskripsi   || '');
 
     // Status radio
     const capStatus = capitalize(st);
     const radioEl   = document.querySelector(`#editForm input[name="status"][value="${capStatus}"]`);
     if (radioEl) radioEl.checked = true;
 
-    // Show/hide fields
     filterFields(capStatus);
-    filterUserDropdown(capStatus);
 
-    // Update preview strip
+    // Preview strip
     if (pvId)    pvId.textContent    = '#' + j.id;
     if (pvNama)  pvNama.textContent  = j.username || '—';
     if (pvShift) pvShift.textContent = isTutup ? 'TUTUP'
       : ((j.waktu_shift || '—') + (j.jam_mulai && j.jam_selesai ? ` · ${j.jam_mulai}–${j.jam_selesai}` : ''));
+
     if (pvStatus) {
       pvStatus.textContent = capStatus.toUpperCase();
       const card = pvStatus.closest('.rounded-xl');
-      if (card) setStatusColorClass(card, st, col);
+      if (card) {
+        // Reset strip status bg
+        ['bg-emerald-50','border-emerald-200','bg-amber-50','border-amber-200',
+         'bg-rose-50','border-rose-200','bg-slate-50','border-slate-200'].forEach(c => card.classList.remove(c));
+        const pvClasses = st === 'tutup'
+          ? ['bg-rose-50','border-rose-200']
+          : (st === 'catatan' ? ['bg-amber-50','border-amber-200'] : ['bg-emerald-50','border-emerald-200']);
+        pvClasses.forEach(c => card.classList.add(c));
+      }
     }
 
-    // Update editing badge
+    // Editing badge
     if (editingBadge) {
-      editingBadge.textContent = `Mengedit: Agenda ${(JADWALS.findIndex(x => String(x.id) === String(j.id)) + 1)}`;
-      // Clear badge color classes
-      ['bg-emerald-50','border-emerald-200','text-emerald-800',
-       'bg-amber-50','border-amber-200','text-amber-800',
-       'bg-rose-50','border-rose-200','text-rose-800'].forEach(c => editingBadge.classList.remove(c));
-      const bMap = {
-        emerald: ['bg-emerald-50','border-emerald-200','text-emerald-800'],
-        amber:   ['bg-amber-50',  'border-amber-200',  'text-amber-800'  ],
-        rose:    ['bg-rose-50',   'border-rose-200',   'text-rose-800'   ],
-      };
-      (bMap[col] || bMap.emerald).forEach(c => editingBadge.classList.add(c));
+      const agendaNum = (JADWALS.findIndex(x => String(x.id) === String(j.id)) + 1);
+      editingBadge.textContent = `Mengedit: Agenda ${agendaNum}`;
+      const allBadge = Object.values(BADGE_CLASSES).flat();
+      allBadge.forEach(c => editingBadge.classList.remove(c));
+      (BADGE_CLASSES[st] || BADGE_CLASSES.aktif).forEach(c => editingBadge.classList.add(c));
     }
 
-    // Animate form refresh
+    // Animate form
     if (editForm) {
       editForm.style.animation = 'none';
       void editForm.offsetWidth;
@@ -598,7 +591,7 @@
     }
   }
 
-  // ─── Field visibility ──────────────────────────────────────────────────────
+  // ─── Show/hide time & desc fields ────────────────────────────────────────
   function filterFields(statusValue) {
     const isTutup = statusValue === 'Tutup';
     [jamMulaiWrapper, jamSelesaiWrapper, shiftWrapper, descWrapper].forEach(el => {
@@ -613,27 +606,12 @@
     }
   }
 
-  function filterUserDropdown(statusValue) {
-    // Di halaman UBAH, tidak ada lock user — user bebas dipilih untuk semua status.
-    // (Lock hanya relevan di Tambah saat membuat jadwal baru)
-    if (!userSelect) return;
-    userSelect.disabled = false;
-    userSelect.classList.remove('is-locked');
-    lockIcon?.classList.add('hidden');
-    document.getElementById('hiddenUserId')?.remove();
-  }
-
-  // ─── Bind status radio ─────────────────────────────────────────────────────
+  // ─── Bind status radio ────────────────────────────────────────────────────
   document.querySelectorAll('#editForm input[name="status"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        filterFields(radio.value);
-        filterUserDropdown(radio.value);
-      }
-    });
+    radio.addEventListener('change', () => { if (radio.checked) filterFields(radio.value); });
   });
 
-  // ─── Bind bubbles ──────────────────────────────────────────────────────────
+  // ─── Bind bubbles ─────────────────────────────────────────────────────────
   document.querySelectorAll('.agenda-bubble').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -644,8 +622,7 @@
     });
   });
 
-  // ─── Init dengan jadwal yang aktif ─────────────────────────────────────────
-  // String() supaya tidak ada type mismatch int vs string dari Blade
+  // ─── Init ─────────────────────────────────────────────────────────────────
   const INIT_ID = String(@json($selected ? $selected['id'] : ($jadwals[0]['id'] ?? '')));
   if (INIT_ID && JADWALS.length > 0) {
     const initJ = JADWALS.find(x => String(x.id) === INIT_ID) || JADWALS[0];
@@ -653,7 +630,7 @@
     loadJadwal(initJ);
   }
 
-  // ─── Confirm Modal ─────────────────────────────────────────────────────────
+  // ─── Confirm Modal ────────────────────────────────────────────────────────
   function showConfirmModal({ title, message, note, confirmText, cancelText, tone = "neutral", onConfirm }) {
     const toneBtn = { neutral: "bg-slate-900 hover:bg-slate-800", danger: "bg-rose-600 hover:bg-rose-700" };
     const t = toneBtn[tone] || toneBtn.neutral;
@@ -713,7 +690,6 @@
     });
   });
 
-  // Prevent manual edit on readonly date input
   document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
     el.addEventListener('keydown', e => e.preventDefault());
     el.addEventListener('mousedown', e => e.preventDefault());

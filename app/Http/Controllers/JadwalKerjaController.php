@@ -291,6 +291,9 @@ class JadwalKerjaController extends Controller
             'status'        => 'required|in:Aktif,Catatan,Tutup',
         ], $messages);
 
+        // ← TAMBAH BARIS INI:
+        $data['user_id'] = $data['user_id'] ?? $authUserId;
+
         // Validasi duplikat Aktif (boleh jika jadwal ini sendiri)
         if ($isAktif) {
             $duplicate = \App\Models\JadwalKerja::where('user_id', $data['user_id'])
