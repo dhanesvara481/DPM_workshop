@@ -80,9 +80,13 @@
       $items = collect($jadwalKerjas ?? [])->map(fn($j) => [
         'id'     => $j->jadwal_id,
         'type'   => 'event',
-        'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
+        'title'  => strtolower($j->status) === 'tutup'
+                        ? 'Hari Libur'
+                        : (($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf')),
         'status' => strtolower($j->status),
-        'time'   => substr($j->jam_mulai, 0, 5) . ' - ' . substr($j->jam_selesai, 0, 5),
+        'time'   => strtolower($j->status) === 'tutup'
+                        ? null
+                        : (substr($j->jam_mulai ?? '', 0, 5) . ' - ' . substr($j->jam_selesai ?? '', 0, 5)),
         'desc'   => $j->deskripsi,
       ])->toArray();
 

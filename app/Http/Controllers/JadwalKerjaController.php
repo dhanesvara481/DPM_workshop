@@ -21,12 +21,12 @@ class JadwalKerjaController extends Controller
         $events = [];
 
         foreach ($rawEvents as $j) {
-            $key = $j->tanggal_kerja->format('Y-m-d');
+            $key     = $j->tanggal_kerja->format('Y-m-d');
             $isTutup = strtolower($j->status) === 'tutup';
 
             $events[$key][] = [
                 'id'     => $j->jadwal_id,
-                'title'  => ($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf'),
+                'title'  => $isTutup ? 'Hari Libur' : (($j->waktu_shift ?? 'Jadwal') . ' - ' . ($j->user->username ?? 'Staf')),
                 'status' => strtolower($j->status),
                 'time'   => $isTutup ? null : (substr($j->jam_mulai ?? '', 0, 5) . ' - ' . substr($j->jam_selesai ?? '', 0, 5)),
                 'desc'   => $j->deskripsi,
@@ -121,11 +121,10 @@ class JadwalKerjaController extends Controller
             $agendas = $jadwalInput[$key];
             if (!is_array($agendas) || empty($agendas)) continue;
 
-            // Track user_id Aktif yang sudah muncul di hari ini (1 user = 1 Aktif/hari)
             $seenAktifUsers = [];
 
             foreach ($agendas as $i => $item) {
-                $status  = $item['status'] ?? '';
+                $status    = $item['status'] ?? '';
                 $isTutup   = $status === 'Tutup';
                 $isCatatan = $status === 'Catatan';
                 $isAktif   = $status === 'Aktif';
@@ -133,7 +132,6 @@ class JadwalKerjaController extends Controller
                 $prefix    = "jadwal.{$key}.{$i}";
                 $itemErrors = [];
 
-                // ── Validasi field wajib ──────────────────────────────────
                 if (empty($item['tanggal_kerja'])) {
                     $itemErrors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk {$label}.";
                 }
@@ -141,7 +139,6 @@ class JadwalKerjaController extends Controller
                     $itemErrors["{$prefix}.status"] = "Status wajib dipilih untuk {$label}.";
                 }
 
-                // Catatan & Tutup: user di-force ke auth()->id() di sini (tidak perlu dari form)
                 if ($isAktif) {
                     if (empty($item['user_id'])) {
                         $itemErrors["{$prefix}.user_id"] = "Nama wajib dipilih untuk {$label}.";
@@ -162,7 +159,6 @@ class JadwalKerjaController extends Controller
                     }
                 }
 
-                // ── Validasi user exists & aktif (hanya untuk Aktif) ─────
                 if ($isAktif && !empty($item['user_id'])) {
                     $userExists = \App\Models\User::aktif()
                         ->where('user_id', $item['user_id'])
@@ -172,9 +168,7 @@ class JadwalKerjaController extends Controller
                     }
                 }
 
-                // ── Duplikat: hanya cek untuk status Aktif ───────────────
                 if ($isAktif && empty($itemErrors) && !empty($item['user_id'])) {
-                    // Cek duplikat dalam input yang sama
                     if (isset($seenAktifUsers[$item['user_id']])) {
                         $itemErrors["{$prefix}.user_id"] =
                             "User sudah ada di {$seenAktifUsers[$item['user_id']]}. Satu user hanya boleh 1 shift Aktif per hari.";
@@ -182,7 +176,6 @@ class JadwalKerjaController extends Controller
                         $seenAktifUsers[$item['user_id']] = $label;
                     }
 
-                    // Cek duplikat di DB (hanya Aktif)
                     if (empty($itemErrors)) {
                         $alreadyExists = \App\Models\JadwalKerja::where('user_id', $item['user_id'])
                             ->whereDate('tanggal_kerja', $item['tanggal_kerja'])
@@ -213,7 +206,7 @@ class JadwalKerjaController extends Controller
                 ->withErrors($errors);
         }
 
-        $saved = 0;
+        $saved      = 0;
         $authUserId = auth()->id();
 
         foreach ($toSave as $entry) {
@@ -223,9 +216,9 @@ class JadwalKerjaController extends Controller
             $isCatatan = $status === 'Catatan';
             $tanggal   = $item['tanggal_kerja'];
 
-            // Tutup: simpan langsung, jadwal lain tidak dihapus (hanya disembunyikan di display)
             \App\Models\JadwalKerja::create([
-                'user_id'       => ($isTutup || $isCatatan) ? $authUserId : $item['user_id'],
+                // FIX: Tutup → null, Catatan → authUser, Aktif → pilihan user
+                'user_id'       => $isTutup ? null : ($isCatatan ? $authUserId : $item['user_id']),
                 'tanggal_kerja' => $tanggal,
                 'waktu_shift'   => $isTutup ? null : ($item['waktu_shift'] ?? null),
                 'jam_mulai'     => $isTutup ? null : ($item['jam_mulai']   ?? null),
@@ -234,8 +227,6 @@ class JadwalKerjaController extends Controller
                 'status'        => $status,
             ]);
             $saved++;
-
-
         }
 
         return redirect()->route('kelola_jadwal_kerja')
@@ -264,10 +255,10 @@ class JadwalKerjaController extends Controller
 
     public function perbaruiJadwalKerja(Request $request, $id)
     {
-        $jadwal    = JadwalKerja::findOrFail($id);
-        $isTutup   = $request->status === 'Tutup';
-        $isCatatan = $request->status === 'Catatan';
-        $isAktif   = $request->status === 'Aktif';
+        $jadwal     = JadwalKerja::findOrFail($id);
+        $isTutup    = $request->status === 'Tutup';
+        $isCatatan  = $request->status === 'Catatan';
+        $isAktif    = $request->status === 'Aktif';
         $authUserId = auth()->id();
 
         $messages = [
@@ -279,8 +270,6 @@ class JadwalKerjaController extends Controller
             'jam_selesai.after'    => 'Jam selesai harus lebih besar dari jam mulai.',
         ];
 
-        // User hanya wajib divalidasi dari form untuk status Aktif
-        // Catatan & Tutup: user di-force ke auth()->id()
         $data = $request->validate([
             'tanggal_kerja' => 'required|date',
             'user_id'       => $isAktif ? 'required|exists:user,user_id' : 'nullable',
@@ -291,10 +280,7 @@ class JadwalKerjaController extends Controller
             'status'        => 'required|in:Aktif,Catatan,Tutup',
         ], $messages);
 
-        // ← TAMBAH BARIS INI:
-        $data['user_id'] = $data['user_id'] ?? $authUserId;
-
-        // Validasi duplikat Aktif (boleh jika jadwal ini sendiri)
+        // Validasi duplikat hanya untuk Aktif
         if ($isAktif) {
             $duplicate = \App\Models\JadwalKerja::where('user_id', $data['user_id'])
                 ->whereDate('tanggal_kerja', $data['tanggal_kerja'])
@@ -308,18 +294,17 @@ class JadwalKerjaController extends Controller
             }
         }
 
-        // Force user untuk Catatan & Tutup
-        if ($isCatatan || $isTutup) {
-            $data['user_id'] = $authUserId;
-        }
-
-        // Tutup: jadwal lain TIDAK dihapus, hanya disembunyikan di display
-        // Bersihkan field yang tidak relevan
+        // FIX: Tutup → user_id null (tidak bentrok unique constraint)
+        //      Catatan → force ke admin yang login
+        //      Aktif → pakai pilihan dari form
         if ($isTutup) {
+            $data['user_id']    = null;
             $data['waktu_shift'] = null;
             $data['jam_mulai']   = null;
             $data['jam_selesai'] = null;
             $data['deskripsi']   = null;
+        } elseif ($isCatatan) {
+            $data['user_id'] = $authUserId;
         }
 
         $jadwal->update($data);

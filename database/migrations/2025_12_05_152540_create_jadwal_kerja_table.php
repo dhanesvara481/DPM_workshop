@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('jadwal_kerja', function (Blueprint $table) {
             $table->id('jadwal_id');
-            $table->foreignId('user_id')->constrained('user', 'user_id')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreign('user_id')->references('user_id')->on('user')->onDelete('set null');
 
-            // date (bukan datetime) — konsisten dengan model cast 'date' dan query whereDate()
             $table->date('tanggal_kerja');
 
             $table->enum('waktu_shift', ['Pagi', 'Siang', 'Sore', 'Malam'])->nullable();

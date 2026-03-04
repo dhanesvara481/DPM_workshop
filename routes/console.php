@@ -8,5 +8,5 @@ use Illuminate\Support\Facades\Schedule;
             ->timezone('Asia/Makassar');
 
     Schedule::command('jadwal:reminder-h1')
-            ->dailyAt('12:00')
+            ->dailyAt('01:05')
             ->timezone('Asia/Makassar');

@@ -554,6 +554,12 @@
 
     filterFields(capStatus);
 
+    // Kalau Tutup/Catatan, pastikan dropdown & hidden pakai authUser
+    if (st === 'tutup' || st === 'catatan') {
+      userSelect.value = AUTH_USER_ID;
+      document.getElementById('hiddenUserId') && (document.getElementById('hiddenUserId').value = AUTH_USER_ID);
+    }
+
     // Preview strip
     if (pvId)    pvId.textContent    = '#' + j.id;
     if (pvNama)  pvNama.textContent  = j.username || '—';
@@ -593,16 +599,35 @@
 
   // ─── Show/hide time & desc fields ────────────────────────────────────────
   function filterFields(statusValue) {
-    const isTutup = statusValue === 'Tutup';
+    const isTutup    = statusValue === 'Tutup';
+    const isRestrict = isTutup || statusValue === 'Catatan';
+
     [jamMulaiWrapper, jamSelesaiWrapper, shiftWrapper, descWrapper].forEach(el => {
       if (el) el.style.display = isTutup ? 'none' : '';
     });
     if (shiftSpacer) shiftSpacer.style.display = isTutup ? '' : 'none';
     if (isTutup) {
-      if (jamMulaiInput)   jamMulaiInput.value   = '';
-      if (jamSelesaiInput) jamSelesaiInput.value  = '';
-      if (shiftSelect)     shiftSelect.value      = '';
-      if (descInput)       descInput.value        = '';
+      if (jamMulaiInput)   jamMulaiInput.value  = '';
+      if (jamSelesaiInput) jamSelesaiInput.value = '';
+      if (shiftSelect)     shiftSelect.value     = '';
+      if (descInput)       descInput.value       = '';
+    }
+
+    // ── Fix: pastikan user_id selalu terkirim ──
+    document.getElementById('hiddenUserId')?.remove();
+    if (isRestrict) {
+      userSelect.value  = AUTH_USER_ID;  // ← tambah ini
+      userSelect.disabled = true;
+      userSelect.classList.add('is-locked');
+      const hidden  = document.createElement('input');
+      hidden.type   = 'hidden';
+      hidden.name   = 'user_id';
+      hidden.id     = 'hiddenUserId';
+      hidden.value  = AUTH_USER_ID;
+      userSelect.insertAdjacentElement('afterend', hidden);
+    } else {
+      userSelect.disabled = false;
+      userSelect.classList.remove('is-locked');
     }
   }
 
