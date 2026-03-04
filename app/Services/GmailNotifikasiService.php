@@ -27,9 +27,11 @@ class GmailNotifikasiService
 
         if ($kirim) {
             Notifikasi::create([
-                'jenis_notifikasi' => $jenisNotifikasi, // contoh: 'jadwal' / 'stok'
-                'judul_notif'      => $judulNotif,
-                'isi_pesan'        => substr($pesan, 0, 150),
+                'jenis_notifikasi' => $jenisNotifikasi,
+                // mb_substr agar tidak potong di tengah karakter multibyte/emoji
+                'judul_notif'      => mb_substr($judulNotif, 0, 100, 'UTF-8'),
+                // TEXT column — tidak perlu dipotong
+                'isi_pesan'        => $pesan,
                 'tanggal_dibuat'   => now(),
                 'tanggal_dikirim'  => now(),
             ]);
