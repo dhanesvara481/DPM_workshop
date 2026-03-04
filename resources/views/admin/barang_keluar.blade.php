@@ -75,7 +75,6 @@
               Pilih barang dari data yang sudah diinput di "Kelola Barang" untuk dicatat keluar.
             </p>
           </div>
-
           <span class="inline-flex self-start items-center rounded-full border border-slate-200 bg-slate-50
                       px-3 py-1 text-xs text-slate-600">
             Form Barang Keluar
@@ -83,12 +82,11 @@
         </div>
       </div>
 
-      {{--
-        ✅ action  => route('barang_keluar.store')  — POST /barang_keluar/store
-        ✅ field   => barang_id, qty_keluar, tanggal, keterangan
-        ✅ kolom DB => jumlah_keluar, tanggal_keluar, ref_invoice
-      --}}
-      <form id="formKeluar" action="{{ route('simpan_barang_keluar') }}" method="POST" class="px-6 py-6">
+      <form id="formKeluar"
+            action="{{ route('simpan_barang_keluar') }}"
+            method="POST"
+            enctype="multipart/form-data"
+            class="px-6 py-6">
         @csrf
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -134,8 +132,7 @@
                    value="{{ date('Y-m-d') }}"
                    readonly
                    class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm
-                          text-slate-500 cursor-not-allowed
-                          focus:outline-none transition">
+                          text-slate-500 cursor-not-allowed focus:outline-none transition">
             @error('tanggal')
               <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
@@ -187,6 +184,74 @@
             @error('keterangan')
               <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
+          </div>
+
+          {{-- Foto Bukti --}}
+          <div class="md:col-span-7">
+            <label class="block text-sm font-semibold text-slate-800 mb-2">
+              Foto Bukti
+            </label>
+
+            {{-- Drop zone --}}
+            <div id="dropZone"
+                 class="relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
+                        border-slate-200 bg-slate-50/60 px-4 py-5 text-center cursor-pointer
+                        hover:border-blue-900/30 hover:bg-blue-50/40 transition group
+                        {{ $errors->has('foto_bukti') ? 'border-red-300 bg-red-50/40' : '' }}">
+
+              {{-- Preview (hidden by default) --}}
+              <div id="previewWrap" class="hidden w-full">
+                <div class="relative inline-block">
+                  <img id="previewImg"
+                       src=""
+                       alt="Preview"
+                       class="mx-auto max-h-36 rounded-lg object-cover shadow-sm border border-slate-200">
+                  <button type="button" id="btnHapusFoto"
+                          class="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 hover:bg-red-600
+                                 text-white grid place-items-center shadow-md transition"
+                          aria-label="Hapus foto">
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <p id="previewName" class="mt-2 text-xs text-slate-500 truncate max-w-[200px] mx-auto"></p>
+              </div>
+
+              {{-- Placeholder (shown when no file) --}}
+              <div id="dropPlaceholder" class="flex flex-col items-center gap-2">
+                <div class="h-10 w-10 rounded-xl bg-white border border-slate-200 grid place-items-center
+                            group-hover:border-blue-900/20 transition shadow-sm">
+                  <svg class="h-5 w-5 text-slate-400 group-hover:text-blue-900/50 transition"
+                       fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159
+                             m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909
+                             M6.75 19.5h10.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0017.25
+                             4.5H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-slate-700">
+                    <span class="text-blue-900 underline underline-offset-2">Klik untuk upload</span>
+                    atau drag &amp; drop
+                  </p>
+                  <p class="text-xs text-slate-400 mt-0.5">JPG, PNG, WEBP · maks. 20 MB</p>
+                </div>
+              </div>
+
+              {{-- Input file tersembunyi --}}
+              <input type="file"
+                     name="foto_bukti"
+                     id="inputFotoBukti"
+                     accept="image/jpeg,image/png,image/webp"
+                     class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" required>
+            </div>
+
+            @error('foto_bukti')
+              <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+            <p class="mt-2 text-xs text-slate-500">Upload foto kondisi barang sebagai dokumentasi keluar.</p>
           </div>
 
         </div>
@@ -251,7 +316,7 @@
                               text-sm placeholder:text-slate-400
                               focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
               </div>
-            
+
               @if(request('search'))
                 <a href="{{ route('barang_keluar', array_filter(['sort' => request('sort'), 'dir' => request('dir')])) }}"
                    class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold
@@ -281,8 +346,8 @@
 
           <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
             <tr class="text-slate-600">
-              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide text-left w-[70px]">No</th>
-            
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide text-left w-[50px]">No</th>
+
               @foreach ($colsKeluar as $key => $col)
                 @php
                   $isActive = $sort === $key;
@@ -300,19 +365,59 @@
                   </a>
                 </th>
               @endforeach
+
+              {{-- Kolom Foto --}}
+              <th class="px-5 py-4 font-semibold text-xs uppercase tracking-wide text-center w-[80px]">Foto</th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
           @forelse($barangKeluar as $i => $k)
+            @php
+              $fotoUrl = $k->foto_bukti ? asset('storage/' . $k->foto_bukti) : null;
+            @endphp
             <tr class="row-lift hover:bg-slate-50/70 transition"
                 data-row-text="{{ strtolower(($k->kode_barang ?? '').' '.($k->nama_barang ?? '').' '.($k->keterangan ?? '')) }}">
               <td class="px-5 py-4 text-slate-600">{{ $barangKeluar->firstItem() + $loop->index }}</td>
-              <td class="px-5 py-4 text-slate-700">{{ $k->tanggal_keluar ?? '-' }}</td>
+              <td class="px-5 py-4 text-slate-700 whitespace-nowrap">{{ $k->tanggal_keluar ?? '-' }}</td>
               <td class="px-5 py-4 font-semibold text-slate-900">{{ $k->kode_barang ?? '-' }}</td>
               <td class="px-5 py-4 text-slate-700">{{ $k->nama_barang ?? '-' }}</td>
               <td class="px-5 py-4 text-slate-700">{{ $k->keterangan ?? '-' }}</td>
               <td class="px-5 py-4 text-right font-semibold text-slate-900">{{ $k->qty_keluar ?? 0 }}</td>
+
+              {{-- Foto Bukti --}}
+              <td class="px-5 py-4 text-center">
+                @if($fotoUrl)
+                  <button type="button"
+                          class="btn-lihat-foto group relative inline-block"
+                          data-src="{{ $fotoUrl }}"
+                          aria-label="Lihat foto bukti">
+                    <img src="{{ $fotoUrl }}"
+                         alt="Bukti"
+                         class="h-10 w-10 rounded-lg object-cover border border-slate-200
+                                shadow-sm group-hover:opacity-80 transition">
+                    <span class="absolute inset-0 rounded-lg bg-slate-900/0 group-hover:bg-slate-900/20
+                                 transition flex items-center justify-center">
+                      <svg class="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition"
+                           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M21 21l-4.3-4.3M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+                      </svg>
+                    </span>
+                  </button>
+                @else
+                  <span class="inline-flex items-center justify-center h-10 w-10 rounded-lg
+                               border border-dashed border-slate-200 bg-slate-50">
+                    <svg class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159
+                               m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909
+                               M6.75 19.5h10.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0017.25
+                               4.5H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z"/>
+                    </svg>
+                  </span>
+                @endif
+              </td>
             </tr>
           @empty
             @for($r = 1; $r <= 3; $r++)
@@ -323,12 +428,15 @@
                 <td class="px-5 py-5"><div class="h-4 w-52 rounded bg-slate-100"></div></td>
                 <td class="px-5 py-5"><div class="h-4 w-40 rounded bg-slate-100"></div></td>
                 <td class="px-5 py-5 text-right"><div class="h-4 w-16 ml-auto rounded bg-slate-100"></div></td>
+                <td class="px-5 py-5"><div class="h-10 w-10 rounded-lg bg-slate-100 mx-auto"></div></td>
               </tr>
             @endfor
           @endforelse
           </tbody>
         </table>
       </div>
+
+      {{-- PAGINATION --}}
       @if ($barangKeluar->hasPages())
         <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-4 flex-wrap">
           <p class="text-xs text-slate-500">
@@ -345,7 +453,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
               </a>
             @endif
-            
+
             @foreach ($barangKeluar->getUrlRange(max(1, $barangKeluar->currentPage()-2), min($barangKeluar->lastPage(), $barangKeluar->currentPage()+2)) as $page => $url)
               @if ($page == $barangKeluar->currentPage())
                 <span class="h-9 w-9 grid place-items-center rounded-lg bg-blue-950 text-white text-xs font-semibold">{{ $page }}</span>
@@ -353,7 +461,7 @@
                 <a href="{{ $url }}" class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition">{{ $page }}</a>
               @endif
             @endforeach
-            
+
             @if ($barangKeluar->hasMorePages())
               <a href="{{ $barangKeluar->nextPageUrl() }}" class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -374,6 +482,43 @@
 
   </div>
 </section>
+
+{{-- ===== LIGHTBOX MODAL ===== --}}
+<div id="lightbox"
+     class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4"
+     role="dialog" aria-modal="true" aria-label="Lihat foto bukti">
+
+  <div class="relative max-w-3xl w-full">
+    {{-- Close --}}
+    <button id="btnCloseLightbox"
+            type="button"
+            class="absolute -top-12 right-0 h-10 w-10 rounded-xl bg-white/10 hover:bg-white/20
+                   text-white grid place-items-center transition"
+            aria-label="Tutup">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <img id="lightboxImg"
+         src=""
+         alt="Foto bukti barang keluar"
+         class="w-full max-h-[80vh] object-contain rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.5)]">
+
+    {{-- Download --}}
+    <a id="lightboxDownload"
+       href=""
+       download
+       target="_blank"
+       class="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/20
+              text-white text-sm font-medium px-4 py-2.5 transition">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Unduh Foto
+    </a>
+  </div>
+</div>
 
 {{-- Toast --}}
 <div id="toast"
@@ -434,10 +579,6 @@
   }
   .tip:hover::after { opacity: 1; transform: translate(50%, 0); }
 
-  /* clear btn */
-  .clear-btn { opacity: 0; pointer-events: none; transform: scale(.9); transition: .15s ease; }
-  .clear-btn.show { opacity: 1; pointer-events: auto; transform: scale(1); }
-
   /* shake */
   @keyframes shake {
     0%   { transform: translateX(0) }
@@ -447,6 +588,16 @@
     100% { transform: translateX(0) }
   }
   .shake { animation: shake .28s ease; }
+
+  /* lightbox fade */
+  #lightbox { transition: opacity .2s ease; }
+  #lightbox.show { display: flex !important; }
+
+  /* drop zone drag-over */
+  #dropZone.drag-over {
+    border-color: rgb(30 58 138 / 0.4);
+    background-color: rgb(239 246 255 / 0.6);
+  }
 </style>
 @endpush
 
@@ -471,7 +622,6 @@
   };
   toastClose?.addEventListener('click', () => toastEl.classList.add('hidden'));
 
-  // Auto-show toast dari session Laravel
   @if(session('success'))
     showToast('Berhasil', @json(session('success')), 'success');
   @endif
@@ -520,16 +670,16 @@
   }
 
   // ===== Elements =====
-  const form        = document.getElementById('formKeluar');
-  const kodeSelect  = document.getElementById('kodeBarangSelect');
-  const namaBarang  = document.getElementById('namaBarang');
-  const satuanBarang= document.getElementById('satuanBarang');
-  const stokTersedia= document.getElementById('stokTersedia');
-  const qtyInput    = document.getElementById('qtyKeluar');
-  const btnReset    = document.getElementById('btnResetKeluar');
-  const btnKembali  = document.getElementById('btnKembaliKeluar');
+  const form         = document.getElementById('formKeluar');
+  const kodeSelect   = document.getElementById('kodeBarangSelect');
+  const namaBarang   = document.getElementById('namaBarang');
+  const satuanBarang = document.getElementById('satuanBarang');
+  const stokTersedia = document.getElementById('stokTersedia');
+  const qtyInput     = document.getElementById('qtyKeluar');
+  const btnReset     = document.getElementById('btnResetKeluar');
+  const btnKembali   = document.getElementById('btnKembaliKeluar');
 
-  // ===== Sync field otomatis dari select barang =====
+  // ===== Barang select sync =====
   const getStokSelected = () => {
     const opt = kodeSelect?.options?.[kodeSelect.selectedIndex];
     return parseInt(opt?.dataset?.stok || '0', 10) || 0;
@@ -556,29 +706,133 @@
   kodeSelect?.addEventListener('change', syncBarangFields);
   syncBarangFields();
 
+  // ===== Foto Bukti: preview & drag-drop =====
+  const inputFoto      = document.getElementById('inputFotoBukti');
+  const dropZone       = document.getElementById('dropZone');
+  const previewWrap    = document.getElementById('previewWrap');
+  const previewImg     = document.getElementById('previewImg');
+  const previewName    = document.getElementById('previewName');
+  const dropPlaceholder= document.getElementById('dropPlaceholder');
+  const btnHapusFoto   = document.getElementById('btnHapusFoto');
+
+  const MAX_SIZE_MB    = 2;
+  const ALLOWED_TYPES  = ['image/jpeg', 'image/png', 'image/webp'];
+
+  const showPreview = (file) => {
+    if (!file) return;
+
+    // Validasi tipe
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showToast('Gagal', 'Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.', 'error');
+      clearFoto();
+      return;
+    }
+
+    // Validasi ukuran
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      showToast('Gagal', `Ukuran file terlalu besar. Maksimal ${MAX_SIZE_MB} MB.`, 'error');
+      clearFoto();
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImg.src      = e.target.result;
+      previewName.textContent = file.name;
+      previewWrap?.classList.remove('hidden');
+      dropPlaceholder?.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearFoto = () => {
+    if (inputFoto) inputFoto.value = '';
+    if (previewImg)  previewImg.src = '';
+    if (previewName) previewName.textContent = '';
+    previewWrap?.classList.add('hidden');
+    dropPlaceholder?.classList.remove('hidden');
+  };
+
+  inputFoto?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) showPreview(file);
+    else clearFoto();
+  });
+
+  btnHapusFoto?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearFoto();
+  });
+
+  // Drag & drop
+  dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+
+  dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+  });
+
+  dropZone?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    // Inject file ke input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    inputFoto.files = dt.files;
+    showPreview(file);
+  });
+
+  // ===== Lightbox =====
+  const lightbox         = document.getElementById('lightbox');
+  const lightboxImg      = document.getElementById('lightboxImg');
+  const lightboxDownload = document.getElementById('lightboxDownload');
+  const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+
+  const openLightbox = (src) => {
+    lightboxImg.src         = src;
+    lightboxDownload.href   = src;
+    lightbox.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeLightbox = () => {
+    lightbox.classList.remove('show');
+    document.body.style.overflow = '';
+    setTimeout(() => { lightboxImg.src = ''; }, 200);
+  };
+
+  document.querySelectorAll('.btn-lihat-foto').forEach(btn => {
+    btn.addEventListener('click', () => openLightbox(btn.dataset.src));
+  });
+
+  btnCloseLightbox?.addEventListener('click', closeLightbox);
+  lightbox?.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox?.classList.contains('show')) closeLightbox();
+  });
+
   // ===== Search table =====
   const inputKeluar = document.getElementById('searchKeluar');
-  const btnClear    = document.getElementById('btnClearSearchKeluar');
 
   const applySearch = () => {
     const q = (inputKeluar?.value || '').trim().toLowerCase();
     document.querySelectorAll('#tableKeluar tbody tr[data-row-text]').forEach(tr => {
       tr.classList.toggle('hidden', !!q && !tr.dataset.rowText.includes(q));
     });
-    btnClear?.classList.toggle('show', !!q);
   };
 
   inputKeluar?.addEventListener('input', applySearch);
-  btnClear?.addEventListener('click', () => {
-    inputKeluar.value = '';
-    inputKeluar.focus();
-    applySearch();
-  });
   applySearch();
 
   // ===== Dirty guard =====
   let isDirty = false;
-  form?.querySelectorAll('input, select, textarea').forEach(el => {
+  form?.querySelectorAll('input:not([readonly]), select, textarea').forEach(el => {
     el.addEventListener('input',  () => { isDirty = true; });
     el.addEventListener('change', () => { isDirty = true; });
   });
@@ -591,6 +845,7 @@
       form.reset();
       const dateInput = form.querySelector('input[name="tanggal"]');
       if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+      clearFoto();
       syncBarangFields();
       isDirty = false;
       showToast('Reset', 'Form dikosongkan.', 'success');
@@ -624,9 +879,9 @@
     });
   });
 
-  // ── Submit (validasi client + confirm modal) ──────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────────────────
   form?.addEventListener('submit', e => {
-    if (form.dataset.confirmed === "1") return; // lolos — sudah konfirmasi
+    if (form.dataset.confirmed === "1") return;
     e.preventDefault();
 
     const barangId = kodeSelect?.value || '';
@@ -661,12 +916,16 @@
       return;
     }
 
+    const adaFoto = inputFoto?.files?.length > 0;
+
     showConfirmModal({
       title:       "Simpan transaksi keluar?",
       message:     "Stok barang akan berkurang sesuai jumlah keluar.",
       confirmText: "Ya, Simpan",
       cancelText:  "Batal",
-      note:        "Cek lagi kode barang, tanggal, jumlah keluar, dan keterangan sebelum menyimpan.",
+      note:        adaFoto
+        ? "Foto bukti akan disimpan bersama transaksi ini."
+        : "Tidak ada foto bukti yang dilampirkan.",
       onConfirm:   () => {
         form.dataset.confirmed = "1";
         isDirty = false;
@@ -674,12 +933,12 @@
       },
     });
   });
-</script>
-<script>
-document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
+
+  // Prevent date input manipulation
+  document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
     el.addEventListener('keydown', e => e.preventDefault());
     el.addEventListener('mousedown', e => e.preventDefault());
-});
+  });
 </script>
 @endpush
 
