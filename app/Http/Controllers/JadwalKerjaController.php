@@ -46,24 +46,22 @@ class JadwalKerjaController extends Controller
     {
         $users = User::aktif()->orderBy('username')->get(['user_id', 'username', 'role']);
 
-        // Hitung existing jadwal per tanggal untuk minggu yang dipilih
-        // Default: minggu sekarang (Senin s/d Minggu)
-        $weekParam = $request->query('week'); // format: "2026-W10"
-        
-        if ($weekParam && preg_match('/^(\d{4})-W(\d{2})$/', $weekParam, $m)) {
-            $year = (int) $m[1];
-            $week = (int) $m[2];
+        $weekParam = $request->query('week');
+
+        if ($weekParam && preg_match('/^(\\d{4})-W(\\d{2})$/', $weekParam, $m)) {
+            $year   = (int) $m[1];
+            $week   = (int) $m[2];
             $monday = new \DateTime();
             $monday->setISODate($year, $week, 1);
         } else {
             $monday = new \DateTime();
             $monday->modify('monday this week');
+            $weekParam = $monday->format("Y-\\WW");
         }
 
         $sunday = clone $monday;
         $sunday->modify('+6 days');
 
-        // Ambil semua jadwal dalam rentang minggu ini, group by tanggal
         $existingRaw = \App\Models\JadwalKerja::whereBetween('tanggal_kerja', [
                 $monday->format('Y-m-d'),
                 $sunday->format('Y-m-d'),
@@ -72,7 +70,6 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get(['jadwal_id', 'user_id', 'tanggal_kerja', 'waktu_shift', 'jam_mulai', 'jam_selesai', 'status', 'deskripsi']);
 
-        // Format: ['2026-03-02' => [ {jadwal data}, ... ], ...]
         $existingByDate = [];
         foreach ($existingRaw as $j) {
             $dateKey = $j->tanggal_kerja->format('Y-m-d');
@@ -80,22 +77,27 @@ class JadwalKerjaController extends Controller
                 'jadwal_id'   => $j->jadwal_id,
                 'user_id'     => $j->user_id,
                 'waktu_shift' => $j->waktu_shift,
-                'jam_mulai'   => $j->jam_mulai ? substr($j->jam_mulai, 0, 5) : '',
+                'jam_mulai'   => $j->jam_mulai   ? substr($j->jam_mulai,   0, 5) : '',
                 'jam_selesai' => $j->jam_selesai ? substr($j->jam_selesai, 0, 5) : '',
                 'status'      => $j->status,
                 'deskripsi'   => $j->deskripsi ?? '',
             ];
         }
 
+        // AJAX request (dari week picker JS) — kembalikan JSON saja
+        if ($request->ajax()) {
+            return response()->json(['existingByDate' => $existingByDate]);
+        }
+
         return view('admin.jadwal_kerja.tambah_jadwal_kerja', [
             'users'          => $users,
             'authUser'       => auth()->user(),
-            'existingByDate' => $existingByDate, // data existing per tanggal
-            'weekParam'      => $weekParam ?? $monday->format("Y-\WW"),
+            'existingByDate' => $existingByDate,
+            'weekParam'      => $weekParam,
         ]);
     }
 
-   public function simpanJadwalKerja(Request $request)
+  public function simpanJadwalKerja(Request $request)
     {
         $jadwalInput = $request->input('jadwal', []);
 
@@ -121,72 +123,79 @@ class JadwalKerjaController extends Controller
             $agendas = $jadwalInput[$key];
             if (!is_array($agendas) || empty($agendas)) continue;
 
-            // ── Cek duplikat dalam input hari ini (user + jam sama) ──────────
-            // sekaligus cek duplikat dengan data yang sudah ada di DB
-            $seenInInput = []; // "user_id|jam_mulai|tanggal" => label
+            // Track user_id yang sudah muncul di hari ini (1 user = 1 agenda/hari)
+            $seenUsers = []; // user_id => label
 
             foreach ($agendas as $i => $item) {
-                $isTutup = ($item['status'] ?? '') === 'Tutup';
-                $label   = $dayLabel[$key] . ' agenda ke-' . ($i + 1);
-                $prefix  = "jadwal.{$key}.{$i}";
+                $isTutup      = ($item['status'] ?? '') === 'Tutup';
+                $label        = $dayLabel[$key] . ' agenda ke-' . ($i + 1);
+                $prefix       = "jadwal.{$key}.{$i}";
+                $itemErrors   = []; // error khusus item ini
 
-                // ── Validasi field wajib ──────────────────────────────────────
+                // ── Validasi field wajib ──────────────────────────────────────────
                 if (empty($item['user_id'])) {
-                    $errors["{$prefix}.user_id"] = "Nama wajib dipilih untuk {$label}.";
+                    $itemErrors["{$prefix}.user_id"] = "Nama wajib dipilih untuk {$label}.";
                 }
                 if (empty($item['tanggal_kerja'])) {
-                    $errors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk {$label}.";
+                    $itemErrors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk {$label}.";
                 }
                 if (empty($item['status'])) {
-                    $errors["{$prefix}.status"] = "Status wajib dipilih untuk {$label}.";
+                    $itemErrors["{$prefix}.status"] = "Status wajib dipilih untuk {$label}.";
                 }
+
                 if (!$isTutup) {
                     if (empty($item['waktu_shift'])) {
-                        $errors["{$prefix}.waktu_shift"] = "Waktu shift wajib diisi untuk {$label}.";
+                        $itemErrors["{$prefix}.waktu_shift"] = "Waktu shift wajib diisi untuk {$label}.";
                     }
                     if (empty($item['jam_mulai'])) {
-                        $errors["{$prefix}.jam_mulai"] = "Jam mulai wajib diisi untuk {$label}.";
+                        $itemErrors["{$prefix}.jam_mulai"] = "Jam mulai wajib diisi untuk {$label}.";
                     }
                     if (empty($item['jam_selesai'])) {
-                        $errors["{$prefix}.jam_selesai"] = "Jam selesai wajib diisi untuk {$label}.";
+                        $itemErrors["{$prefix}.jam_selesai"] = "Jam selesai wajib diisi untuk {$label}.";
                     }
                     if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
                         if ($item['jam_selesai'] <= $item['jam_mulai']) {
-                            $errors["{$prefix}.jam_selesai"] = "Jam selesai harus setelah jam mulai untuk {$label}.";
+                            $itemErrors["{$prefix}.jam_selesai"] = "Jam selesai harus setelah jam mulai untuk {$label}.";
                         }
                     }
                 }
 
-                // ── Validasi user exists & aktif ──────────────────────────────
+                // ── Validasi user exists & aktif ──────────────────────────────────
                 if (!empty($item['user_id'])) {
                     $userExists = \App\Models\User::aktif()
                         ->where('user_id', $item['user_id'])
                         ->exists();
                     if (!$userExists) {
-                        $errors["{$prefix}.user_id"] = "User tidak valid atau tidak aktif untuk {$label}.";
+                        $itemErrors["{$prefix}.user_id"] = "User tidak valid atau tidak aktif untuk {$label}.";
                     }
                 }
 
-                // ── Cek duplikat antar agenda dalam input ini ─────────────────
-                if (!$isTutup && !empty($item['user_id']) && !empty($item['jam_mulai']) && !empty($item['tanggal_kerja'])) {
-                    $dupKey = $item['user_id'] . '|' . $item['jam_mulai'] . '|' . $item['tanggal_kerja'];
-                    if (isset($seenInInput[$dupKey])) {
-                        $errors["{$prefix}.user_id"] = "Duplikat: {$label} punya user & jam mulai yang sama dengan {$seenInInput[$dupKey]}.";
+                // ── 1 user = 1 agenda per hari (cek dalam input) ─────────────────
+                if (!empty($item['user_id'])) {
+                    if (isset($seenUsers[$item['user_id']])) {
+                        $itemErrors["{$prefix}.user_id"] =
+                            "User sudah ada di {$seenUsers[$item['user_id']]}. Satu user hanya boleh 1 agenda per hari.";
                     } else {
-                        $seenInInput[$dupKey] = $label;
+                        $seenUsers[$item['user_id']] = $label;
                     }
+                }
 
-                    // ── Cek duplikat dengan data yang sudah ada di DB ─────────
+                // ── 1 user = 1 agenda per hari (cek DB) ──────────────────────────
+                if (empty($itemErrors) && !empty($item['user_id']) && !empty($item['tanggal_kerja'])) {
                     $alreadyExists = \App\Models\JadwalKerja::where('user_id', $item['user_id'])
-                        ->where('tanggal_kerja', $item['tanggal_kerja'])
-                        ->where('jam_mulai', $item['jam_mulai'])
+                        ->whereDate('tanggal_kerja', $item['tanggal_kerja'])
                         ->exists();
                     if ($alreadyExists) {
-                        $errors["{$prefix}.user_id"] = "Jadwal untuk user ini dengan jam mulai yang sama di tanggal tersebut sudah ada ({$label}).";
+                        $itemErrors["{$prefix}.user_id"] =
+                            "Jadwal untuk user ini di tanggal tersebut sudah ada ({$label}).";
                     }
                 }
 
-                if (empty($errors)) {
+                // ── Kumpulkan error & toSave secara independen per item ───────────
+                // BUG FIX: dulu pakai `empty($errors)` global — sekarang per-item
+                if (!empty($itemErrors)) {
+                    $errors = array_merge($errors, $itemErrors);
+                } else {
                     $toSave[] = [
                         'day'  => $key,
                         'idx'  => $i,
@@ -196,32 +205,32 @@ class JadwalKerjaController extends Controller
             }
         }
 
-        if (!empty($errors)) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors($errors);
-        }
+            if (!empty($errors)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors($errors);
+            }
 
-        // ── Simpan semua record ───────────────────────────────────────────────────
-        foreach ($toSave as $entry) {
-            $item    = $entry['item'];
-            $isTutup = ($item['status'] ?? '') === 'Tutup';
+            // ── Simpan semua record ───────────────────────────────────────────────────
+            $saved = 0;
+            foreach ($toSave as $entry) {
+                $item    = $entry['item'];
+                $isTutup = ($item['status'] ?? '') === 'Tutup';
 
-            \App\Models\JadwalKerja::create([
-                'user_id'       => $item['user_id'],
-                'tanggal_kerja' => $item['tanggal_kerja'],
-                'waktu_shift'   => $isTutup ? null : ($item['waktu_shift'] ?? null),
-                'jam_mulai'     => $isTutup ? null : ($item['jam_mulai']   ?? null),
-                'jam_selesai'   => $isTutup ? null : ($item['jam_selesai'] ?? null),
-                'deskripsi'     => $isTutup ? null : ($item['deskripsi']   ?? null),
-                'status'        => $item['status'],
-            ]);
-        }
+                \App\Models\JadwalKerja::create([
+                    'user_id'       => $item['user_id'],
+                    'tanggal_kerja' => $item['tanggal_kerja'],
+                    'waktu_shift'   => $isTutup ? null : ($item['waktu_shift'] ?? null),
+                    'jam_mulai'     => $isTutup ? null : ($item['jam_mulai']   ?? null),
+                    'jam_selesai'   => $isTutup ? null : ($item['jam_selesai'] ?? null),
+                    'deskripsi'     => $isTutup ? null : ($item['deskripsi']   ?? null),
+                    'status'        => $item['status'],
+                ]);
+                $saved++;
+            }
 
-        $count = count($toSave);
-
-        return redirect()->route('kelola_jadwal_kerja')
-            ->with('success', "{$count} agenda jadwal berhasil ditambahkan.");
+            return redirect()->route('kelola_jadwal_kerja')
+                ->with('success', "{$saved} agenda jadwal berhasil ditambahkan.");
     }
 
     // ─── Ubah ────────────────────────────────────────────────────────────────

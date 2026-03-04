@@ -284,6 +284,12 @@
   /* Validation errors */
   .v-error-field { border-color: #f43f5e !important; background: #fff5f5 !important; }
   .bubble-error  { outline: 2px solid #f43f5e !important; animation: bubbleShake .3s ease; }
+
+  /* Disabled day cards */
+  .day-disabled-tutup { cursor: not-allowed !important; pointer-events: none; }
+  .day-disabled-tutup .day-check-card { opacity: 0.6; }
+  .day-disabled-full  { cursor: not-allowed !important; pointer-events: none; }
+  .day-disabled-full  .day-check-card { opacity: 0.65; }
   @keyframes bubbleShake {
     0%,100% { transform: translateX(0); }
     25%      { transform: translateX(-4px); }
@@ -369,23 +375,77 @@ function updateWeekUI() {
       numEl.textContent = pad2(d.getDate());
     }
 
-    // Tampilkan existing count dari DB di bawah hari (sebelum dicentang)
+    // Tampilkan existing count dari DB + disable hari yang TUTUP atau penuh
     const dateKey    = getDateForDay(key);
     const existing   = EXISTING_BY_DATE[dateKey] || [];
     const exCount    = existing.length;
+    const exHasTutup = existing.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+    const exIsFull   = exCount >= MAX_PER_DAY;
     const countEl    = document.getElementById('agendaCount_' + key);
-    if (countEl && !document.getElementById('check_'+key)?.checked) {
+    const cb         = document.getElementById('check_' + key);
+    const card       = document.querySelector(`label[data-day="${key}"] .day-check-card`);
+
+    if (countEl && !cb?.checked) {
       if (exCount > 0) {
-        const isFull = exCount >= MAX_PER_DAY;
-        countEl.textContent  = isFull ? `${exCount}/${MAX_PER_DAY} penuh` : `${exCount}/${MAX_PER_DAY}`;
-        countEl.style.color  = isFull ? '#f59e0b' : '#94a3b8';
+        countEl.textContent = exHasTutup ? 'TUTUP' : (exIsFull ? `${exCount}/${MAX_PER_DAY} penuh` : `${exCount}/${MAX_PER_DAY}`);
+        countEl.style.color = exHasTutup ? '#f43f5e' : (exIsFull ? '#f59e0b' : '#94a3b8');
       } else {
         countEl.textContent = '';
       }
     }
+
+    // Disable + style kartu hari kalau TUTUP atau penuh
+    if (cb) {
+      const label = document.querySelector(`label[data-day="${key}"]`);
+      if (exHasTutup) {
+        cb.disabled = true;
+        if (label) {
+          label.classList.add('day-disabled-tutup');
+          label.classList.remove('cursor-pointer');
+        }
+        if (card) {
+          card.classList.add('!border-rose-200', '!bg-rose-50');
+        }
+        // Paksa uncheck kalau sudah terlanjur dicentang
+        if (cb.checked) { cb.checked = false; onDayCheck(key, false); }
+      } else if (exIsFull) {
+        cb.disabled = true;
+        if (label) label.classList.add('day-disabled-full');
+        if (card) card.classList.add('!border-amber-200', '!bg-amber-50/50');
+        if (cb.checked) { cb.checked = false; onDayCheck(key, false); }
+      } else {
+        cb.disabled = false;
+        if (label) {
+          label.classList.remove('day-disabled-tutup', 'day-disabled-full');
+          label.classList.add('cursor-pointer');
+        }
+        if (card) card.classList.remove('!border-rose-200', '!bg-rose-50', '!border-amber-200', '!bg-amber-50/50');
+      }
+    }
   });
 }
-weekPicker.addEventListener('change', updateWeekUI);
+weekPicker.addEventListener('change', () => {
+  // Fetch existing data untuk minggu baru via AJAX, lalu update UI
+  const week = weekPicker.value;
+  if (!week) { updateWeekUI(); return; }
+  fetch(`${window.location.pathname}?week=${encodeURIComponent(week)}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+  })
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(json => {
+    // Update EXISTING_BY_DATE global dengan data terbaru
+    Object.keys(EXISTING_BY_DATE).forEach(k => delete EXISTING_BY_DATE[k]);
+    Object.assign(EXISTING_BY_DATE, json.existingByDate || {});
+
+    // Reset semua hari yang sudah dibuka (data lama tidak relevan)
+    DAY_KEYS.forEach(k => {
+      const cb = document.getElementById('check_'+k);
+      if (cb?.checked) { cb.checked = false; onDayCheck(k, false); }
+    });
+    updateWeekUI();
+  })
+  .catch(() => updateWeekUI()); // fallback kalau fetch gagal
+});
 updateWeekUI();
 
 // ══════════════════════════════════════════════════════
@@ -481,13 +541,26 @@ function renderDayBlock(key) {
     jadwal_id:   ag.jadwal_id,
   }));
 
-  if (existingCount >= MAX_PER_DAY) {
-    // Hari sudah penuh dari DB — tampilkan bubble saja, tanpa form tambah
+  const existingHasTutup = window._agendaData[key].some(ag => (ag.status||'').toLowerCase() === 'tutup');
+
+  if (existingHasTutup || existingCount >= MAX_PER_DAY) {
+    // Hari TUTUP atau penuh — tampilkan bubble read-only saja, no tambah
     window._activeSlot[key] = 0;
     renderBubbleRow(key);
     renderActiveForm(key, 0);
     updateAgendaCount(key);
     updateSubmitSection();
+
+    if (existingHasTutup) {
+      // Kasih tanda visual di header hari
+      const lbl = document.getElementById('formDateLabel_' + key);
+      if (lbl) {
+        const badge = document.createElement('span');
+        badge.className = 'ml-2 text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full';
+        badge.textContent = 'TUTUP';
+        lbl.appendChild(badge);
+      }
+    }
   } else {
     // Masih ada slot — tambah 1 agenda baru kosong
     window._activeSlot[key] = existingCount > 0 ? existingCount : 0;
@@ -542,9 +615,10 @@ function renderBubbleRow(key) {
     row.appendChild(pill);
   });
 
-  // Tombol + hanya tampil kalau belum maks DAN ada slot baru (non-DB)
-  const newSlots = data.filter(ag => !ag.fromDB).length;
-  if (!maxed) {
+  // Tombol + hanya tampil kalau belum maks DAN tidak ada agenda Tutup
+  const newSlots    = data.filter(ag => !ag.fromDB).length;
+  const hasTutupAny = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  if (!maxed && !hasTutupAny) {
     const addPill = document.createElement('button');
     addPill.type      = 'button';
     addPill.id        = 'addBubbleBtn_' + key;
@@ -719,11 +793,35 @@ function renderHiddenInputs(key, activeIdx) {
   if (!container) return;
   const data = window._agendaData[key] || [];
   container.innerHTML = '';
-  // Reindex only non-DB agendas for submission (DB records already saved)
+
+  // Build submit index: only non-DB agendas, reindexed from 0
   let submitIdx = 0;
+  let activeSubmitIdx = 0;
+
+  // First pass: figure out what submitIdx the active slot will get
   data.forEach((ag, i) => {
-    if (ag.fromDB) return; // skip — sudah ada di DB
-    if (i === activeIdx) { submitIdx++; return; } // active slot punya real inputs
+    if (ag.fromDB) return;
+    if (i === activeIdx) { activeSubmitIdx = submitIdx; }
+    submitIdx++;
+  });
+
+  // Fix the real inputs in the active form panel to use correct submit index
+  const panel = document.getElementById('agendaList_' + key);
+  if (panel) {
+    panel.querySelectorAll('[name]').forEach(el => {
+      // Replace [key][any_number][ with [key][activeSubmitIdx][
+      el.name = el.name.replace(
+        new RegExp('\\[' + key + '\\]\\[\\d+\\]\\['),
+        '[' + key + '][' + activeSubmitIdx + ']['
+      );
+    });
+  }
+
+  // Second pass: write hidden inputs for non-active, non-DB slots
+  submitIdx = 0;
+  data.forEach((ag, i) => {
+    if (ag.fromDB) return;
+    if (i === activeIdx) { submitIdx++; return; }
     const fields = ['tanggal_kerja','user_id','waktu_shift','jam_mulai','jam_selesai','status','deskripsi'];
     fields.forEach(f => {
       const inp = document.createElement('input');
@@ -1082,21 +1180,34 @@ function validateAndSubmit(form) {
       }
     });
 
-    // Cek duplikat dalam hari yang sama (user + jam_mulai sama)
-    const seen = new Map();
+    // Cek duplikat: 1 user = 1 agenda per hari
+    const seenUsers = new Map(); // user_id => agenda index
     data.forEach((ag, i) => {
-      if (ag.status === 'Tutup' || !ag.user_id || !ag.jam_mulai) return;
-      const dupKey = ag.user_id + '|' + ag.jam_mulai;
-      if (seen.has(dupKey)) {
-        const prevIdx   = seen.get(dupKey);
-        const activeIdx = window._activeSlot?.[key] ?? 0;
+      if (ag.fromDB || !ag.user_id) return;
+      const activeIdx = window._activeSlot?.[key] ?? 0;
+
+      // Cek vs agenda baru lain di hari yang sama
+      if (seenUsers.has(String(ag.user_id))) {
+        const prevIdx = seenUsers.get(String(ag.user_id));
         validationErrors.push({
           key, si: i,
           fieldId: i === activeIdx ? 'uSel_'+key+'_'+i : null,
-          msg: 'Duplikat dengan agenda '+(prevIdx+1)+' — '+DAY_LABELS[key]+' agenda '+(i+1)
+          msg: 'User sudah ada di agenda '+(prevIdx+1)+' — 1 user hanya boleh 1 agenda per hari'
         });
       } else {
-        seen.set(dupKey, i);
+        seenUsers.set(String(ag.user_id), i);
+      }
+
+      // Cek vs data existing di DB
+      const dateKey  = getDateForDay(key);
+      const dbRecs   = EXISTING_BY_DATE[dateKey] || [];
+      const inDB     = dbRecs.some(db => String(db.user_id) === String(ag.user_id));
+      if (inDB) {
+        validationErrors.push({
+          key, si: i,
+          fieldId: i === activeIdx ? 'uSel_'+key+'_'+i : null,
+          msg: 'User sudah punya jadwal di hari ini — 1 user hanya boleh 1 agenda per hari'
+        });
       }
     });
   });
