@@ -9,6 +9,16 @@ use Carbon\Carbon;
 
 class JadwalKerjaWahaObserver
 {
+    private function stripEmoji(string $text): string
+    {
+        // buang emoji + variation selector + beberapa simbol emoji common
+        $text = preg_replace('/[\x{1F1E6}-\x{1F1FF}]/u', '', $text); // flags
+        $text = preg_replace('/[\x{1F300}-\x{1FAFF}]/u', '', $text); // emoji range luas
+        $text = preg_replace('/[\x{2600}-\x{27BF}]/u', '', $text);   // dingbats/simbol
+        $text = preg_replace('/\x{FE0F}/u', '', $text);              // variation selector
+        return trim($text);
+    }
+
     // ─── CREATED ─────────────────────────────────────────────────────────────
 
     public function created(JadwalKerja $jadwal): void
@@ -73,9 +83,11 @@ class JadwalKerjaWahaObserver
             . "Cek jadwal kamu di aplikasi DPM Workshop.\n"
             . "_Tim DPM Workshop_";
 
+        $pesanNoEmoji = $this->stripEmoji($pesan);
+
         $notif->kirimManual(
             $user->kontak,
-            $pesan,
+            $pesanNoEmoji,   // <-- ini yang disimpan ke DB (dan dikirim juga)
             'jadwal',
             $aksi === 'buat' ? 'Jadwal Baru' : 'Perubahan Jadwal'
         );
@@ -113,11 +125,13 @@ class JadwalKerjaWahaObserver
                 . "Info lebih lanjut di aplikasi DPM Workshop.\n"
                 . "_Tim DPM Workshop_";
 
-            $notif->kirimManual(
-                $user->kontak,
-                $pesan,
-                'jadwal',
-                'Info Jadwal ' . $jadwal->status
+        $pesanNoEmoji = $this->stripEmoji($pesan);
+
+        $notif->kirimManual(
+            $user->kontak,
+            $pesanNoEmoji,
+            'jadwal',
+            'Info Jadwal ' . $jadwal->status
             );
         }
     }

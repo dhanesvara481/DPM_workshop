@@ -315,7 +315,7 @@
 const USERS           = @json($users ?? []);
 const AUTH_USER_ID    = "{{ $authUser->user_id ?? '' }}";
 const EXISTING_BY_DATE = @json($existingByDate ?? []);
-const MAX_PER_DAY_TOTAL = 4; // total maks termasuk yang sudah ada di DB
+const MAX_PER_DAY_AKTIF = 4; // maks slot Aktif per hari (Catatan tidak dihitung)
 const MAX_PER_DAY  = 4;
 const MONTHS_ID    = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
 const DAY_KEYS     = ['senin','selasa','rabu','kamis','jumat','sabtu','minggu'];
@@ -375,57 +375,48 @@ function updateWeekUI() {
       numEl.textContent = pad2(d.getDate());
     }
 
-    // Tampilkan existing count dari DB + disable hari yang TUTUP atau penuh
     const dateKey    = getDateForDay(key);
     const existing   = EXISTING_BY_DATE[dateKey] || [];
     const exCount    = existing.length;
+    // Tutup: disable hari. Catatan tidak memblokir hari.
     const exHasTutup = existing.some(ag => (ag.status||'').toLowerCase() === 'tutup');
-    const exIsFull   = exCount >= MAX_PER_DAY;
+    // Hitung hanya Aktif existing untuk quota check
+    const exAktifCount = existing.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+    const exIsFull   = exAktifCount >= MAX_PER_DAY_AKTIF;
     const countEl    = document.getElementById('agendaCount_' + key);
     const cb         = document.getElementById('check_' + key);
     const card       = document.querySelector(`label[data-day="${key}"] .day-check-card`);
 
     if (countEl && !cb?.checked) {
       if (exCount > 0) {
-        countEl.textContent = exHasTutup ? 'TUTUP' : (exIsFull ? `${exCount}/${MAX_PER_DAY} penuh` : `${exCount}/${MAX_PER_DAY}`);
+        countEl.textContent = exHasTutup ? 'TUTUP' : (exIsFull ? `${exAktifCount}/${MAX_PER_DAY_AKTIF} penuh` : `${exAktifCount}/${MAX_PER_DAY_AKTIF}`);
         countEl.style.color = exHasTutup ? '#f43f5e' : (exIsFull ? '#f59e0b' : '#94a3b8');
       } else {
         countEl.textContent = '';
       }
     }
 
-    // Disable + style kartu hari kalau TUTUP atau penuh
     if (cb) {
       const label = document.querySelector(`label[data-day="${key}"]`);
       if (exHasTutup) {
         cb.disabled = true;
-        if (label) {
-          label.classList.add('day-disabled-tutup');
-          label.classList.remove('cursor-pointer');
-        }
-        if (card) {
-          card.classList.add('!border-rose-200', '!bg-rose-50');
-        }
-        // Paksa uncheck kalau sudah terlanjur dicentang
+        if (label) { label.classList.add('day-disabled-tutup'); label.classList.remove('cursor-pointer'); }
+        if (card)  card.classList.add('!border-rose-200', '!bg-rose-50');
         if (cb.checked) { cb.checked = false; onDayCheck(key, false); }
       } else if (exIsFull) {
         cb.disabled = true;
         if (label) label.classList.add('day-disabled-full');
-        if (card) card.classList.add('!border-amber-200', '!bg-amber-50/50');
+        if (card)  card.classList.add('!border-amber-200', '!bg-amber-50/50');
         if (cb.checked) { cb.checked = false; onDayCheck(key, false); }
       } else {
         cb.disabled = false;
-        if (label) {
-          label.classList.remove('day-disabled-tutup', 'day-disabled-full');
-          label.classList.add('cursor-pointer');
-        }
-        if (card) card.classList.remove('!border-rose-200', '!bg-rose-50', '!border-amber-200', '!bg-amber-50/50');
+        if (label) { label.classList.remove('day-disabled-tutup', 'day-disabled-full'); label.classList.add('cursor-pointer'); }
+        if (card)  card.classList.remove('!border-rose-200', '!bg-rose-50', '!border-amber-200', '!bg-amber-50/50');
       }
     }
   });
 }
 weekPicker.addEventListener('change', () => {
-  // Fetch existing data untuk minggu baru via AJAX, lalu update UI
   const week = weekPicker.value;
   if (!week) { updateWeekUI(); return; }
   fetch(`${window.location.pathname}?week=${encodeURIComponent(week)}`, {
@@ -433,18 +424,15 @@ weekPicker.addEventListener('change', () => {
   })
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(json => {
-    // Update EXISTING_BY_DATE global dengan data terbaru
     Object.keys(EXISTING_BY_DATE).forEach(k => delete EXISTING_BY_DATE[k]);
     Object.assign(EXISTING_BY_DATE, json.existingByDate || {});
-
-    // Reset semua hari yang sudah dibuka (data lama tidak relevan)
     DAY_KEYS.forEach(k => {
       const cb = document.getElementById('check_'+k);
       if (cb?.checked) { cb.checked = false; onDayCheck(k, false); }
     });
     updateWeekUI();
   })
-  .catch(() => updateWeekUI()); // fallback kalau fetch gagal
+  .catch(() => updateWeekUI());
 });
 updateWeekUI();
 
@@ -452,7 +440,7 @@ updateWeekUI();
 //  DAY CHECKLIST
 // ══════════════════════════════════════════════════════
 document.getElementById('btnCheckAll').addEventListener('click', () =>
-  DAY_KEYS.forEach(k => { const cb = document.getElementById('check_'+k); if(cb&&!cb.checked){cb.checked=true;onDayCheck(k,true);} })
+  DAY_KEYS.forEach(k => { const cb = document.getElementById('check_'+k); if(cb&&!cb.checked&&!cb.disabled){cb.checked=true;onDayCheck(k,true);} })
 );
 document.getElementById('btnUncheckAll').addEventListener('click', () =>
   DAY_KEYS.forEach(k => { const cb = document.getElementById('check_'+k); if(cb&&cb.checked){cb.checked=false;onDayCheck(k,false);} })
@@ -498,21 +486,12 @@ function renderDayBlock(key) {
         ✕ Hapus hari
       </button>
     </div>
-
-    {{-- BUBBLE ROW --}}
     <div class="px-4 pt-4 pb-1">
-      <div class="flex items-center gap-2 flex-wrap" id="bubbleRow_${key}">
-        {{-- bubbles rendered by JS --}}
-      </div>
+      <div class="flex items-center gap-2 flex-wrap" id="bubbleRow_${key}"></div>
     </div>
-
-    {{-- FORM PANEL (below bubbles, always visible, switches per active bubble) --}}
-    <div class="px-4 pb-4 pt-3" id="agendaList_${key}">
-      {{-- form injected here --}}
-    </div>
+    <div class="px-4 pb-4 pt-3" id="agendaList_${key}"></div>
   `;
 
-  // Sisipkan urut
   const existing = Array.from(container.querySelectorAll('.day-form-card'));
   let inserted = false;
   for (const el of existing) {
@@ -520,12 +499,11 @@ function renderDayBlock(key) {
   }
   if (!inserted) container.appendChild(wrap);
 
-  // Init state — pre-populate dengan data existing dari DB jika ada
   if (!window._agendaData) window._agendaData = {};
   if (!window._activeSlot) window._activeSlot = {};
 
-  const dateForDay  = getDateForDay(key);
-  const existingAgs = EXISTING_BY_DATE[dateForDay] || [];
+  const dateForDay    = getDateForDay(key);
+  const existingAgs   = EXISTING_BY_DATE[dateForDay] || [];
   const existingCount = existingAgs.length;
 
   window._agendaData[key] = existingAgs.map(ag => ({
@@ -537,14 +515,15 @@ function renderDayBlock(key) {
     status:      ag.status      || 'Aktif',
     deskripsi:   ag.deskripsi   || '',
     filled:      true,
-    fromDB:      true, // tandai supaya tidak ikut di-submit (sudah ada)
+    fromDB:      true,
     jadwal_id:   ag.jadwal_id,
   }));
 
-  const existingHasTutup = window._agendaData[key].some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  const existingHasTutup  = window._agendaData[key].some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  const existingAktifCount = window._agendaData[key].filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+  const existingAktifFull  = existingAktifCount >= MAX_PER_DAY_AKTIF;
 
-  if (existingHasTutup || existingCount >= MAX_PER_DAY) {
-    // Hari TUTUP atau penuh — tampilkan bubble read-only saja, no tambah
+  if (existingHasTutup || existingAktifFull) {
     window._activeSlot[key] = 0;
     renderBubbleRow(key);
     renderActiveForm(key, 0);
@@ -552,7 +531,6 @@ function renderDayBlock(key) {
     updateSubmitSection();
 
     if (existingHasTutup) {
-      // Kasih tanda visual di header hari
       const lbl = document.getElementById('formDateLabel_' + key);
       if (lbl) {
         const badge = document.createElement('span');
@@ -562,12 +540,9 @@ function renderDayBlock(key) {
       }
     }
   } else {
-    // Masih ada slot — tambah 1 agenda baru kosong
     window._activeSlot[key] = existingCount > 0 ? existingCount : 0;
-    if (existingCount > 0) {
-      renderBubbleRow(key);
-    }
-    addAgenda(key); // tambah slot kosong baru
+    if (existingCount > 0) renderBubbleRow(key);
+    addAgenda(key);
   }
 }
 
@@ -579,9 +554,15 @@ const STATUS_COLOR = { Aktif:'emerald', Catatan:'amber', Tutup:'rose' };
 function renderBubbleRow(key) {
   const row = document.getElementById('bubbleRow_' + key);
   if (!row) return;
-  const data    = window._agendaData[key] || [];
-  const active  = window._activeSlot?.[key] ?? 0;
-  const maxed   = data.length >= MAX_PER_DAY;
+  const data   = window._agendaData[key] || [];
+  const active = window._activeSlot?.[key] ?? 0;
+
+  // Quota: hanya hitung Aktif
+  const aktifCount   = data.filter(ag => !ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
+  const dbAktifCount = data.filter(ag => ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
+  const totalAktif   = aktifCount + dbAktifCount;
+  const maxed        = totalAktif >= MAX_PER_DAY_AKTIF;
+  const hasTutupAny  = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
 
   row.innerHTML = '';
 
@@ -597,27 +578,24 @@ function renderBubbleRow(key) {
       slate:   isActive ? 'bg-slate-800 border-slate-800 text-white shadow-md'                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200',
     };
     const cls = colMap[col] || colMap.slate;
+    const uName = ag.username || '';
 
     const pill = document.createElement('button');
     pill.type      = 'button';
     pill.className = `agenda-bubble inline-flex items-center gap-1.5 h-9 px-3 rounded-full border text-xs font-bold transition-all duration-150 ${cls}`;
     pill.dataset.idx = i;
-
-    const uName = ag.username || '';
-    // DB bubble: tampilkan lock icon kecil sebagai indikator sudah tersimpan
     pill.innerHTML = `
       <span class="agenda-bubble-num">${i+1}</span>
       ${uName ? `<span class="max-w-[72px] truncate opacity-90 font-semibold">${uName}</span>` : ''}
-      ${ag.status === 'Tutup' ? `<span class="text-[10px] opacity-80">✕</span>` : ''}
+      ${statusVal === 'Tutup'   ? `<span class="text-[10px] opacity-80">✕</span>` : ''}
+      ${statusVal === 'Catatan' ? `<span class="text-[10px] opacity-80">📝</span>` : ''}
       ${isFromDB ? `<span class="text-[10px] opacity-60" title="Sudah tersimpan">🔒</span>` : ''}
     `;
     pill.addEventListener('click', () => activateBubble(key, i));
     row.appendChild(pill);
   });
 
-  // Tombol + hanya tampil kalau belum maks DAN tidak ada agenda Tutup
-  const newSlots    = data.filter(ag => !ag.fromDB).length;
-  const hasTutupAny = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  // Tombol + : muncul kalau belum ada Tutup DAN Aktif belum penuh
   if (!maxed && !hasTutupAny) {
     const addPill = document.createElement('button');
     addPill.type      = 'button';
@@ -646,10 +624,11 @@ function renderActiveForm(key, si) {
   const ag        = data[si] || {};
   const statusVal = ag.status || 'Aktif';
   const isTutup   = statusVal === 'Tutup';
-  const isRestrict = ['Catatan','Tutup'].includes(statusVal);
+  const isCatatan = statusVal === 'Catatan';
+  const isRestrict = isTutup || isCatatan; // user di-lock ke authUser
   const isFromDB   = ag.fromDB === true;
 
-  // ── Read-only view untuk agenda yang sudah ada di DB ─────────────────────
+  // ── Read-only untuk agenda dari DB ──────────────────────────────────────
   if (isFromDB) {
     const colMap = { Aktif:'emerald', Catatan:'amber', Tutup:'rose' };
     const col = colMap[statusVal] || 'slate';
@@ -693,16 +672,23 @@ function renderActiveForm(key, si) {
   }
 
   const statuses = [
-    {val:'Aktif',  col:'emerald', desc:'Normal'},
-    {val:'Catatan',col:'amber',   desc:'Info'},
-    {val:'Tutup',  col:'rose',    desc:'Libur'},
+    {val:'Aktif',   col:'emerald', desc:'Shift kerja'},
+    {val:'Catatan', col:'amber',   desc:'Reminder/info'},
+    {val:'Tutup',   col:'rose',    desc:'Libur/tutup'},
   ];
+
+  // Note untuk Catatan & Tutup: user auto-assign
+  const userNote = isRestrict
+    ? `<p class="text-[11px] text-amber-600 mt-1 font-medium">
+        ${isTutup ? 'ℹ️ Jadwal lain di hari ini akan tersembunyi selama Tutup aktif' : '📝 Catatan otomatis tercatat atas nama admin yang login'}
+       </p>`
+    : '';
 
   panel.innerHTML = `
     <div class="agenda-slot p-4" data-slot="${si}">
       <div class="flex items-center justify-between gap-2 mb-3">
         <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Agenda ${si+1}</span>
-        ${si > 0 ? `<button type="button" onclick="removeBubble('${key}',${si})"
+        ${si > 0 || (data.length > 1 && !data[0]?.fromDB) ? `<button type="button" onclick="removeBubble('${key}',${si})"
           class="h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400">Hapus</button>` : ''}
       </div>
 
@@ -710,16 +696,26 @@ function renderActiveForm(key, si) {
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-        <div>
+        <div class="sm:col-span-2">
           <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama</label>
-          <select name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}"
-                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                         focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition ${isRestrict?'locked':''}"
-                  onchange="onUserChange('${key}',${si},this)">
-            <option value="">Pilih user</option>
-            ${USERS.map(u=>`<option value="${u.user_id}"${String(u.user_id)===String(isRestrict?AUTH_USER_ID:(ag.user_id||''))?'selected':''}>${u.username}</option>`).join('')}
-          </select>
-          ${isRestrict?`<input type="hidden" id="hUser_${key}_${si}" name="jadwal[${key}][${si}][user_id]" value="${AUTH_USER_ID}">` : ''}
+          ${isRestrict ? `
+            <div class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 flex items-center text-sm font-semibold text-slate-500 gap-2">
+              <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <span id="lockedUserName_${key}_${si}">${getUserName(AUTH_USER_ID) || 'Admin login'}</span>
+            </div>
+            <input type="hidden" name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}" value="${AUTH_USER_ID}">
+          ` : `
+            <select name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}"
+                    class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                           focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition"
+                    onchange="onUserChange('${key}',${si},this)">
+              <option value="">Pilih user</option>
+              ${USERS.map(u=>`<option value="${u.user_id}"${String(u.user_id)===String(ag.user_id||'')?'selected':''}>${u.username}</option>`).join('')}
+            </select>
+          `}
+          ${userNote}
         </div>
 
         <div id="swWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
@@ -772,44 +768,36 @@ function renderActiveForm(key, si) {
           <label class="block text-[11px] font-semibold text-slate-500 mb-1">Deskripsi <span class="font-normal opacity-50">(opsional)</span></label>
           <input type="text" name="jadwal[${key}][${si}][deskripsi]"
                  value="${esc(ag.deskripsi||'')}"
-                 placeholder="Contoh: Service rutin, booking pelanggan..."
+                 placeholder="Contoh: Servis rutin, booking pelanggan..."
                  onchange="syncField('${key}',${si},'deskripsi',this.value)"
                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
                         focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
         </div>
       </div>
     </div>
-
-    {{-- hidden inputs for NON-active agendas (so all data gets submitted) --}}
     <div id="hiddenInputs_${key}"></div>
   `;
 
   renderHiddenInputs(key, si);
 }
 
-// Render hidden inputs for all slots except the active one (so form submission captures everything)
 function renderHiddenInputs(key, activeIdx) {
   const container = document.getElementById('hiddenInputs_' + key);
   if (!container) return;
   const data = window._agendaData[key] || [];
   container.innerHTML = '';
 
-  // Build submit index: only non-DB agendas, reindexed from 0
   let submitIdx = 0;
   let activeSubmitIdx = 0;
-
-  // First pass: figure out what submitIdx the active slot will get
   data.forEach((ag, i) => {
     if (ag.fromDB) return;
     if (i === activeIdx) { activeSubmitIdx = submitIdx; }
     submitIdx++;
   });
 
-  // Fix the real inputs in the active form panel to use correct submit index
   const panel = document.getElementById('agendaList_' + key);
   if (panel) {
     panel.querySelectorAll('[name]').forEach(el => {
-      // Replace [key][any_number][ with [key][activeSubmitIdx][
       el.name = el.name.replace(
         new RegExp('\\[' + key + '\\]\\[\\d+\\]\\['),
         '[' + key + '][' + activeSubmitIdx + ']['
@@ -817,7 +805,6 @@ function renderHiddenInputs(key, activeIdx) {
     });
   }
 
-  // Second pass: write hidden inputs for non-active, non-DB slots
   submitIdx = 0;
   data.forEach((ag, i) => {
     if (ag.fromDB) return;
@@ -835,16 +822,23 @@ function renderHiddenInputs(key, activeIdx) {
 }
 
 // ══════════════════════════════════════════════════════
-//  ADD AGENDA (new bubble UX)
+//  ADD AGENDA
 // ══════════════════════════════════════════════════════
 function addAgenda(key, prefill = {}) {
   if (!window._agendaData) window._agendaData = {};
   if (!window._agendaData[key]) window._agendaData[key] = [];
 
-  const data = window._agendaData[key];
-  if (data.length >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari (sudah penuh).`, 'warn'); return; }
+  const data         = window._agendaData[key];
+  const hasTutupAny  = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  if (hasTutupAny) { showToast('Hari ini TUTUP. Tidak bisa menambah agenda.', 'warn'); return; }
 
-  // Cek apakah agenda baru (non-DB) sebelumnya sudah diisi — kecuali prefill (dari QF)
+  // Quota hanya dari Aktif
+  const aktifCount = data.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+  if (aktifCount >= MAX_PER_DAY_AKTIF) {
+    showToast(`Maks ${MAX_PER_DAY_AKTIF} shift Aktif per hari (Catatan tidak terhitung).`, 'warn');
+    return;
+  }
+
   const isPrefill = Object.keys(prefill).length > 0;
   if (!isPrefill && data.length > 0) {
     const lastNew = [...data].reverse().find(ag => !ag.fromDB);
@@ -855,18 +849,33 @@ function addAgenda(key, prefill = {}) {
     }
   }
 
+  const newStatus = prefill.status || 'Aktif';
   const ag = {
-    user_id:     prefill.user_id     || '',
-    username:    prefill.username    || getUserName(prefill.user_id),
+    user_id:     (newStatus === 'Tutup' || newStatus === 'Catatan') ? AUTH_USER_ID : (prefill.user_id || ''),
+    username:    (newStatus === 'Tutup' || newStatus === 'Catatan') ? getUserName(AUTH_USER_ID) : getUserName(prefill.user_id),
     waktu_shift: prefill.waktu_shift || '',
     jam_mulai:   prefill.jam_mulai   || '',
     jam_selesai: prefill.jam_selesai || '',
-    status:      prefill.status      || 'Aktif',
+    status:      newStatus,
     deskripsi:   prefill.deskripsi   || '',
-    filled:      !!prefill.user_id,
+    filled:      !!(prefill.user_id || newStatus === 'Tutup' || newStatus === 'Catatan'),
   };
-  data.push(ag);
 
+  // Tutup: simpan langsung sebagai bubble baru, jadwal lain tidak dihapus (soft hide)
+  if (newStatus === 'Tutup') {
+    data.push(ag);
+    const newIdx = data.length - 1;
+    if (!window._activeSlot) window._activeSlot = {};
+    window._activeSlot[key] = newIdx;
+    renderBubbleRow(key);
+    renderActiveForm(key, newIdx);
+    updateAgendaCount(key);
+    updateSubmitSection();
+    showToast('ℹ️ Tutup ditambahkan. Jadwal lain di hari ini akan tersembunyi di tampilan.', 'info');
+    return;
+  }
+
+  data.push(ag);
   const newIdx = data.length - 1;
   if (!window._activeSlot) window._activeSlot = {};
   window._activeSlot[key] = newIdx;
@@ -881,12 +890,12 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(
 const getUserName = id => { const u = USERS.find(u => String(u.user_id) === String(id)); return u ? u.username : ''; };
 
 // ══════════════════════════════════════════════════════
-//  SYNC FIELD → state (called on input change)
+//  SYNC FIELD
 // ══════════════════════════════════════════════════════
 function syncField(key, si, field, val) {
   if (!window._agendaData?.[key]?.[si]) return;
   window._agendaData[key][si][field] = val;
-  renderHiddenInputs(key, si); // keep hidden inputs in sync
+  renderHiddenInputs(key, si);
 }
 
 function onUserChange(key, si, sel) {
@@ -900,11 +909,14 @@ function onUserChange(key, si, sel) {
 }
 
 // ══════════════════════════════════════════════════════
-//  REMOVE BUBBLE / AGENDA
+//  REMOVE BUBBLE
 // ══════════════════════════════════════════════════════
 function removeBubble(key, si) {
   const data = window._agendaData[key];
-  if (!data || si === 0) return;
+  if (!data) return;
+  // Jangan hapus satu-satunya agenda non-DB
+  const nonDB = data.filter(ag => !ag.fromDB);
+  if (nonDB.length <= 1 && !data[si]?.fromDB) return;
   data.splice(si, 1);
 
   if (!window._activeSlot) window._activeSlot = {};
@@ -920,41 +932,41 @@ function removeBubble(key, si) {
 //  STATUS CHANGE
 // ══════════════════════════════════════════════════════
 function onStatusChange(key, si, val) {
-  // Persist to state
+  const isTutup    = val === 'Tutup';
+  const isCatatan  = val === 'Catatan';
+  const isRestrict = isTutup || isCatatan;
+
   if (window._agendaData?.[key]?.[si]) {
     window._agendaData[key][si].status = val;
-    if (val === 'Tutup') {
+    if (isTutup || isCatatan) {
+      window._agendaData[key][si].user_id  = AUTH_USER_ID;
+      window._agendaData[key][si].username = getUserName(AUTH_USER_ID);
+      window._agendaData[key][si].filled   = true;
+    }
+    if (isTutup) {
       window._agendaData[key][si].waktu_shift = '';
       window._agendaData[key][si].jam_mulai   = '';
       window._agendaData[key][si].jam_selesai = '';
     }
   }
 
-  const isTutup    = val === 'Tutup';
-  const isRestrict = ['Catatan','Tutup'].includes(val);
+  // Tutup: jadwal lain tidak dihapus dari state (soft hide di display)
+  // Hanya re-render form & bubble untuk update tampilan
+  if (isTutup) {
+    renderBubbleRow(key);
+    renderActiveForm(key, si);
+    updateAgendaCount(key);
+    updateSubmitSection();
+    return;
+  }
 
+  // Show/hide time fields
   ['swWrap','jmWrap','jsWrap','dWrap'].forEach(p => {
     document.getElementById(`${p}_${key}_${si}`)?.classList.toggle('field-hidden', isTutup);
   });
-  if (isTutup) {
-    ['swSel','jm','js'].forEach(p => { const el = document.getElementById(`${p}_${key}_${si}`); if(el) el.value=''; });
-  }
 
-  // User lock
-  const uSel  = document.getElementById(`uSel_${key}_${si}`);
-  const hUser = document.getElementById(`hUser_${key}_${si}`);
-  if (uSel) {
-    if (isRestrict) {
-      uSel.value = AUTH_USER_ID; uSel.classList.add('locked'); uSel.disabled = true;
-      if (!hUser) {
-        const h = document.createElement('input');
-        h.type='hidden'; h.id=`hUser_${key}_${si}`; h.name=`jadwal[${key}][${si}][user_id]`; h.value=AUTH_USER_ID;
-        uSel.parentNode.appendChild(h);
-      }
-    } else {
-      uSel.classList.remove('locked'); uSel.disabled = false; hUser?.remove();
-    }
-  }
+  // Re-render form untuk ganti tampilan user (lock/unlock)
+  renderActiveForm(key, si);
 
   // Active ring on status card
   const row = document.getElementById(`statusRow_${key}_${si}`);
@@ -964,7 +976,6 @@ function onStatusChange(key, si, val) {
     row.querySelector(`input[value="${val}"]`)?.nextElementSibling?.classList.add(`is-active-${colorMap[val]||'emerald'}`);
   }
 
-  // Refresh bubble to show new color
   renderBubbleRow(key);
   renderHiddenInputs(key, si);
 }
@@ -975,13 +986,16 @@ function onStatusChange(key, si, val) {
 function updateAgendaCount(key) {
   const data    = window._agendaData?.[key] || [];
   const total   = data.length;
-  const dbCount = data.filter(ag => ag.fromDB).length;
-  const el      = document.getElementById('agendaCount_' + key);
+  if (total === 0) { const el = document.getElementById('agendaCount_' + key); if(el) el.textContent=''; return; }
+  const aktifNew = data.filter(ag => !ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
+  const aktifDB  = data.filter(ag => ag.fromDB  && (ag.status||'Aktif') === 'Aktif').length;
+  const catNew   = data.filter(ag => !ag.fromDB && ag.status === 'Catatan').length;
+  const el       = document.getElementById('agendaCount_' + key);
   if (!el) return;
-  if (total === 0) { el.textContent = ''; return; }
-  // Tampilkan: "2/4" atau "2/4 (+1 baru)" kalau ada yang baru
-  const newCount = total - dbCount;
-  el.textContent = newCount > 0 ? `${total}/${MAX_PER_DAY} (+${newCount})` : `${total}/${MAX_PER_DAY}`;
+  const parts = [];
+  if (aktifDB + aktifNew > 0) parts.push(`${aktifDB+aktifNew}/${MAX_PER_DAY_AKTIF} Aktif`);
+  if (catNew > 0) parts.push(`+${catNew} Catatan`);
+  el.textContent = parts.join(' · ');
 }
 
 function uncheckDay(key) {
@@ -995,16 +1009,13 @@ function updateSubmitSection() {
   const summary = document.getElementById('submitSummary');
   if (checked.length > 0) {
     section.classList.remove('hidden');
-    // Hitung hanya agenda baru (bukan dari DB)
-    const total = checked.reduce((s,k) => {
+    const totalNew = checked.reduce((s,k) => {
       const data = window._agendaData?.[k] || [];
       return s + data.filter(ag => !ag.fromDB).length;
     }, 0);
-    if (total === 0) {
-      summary.textContent = 'Belum ada agenda baru yang ditambahkan.';
-    } else {
-      summary.textContent = `${checked.length} hari · ${total} agenda baru akan disimpan`;
-    }
+    summary.textContent = totalNew === 0
+      ? 'Belum ada agenda baru yang ditambahkan.'
+      : `${checked.length} hari · ${totalNew} agenda baru akan disimpan`;
   } else {
     section.classList.add('hidden');
   }
@@ -1025,17 +1036,14 @@ function openQF(userId, username) {
 
   qfDayGrid.innerHTML = '';
   DAY_KEYS.forEach(key => {
-    // Gabungkan data dari state (kalau hari sudah dibuka) + EXISTING_BY_DATE (kalau belum dibuka)
     const dateForDay  = getDateForDay(key);
     const stateData   = window._agendaData?.[key];
     const data        = stateData || (EXISTING_BY_DATE[dateForDay] || []);
-    const count       = data.length;
     const hasTutup    = data.some(ag => (ag.status || '').toLowerCase() === 'tutup');
-    const isFull      = count >= MAX_PER_DAY;
+    const aktifCount  = data.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+    const isFull      = aktifCount >= MAX_PER_DAY_AKTIF;
     const disabled    = isFull || hasTutup;
-
-    // Hitung slot tersisa
-    const remaining = MAX_PER_DAY - count;
+    const remaining   = MAX_PER_DAY_AKTIF - aktifCount;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -1045,9 +1053,9 @@ function openQF(userId, username) {
     let note = hasTutup
       ? `<span class="text-[10px] text-rose-500 block mt-0.5">TUTUP</span>`
       : isFull
-        ? `<span class="text-[10px] text-amber-600 block mt-0.5">PENUH (${MAX_PER_DAY}/${MAX_PER_DAY})</span>`
-        : count > 0
-          ? `<span class="text-[10px] text-slate-400 block mt-0.5">${count}/${MAX_PER_DAY} · sisa ${remaining}</span>`
+        ? `<span class="text-[10px] text-amber-600 block mt-0.5">PENUH (${MAX_PER_DAY_AKTIF}/${MAX_PER_DAY_AKTIF})</span>`
+        : aktifCount > 0
+          ? `<span class="text-[10px] text-slate-400 block mt-0.5">${aktifCount}/${MAX_PER_DAY_AKTIF} · sisa ${remaining}</span>`
           : `<span class="text-[10px] text-slate-400 block mt-0.5">Kosong</span>`;
 
     btn.innerHTML = `<div class="text-xs font-semibold text-slate-700">${DAY_LABELS[key]}</div>${note}`;
@@ -1073,29 +1081,23 @@ document.getElementById('qfApply').addEventListener('click', () => {
   if (!selected.length) { closeQF(); return; }
 
   selected.forEach(key => {
-    // Aktifkan hari kalau belum
     const cb = document.getElementById('check_'+key);
     if (cb && !cb.checked) { cb.checked = true; if(!document.getElementById('dayForm_'+key)) renderDayBlock(key); }
 
     const data = window._agendaData?.[key] || [];
-
-    // Cari bubble yang masih kosong (belum ada user_id) — isi itu, jangan tambah baru
     const emptyIdx = data.findIndex(ag => !ag.user_id);
-
-    // Prefill: copy setting dari slot pertama yang sudah terisi (sebagai template)
-    const template = data.find(ag => ag.user_id && ag.status !== 'Tutup');
+    const template = data.find(ag => ag.user_id && ag.status === 'Aktif');
     const prefill = {
       user_id:     qfUserId,
       username:    getUserName(qfUserId),
       waktu_shift: template?.waktu_shift || '',
       jam_mulai:   template?.jam_mulai   || '',
       jam_selesai: template?.jam_selesai || '',
-      status:      template?.status      || 'Aktif',
+      status:      'Aktif',
       deskripsi:   template?.deskripsi   || '',
     };
 
     if (emptyIdx !== -1) {
-      // Isi bubble yang sudah ada tapi masih kosong
       Object.assign(data[emptyIdx], prefill);
       data[emptyIdx].filled = true;
       if (!window._activeSlot) window._activeSlot = {};
@@ -1104,7 +1106,6 @@ document.getElementById('qfApply').addEventListener('click', () => {
       renderActiveForm(key, emptyIdx);
       updateAgendaCount(key);
     } else {
-      // Semua bubble sudah terisi — tambah baru
       addAgenda(key, prefill);
     }
   });
@@ -1114,16 +1115,12 @@ document.getElementById('qfApply').addEventListener('click', () => {
   showToast(`Quick Fill: ${selected.map(k=>DAY_LABELS[k]).join(', ')}`, 'success');
 });
 
-// Bind QF buttons
 document.querySelectorAll('.qf-btn').forEach(btn =>
   btn.addEventListener('click', () => openQF(btn.dataset.userId, btn.dataset.username))
 );
 
 // ══════════════════════════════════════════════════════
-//  FORM SUBMIT
-// ══════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════
-//  CLIENT-SIDE VALIDATION + SUBMIT
+//  FORM SUBMIT + VALIDATION
 // ══════════════════════════════════════════════════════
 function clearValidationErrors() {
   document.querySelectorAll('.v-error-msg').forEach(el => el.remove());
@@ -1158,17 +1155,19 @@ function validateAndSubmit(form) {
   checked.forEach(key => {
     const data = window._agendaData?.[key] || [];
     data.forEach((ag, i) => {
-      if (ag.fromDB) return; // skip — already saved
+      if (ag.fromDB) return;
       const isTutup    = ag.status === 'Tutup';
-      const isRestrict = ['Catatan','Tutup'].includes(ag.status);
+      const isCatatan  = ag.status === 'Catatan';
+      const isAktif    = ag.status === 'Aktif';
       const label      = DAY_LABELS[key] + ' agenda ' + (i+1);
       const activeIdx  = window._activeSlot?.[key] ?? 0;
       const isActive   = i === activeIdx;
 
-      if (!ag.user_id && !isRestrict) {
+      // User wajib untuk Aktif (Catatan & Tutup auto dari server)
+      if (isAktif && !ag.user_id) {
         validationErrors.push({ key, si: i, fieldId: isActive ? 'uSel_'+key+'_'+i : null, msg: 'Nama belum dipilih — '+label });
       }
-      if (!isTutup) {
+      if (isAktif) {
         if (!ag.waktu_shift)
           validationErrors.push({ key, si: i, fieldId: isActive ? 'swSel_'+key+'_'+i : null, msg: 'Waktu shift belum diisi — '+label });
         if (!ag.jam_mulai)
@@ -1180,40 +1179,39 @@ function validateAndSubmit(form) {
       }
     });
 
-    // Cek duplikat: 1 user = 1 agenda per hari
-    const seenUsers = new Map(); // user_id => agenda index
+    // Duplikat: hanya cek Aktif
+    const seenAktifUsers = new Map();
     data.forEach((ag, i) => {
-      if (ag.fromDB || !ag.user_id) return;
+      if (ag.fromDB || !ag.user_id || ag.status !== 'Aktif') return;
       const activeIdx = window._activeSlot?.[key] ?? 0;
 
-      // Cek vs agenda baru lain di hari yang sama
-      if (seenUsers.has(String(ag.user_id))) {
-        const prevIdx = seenUsers.get(String(ag.user_id));
+      if (seenAktifUsers.has(String(ag.user_id))) {
+        const prevIdx = seenAktifUsers.get(String(ag.user_id));
         validationErrors.push({
           key, si: i,
           fieldId: i === activeIdx ? 'uSel_'+key+'_'+i : null,
-          msg: 'User sudah ada di agenda '+(prevIdx+1)+' — 1 user hanya boleh 1 agenda per hari'
+          msg: 'User sudah ada di agenda Aktif '+(prevIdx+1)+' — 1 user 1 shift Aktif per hari'
         });
       } else {
-        seenUsers.set(String(ag.user_id), i);
+        seenAktifUsers.set(String(ag.user_id), i);
       }
 
-      // Cek vs data existing di DB
-      const dateKey  = getDateForDay(key);
-      const dbRecs   = EXISTING_BY_DATE[dateKey] || [];
-      const inDB     = dbRecs.some(db => String(db.user_id) === String(ag.user_id));
+      // Cek DB — hanya Aktif
+      const dateKey = getDateForDay(key);
+      const dbRecs  = EXISTING_BY_DATE[dateKey] || [];
+      const inDB    = dbRecs.some(db => String(db.user_id) === String(ag.user_id) && (db.status||'Aktif') === 'Aktif');
       if (inDB) {
         validationErrors.push({
           key, si: i,
           fieldId: i === activeIdx ? 'uSel_'+key+'_'+i : null,
-          msg: 'User sudah punya jadwal di hari ini — 1 user hanya boleh 1 agenda per hari'
+          msg: 'User sudah punya shift Aktif di hari ini'
         });
       }
     });
   });
 
   if (validationErrors.length === 0) {
-    const total = checked.reduce((s,k) => s + (window._agendaData?.[k]?.length||0), 0);
+    const total = checked.reduce((s,k) => s + (window._agendaData?.[k]?.filter(ag=>!ag.fromDB).length||0), 0);
     showConfirm('Simpan '+total+' agenda ('+checked.length+' hari)?', () => {
       form.dataset.confirmed = '1';
       form.submit();
@@ -1221,11 +1219,9 @@ function validateAndSubmit(form) {
     return;
   }
 
-  // Switch ke bubble yang bermasalah pertama
   const firstErr = validationErrors[0];
   activateBubble(firstErr.key, firstErr.si);
 
-  // Tandai semua bubble error
   const errBubbles = new Set(validationErrors.map(e => e.key+'|'+e.si));
   errBubbles.forEach(bk => {
     const [k, siStr] = bk.split('|');
@@ -1236,7 +1232,6 @@ function validateAndSubmit(form) {
     }
   });
 
-  // Highlight field error di DOM aktif
   validationErrors.forEach(err => {
     if (err.fieldId) {
       const el = document.getElementById(err.fieldId);
@@ -1244,7 +1239,6 @@ function validateAndSubmit(form) {
     }
   });
 
-  // Scroll ke hari yang bermasalah
   requestAnimationFrame(() => {
     const dayCard = document.getElementById('dayForm_' + firstErr.key);
     if (dayCard) dayCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1261,7 +1255,6 @@ document.getElementById('mainForm').addEventListener('submit', function(e) {
   validateAndSubmit(this);
 });
 
-// Hapus error highlight saat user mulai isi field
 document.getElementById('mainForm').addEventListener('change', function(e) {
   const field = e.target;
   if (field.classList.contains('v-error-field')) {
