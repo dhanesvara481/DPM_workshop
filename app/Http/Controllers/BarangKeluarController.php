@@ -23,7 +23,7 @@ class BarangKeluarController extends Controller
             ->select(
                 'barang_keluar.*',
                 DB::raw("COALESCE(barang_keluar.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
-                DB::raw("COALESCE(barang_keluar.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),    
+                DB::raw("COALESCE(barang_keluar.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
                 'barang_keluar.jumlah_keluar as qty_keluar',
             )
             ->when($request->search, function ($q) use ($request) {
@@ -41,12 +41,13 @@ class BarangKeluarController extends Controller
 
     public function simpanBarangKeluar(Request $request)
     {
-        // FIX: Enum keterangan hanya untuk input manual (tanpa 'Invoice' - itu dari sistem)
         $validated = $request->validate([
             'barang_id'  => ['required', 'exists:barang,barang_id'],
             'qty_keluar' => ['required', 'integer', 'min:1'],
             'tanggal'    => ['required', 'date'],
             'keterangan' => ['required', 'in:Barang Rusak,Barang Dikembalikan,Penyesuaian Stok'],
+            // ── foto bukti: opsional, max 2 MB, hanya gambar ──
+            'foto_bukti' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         ], [
             'barang_id.required'  => 'Pilih kode barang terlebih dahulu.',
             'barang_id.exists'    => 'Barang tidak ditemukan.',
@@ -55,6 +56,9 @@ class BarangKeluarController extends Controller
             'tanggal.required'    => 'Tanggal wajib diisi.',
             'keterangan.required' => 'Pilih keterangan.',
             'keterangan.in'       => 'Keterangan tidak valid.',
+            'foto_bukti.image'    => 'File harus berupa gambar.',
+            'foto_bukti.mimes'    => 'Format gambar harus jpg, jpeg, png, atau webp.',
+            'foto_bukti.max'      => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
         $barang = Barang::where('barang_id', $validated['barang_id'])
@@ -67,9 +71,17 @@ class BarangKeluarController extends Controller
                 ->withErrors(['qty_keluar' => 'Jumlah keluar ('.$validated['qty_keluar'].') melebihi stok tersedia ('.$barang->stok.').']);
         }
 
-        DB::transaction(function () use ($validated, $barang) {
-             $tanggalInput = $validated['tanggal']; // buat whereDate
-             $waktuKeluar  = now();                 // ini yg bikin jam kebaca
+        // ── Upload foto (di luar transaksi DB agar tidak memblokir koneksi) ──
+        $fotoBuktiPath = null;
+        if ($request->hasFile('foto_bukti')) {
+            // Disimpan ke: storage/app/public/barang_keluar/YYYY/MM/<hash>.ext
+            $fotoBuktiPath = $request->file('foto_bukti')
+                ->store('barang_keluar/' . now()->format('Y/m'), 'public');
+        }
+
+        DB::transaction(function () use ($validated, $barang, $fotoBuktiPath) {
+            $tanggalInput = $validated['tanggal'];
+            $waktuKeluar  = now();
             $qty          = (int) $validated['qty_keluar'];
 
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
@@ -102,15 +114,16 @@ class BarangKeluarController extends Controller
             $barang->decrement('stok', $qty);
 
             $barangKeluar = BarangKeluar::create([
-                'user_id'        => Auth::id(),
-                'barang_id'      => $validated['barang_id'],
-                'jumlah_keluar'  => $qty,
-                'tanggal_keluar' => $waktuKeluar,
-                'keterangan'     => $validated['keterangan'], // manual input: Barang Rusak, dll.
-                'ref_invoice'    => null,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
-                'satuan_snapshot'      => $barang->satuan,       // ← tambah
+                'user_id'              => Auth::id(),
+                'barang_id'            => $validated['barang_id'],
+                'jumlah_keluar'        => $qty,
+                'tanggal_keluar'       => $waktuKeluar,
+                'keterangan'           => $validated['keterangan'],
+                'ref_invoice'          => null,
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
+                'satuan_snapshot'      => $barang->satuan,
+                'foto_bukti'           => $fotoBuktiPath,  // ← null kalau tidak upload
             ]);
 
             RiwayatStok::create([
@@ -121,8 +134,8 @@ class BarangKeluarController extends Controller
                 'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
             ]);
         });
 

@@ -19,15 +19,27 @@ class BarangKeluar extends Model
         'tanggal_keluar',
         'keterangan',
         'ref_invoice',
-         // ── snapshot (ditambah) ──
+        // ── snapshot ──
         'kode_barang_snapshot',
         'nama_barang_snapshot',
         'satuan_snapshot',
+        // ── bukti foto ──
+        'foto_bukti',
     ];
 
     protected $casts = [
         'tanggal_keluar' => 'datetime',
     ];
+
+    // ── Accessor: URL lengkap foto bukti ─────────────────────────────────────
+    // Kembalikan null kalau foto belum diisi, sehingga view bisa pakai @if
+
+    public function getFotoBuktiUrlAttribute(): ?string
+    {
+        return $this->foto_bukti
+            ? asset('storage/' . $this->foto_bukti)
+            : null;
+    }
 
     public function barang()
     {
