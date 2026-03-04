@@ -42,16 +42,56 @@ class JadwalKerjaController extends Controller
     }
 
     // ─── Tambah ──────────────────────────────────────────────────────────────
-
     public function getTambahJadwalKerja(Request $request)
     {
-        $users = User::aktif()
-             ->orderBy('username')
-             ->get(['user_id', 'username', 'role']);
+        $users = User::aktif()->orderBy('username')->get(['user_id', 'username', 'role']);
+
+        // Hitung existing jadwal per tanggal untuk minggu yang dipilih
+        // Default: minggu sekarang (Senin s/d Minggu)
+        $weekParam = $request->query('week'); // format: "2026-W10"
+        
+        if ($weekParam && preg_match('/^(\d{4})-W(\d{2})$/', $weekParam, $m)) {
+            $year = (int) $m[1];
+            $week = (int) $m[2];
+            $monday = new \DateTime();
+            $monday->setISODate($year, $week, 1);
+        } else {
+            $monday = new \DateTime();
+            $monday->modify('monday this week');
+        }
+
+        $sunday = clone $monday;
+        $sunday->modify('+6 days');
+
+        // Ambil semua jadwal dalam rentang minggu ini, group by tanggal
+        $existingRaw = \App\Models\JadwalKerja::whereBetween('tanggal_kerja', [
+                $monday->format('Y-m-d'),
+                $sunday->format('Y-m-d'),
+            ])
+            ->orderBy('tanggal_kerja')
+            ->orderBy('jam_mulai')
+            ->get(['jadwal_id', 'user_id', 'tanggal_kerja', 'waktu_shift', 'jam_mulai', 'jam_selesai', 'status', 'deskripsi']);
+
+        // Format: ['2026-03-02' => [ {jadwal data}, ... ], ...]
+        $existingByDate = [];
+        foreach ($existingRaw as $j) {
+            $dateKey = $j->tanggal_kerja->format('Y-m-d');
+            $existingByDate[$dateKey][] = [
+                'jadwal_id'   => $j->jadwal_id,
+                'user_id'     => $j->user_id,
+                'waktu_shift' => $j->waktu_shift,
+                'jam_mulai'   => $j->jam_mulai ? substr($j->jam_mulai, 0, 5) : '',
+                'jam_selesai' => $j->jam_selesai ? substr($j->jam_selesai, 0, 5) : '',
+                'status'      => $j->status,
+                'deskripsi'   => $j->deskripsi ?? '',
+            ];
+        }
 
         return view('admin.jadwal_kerja.tambah_jadwal_kerja', [
-            'users'    => $users,
-            'authUser' => auth()->user(),
+            'users'          => $users,
+            'authUser'       => auth()->user(),
+            'existingByDate' => $existingByDate, // data existing per tanggal
+            'weekParam'      => $weekParam ?? $monday->format("Y-\WW"),
         ]);
     }
 

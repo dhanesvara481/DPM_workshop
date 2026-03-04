@@ -306,8 +306,10 @@
 // ══════════════════════════════════════════════════════
 //  CONSTANTS
 // ══════════════════════════════════════════════════════
-const USERS        = @json($users ?? []);
-const AUTH_USER_ID = "{{ $authUser->user_id ?? '' }}";
+const USERS           = @json($users ?? []);
+const AUTH_USER_ID    = "{{ $authUser->user_id ?? '' }}";
+const EXISTING_BY_DATE = @json($existingByDate ?? []);
+const MAX_PER_DAY_TOTAL = 4; // total maks termasuk yang sudah ada di DB
 const MAX_PER_DAY  = 4;
 const MONTHS_ID    = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
 const DAY_KEYS     = ['senin','selasa','rabu','kamis','jumat','sabtu','minggu'];
@@ -355,7 +357,7 @@ function updateWeekUI() {
   if (!mon) { weekRangeText.textContent = '—'; return; }
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
   weekRangeText.textContent = `${mon.getDate()} ${MONTHS_ID[mon.getMonth()]} – ${sun.getDate()} ${MONTHS_ID[sun.getMonth()]} ${sun.getFullYear()}`;
-  // Update semua tanggal tersimpan + label di form yang sudah terbuka
+
   DAY_KEYS.forEach(key => {
     document.querySelectorAll(`input[name^="jadwal[${key}]"][name$="[tanggal_kerja]"]`)
       .forEach(el => el.value = getDateForDay(key));
@@ -365,6 +367,21 @@ function updateWeekUI() {
     if (numEl) {
       const d = new Date(mon); d.setDate(mon.getDate() + DAY_KEYS.indexOf(key));
       numEl.textContent = pad2(d.getDate());
+    }
+
+    // Tampilkan existing count dari DB di bawah hari (sebelum dicentang)
+    const dateKey    = getDateForDay(key);
+    const existing   = EXISTING_BY_DATE[dateKey] || [];
+    const exCount    = existing.length;
+    const countEl    = document.getElementById('agendaCount_' + key);
+    if (countEl && !document.getElementById('check_'+key)?.checked) {
+      if (exCount > 0) {
+        const isFull = exCount >= MAX_PER_DAY;
+        countEl.textContent  = isFull ? `${exCount}/${MAX_PER_DAY} penuh` : `${exCount}/${MAX_PER_DAY}`;
+        countEl.style.color  = isFull ? '#f59e0b' : '#94a3b8';
+      } else {
+        countEl.textContent = '';
+      }
     }
   });
 }
@@ -443,11 +460,42 @@ function renderDayBlock(key) {
   }
   if (!inserted) container.appendChild(wrap);
 
-  // state: berapa agenda sudah dibuat untuk hari ini
+  // Init state — pre-populate dengan data existing dari DB jika ada
   if (!window._agendaData) window._agendaData = {};
-  window._agendaData[key] = [];
+  if (!window._activeSlot) window._activeSlot = {};
 
-  addAgenda(key); // agenda 1 default, langsung aktif
+  const dateForDay  = getDateForDay(key);
+  const existingAgs = EXISTING_BY_DATE[dateForDay] || [];
+  const existingCount = existingAgs.length;
+
+  window._agendaData[key] = existingAgs.map(ag => ({
+    user_id:     String(ag.user_id),
+    username:    getUserName(ag.user_id),
+    waktu_shift: ag.waktu_shift || '',
+    jam_mulai:   ag.jam_mulai   || '',
+    jam_selesai: ag.jam_selesai || '',
+    status:      ag.status      || 'Aktif',
+    deskripsi:   ag.deskripsi   || '',
+    filled:      true,
+    fromDB:      true, // tandai supaya tidak ikut di-submit (sudah ada)
+    jadwal_id:   ag.jadwal_id,
+  }));
+
+  if (existingCount >= MAX_PER_DAY) {
+    // Hari sudah penuh dari DB — tampilkan bubble saja, tanpa form tambah
+    window._activeSlot[key] = 0;
+    renderBubbleRow(key);
+    renderActiveForm(key, 0);
+    updateAgendaCount(key);
+    updateSubmitSection();
+  } else {
+    // Masih ada slot — tambah 1 agenda baru kosong
+    window._activeSlot[key] = existingCount > 0 ? existingCount : 0;
+    if (existingCount > 0) {
+      renderBubbleRow(key);
+    }
+    addAgenda(key); // tambah slot kosong baru
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -466,14 +514,14 @@ function renderBubbleRow(key) {
 
   data.forEach((ag, i) => {
     const isActive  = i === active;
-    const isFilled  = ag.filled; // true once user_id is set
     const statusVal = ag.status || 'Aktif';
+    const isFromDB  = ag.fromDB === true;
     const col       = STATUS_COLOR[statusVal] || 'slate';
     const colMap    = {
       emerald: isActive ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100',
-      amber:   isActive ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200'   : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100',
-      rose:    isActive ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-200'     : 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100',
-      slate:   isActive ? 'bg-slate-800 border-slate-800 text-white shadow-md'                   : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200',
+      amber:   isActive ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200'       : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100',
+      rose:    isActive ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-200'          : 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100',
+      slate:   isActive ? 'bg-slate-800 border-slate-800 text-white shadow-md'                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200',
     };
     const cls = colMap[col] || colMap.slate;
 
@@ -482,18 +530,20 @@ function renderBubbleRow(key) {
     pill.className = `agenda-bubble inline-flex items-center gap-1.5 h-9 px-3 rounded-full border text-xs font-bold transition-all duration-150 ${cls}`;
     pill.dataset.idx = i;
 
-    // Label: angka + nama user kalau sudah diisi
     const uName = ag.username || '';
+    // DB bubble: tampilkan lock icon kecil sebagai indikator sudah tersimpan
     pill.innerHTML = `
       <span class="agenda-bubble-num">${i+1}</span>
       ${uName ? `<span class="max-w-[72px] truncate opacity-90 font-semibold">${uName}</span>` : ''}
       ${ag.status === 'Tutup' ? `<span class="text-[10px] opacity-80">✕</span>` : ''}
+      ${isFromDB ? `<span class="text-[10px] opacity-60" title="Sudah tersimpan">🔒</span>` : ''}
     `;
     pill.addEventListener('click', () => activateBubble(key, i));
     row.appendChild(pill);
   });
 
-  // Tombol tambah bubble (kalau belum maks)
+  // Tombol + hanya tampil kalau belum maks DAN ada slot baru (non-DB)
+  const newSlots = data.filter(ag => !ag.fromDB).length;
   if (!maxed) {
     const addPill = document.createElement('button');
     addPill.type      = 'button';
@@ -523,6 +573,50 @@ function renderActiveForm(key, si) {
   const statusVal = ag.status || 'Aktif';
   const isTutup   = statusVal === 'Tutup';
   const isRestrict = ['Catatan','Tutup'].includes(statusVal);
+  const isFromDB   = ag.fromDB === true;
+
+  // ── Read-only view untuk agenda yang sudah ada di DB ─────────────────────
+  if (isFromDB) {
+    const colMap = { Aktif:'emerald', Catatan:'amber', Tutup:'rose' };
+    const col = colMap[statusVal] || 'slate';
+    panel.innerHTML = `
+      <div class="agenda-slot p-4 bg-slate-50/80" data-slot="${si}">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+            <span>Agenda ${si+1}</span>
+            <span class="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-semibold">Tersimpan</span>
+          </span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <p class="text-[11px] font-semibold text-slate-400 mb-0.5">Nama</p>
+            <p class="font-semibold text-slate-700">${ag.username || '—'}</p>
+          </div>
+          ${!isTutup ? `
+          <div>
+            <p class="text-[11px] font-semibold text-slate-400 mb-0.5">Shift</p>
+            <p class="font-semibold text-slate-700">${ag.waktu_shift || '—'}</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold text-slate-400 mb-0.5">Jam</p>
+            <p class="font-semibold text-slate-700">${ag.jam_mulai||'—'} – ${ag.jam_selesai||'—'}</p>
+          </div>` : ''}
+          <div>
+            <p class="text-[11px] font-semibold text-slate-400 mb-0.5">Status</p>
+            <span class="inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-${col}-100 text-${col}-700">${statusVal}</span>
+          </div>
+          ${ag.deskripsi ? `<div class="col-span-2 sm:col-span-3">
+            <p class="text-[11px] font-semibold text-slate-400 mb-0.5">Deskripsi</p>
+            <p class="text-slate-600">${ag.deskripsi}</p>
+          </div>` : ''}
+        </div>
+        <p class="mt-3 text-[11px] text-slate-400 italic">Jadwal ini sudah tersimpan. Gunakan menu Ubah untuk mengedit.</p>
+      </div>
+      <div id="hiddenInputs_${key}"></div>
+    `;
+    renderHiddenInputs(key, si);
+    return;
+  }
 
   const statuses = [
     {val:'Aktif',  col:'emerald', desc:'Normal'},
@@ -625,16 +719,20 @@ function renderHiddenInputs(key, activeIdx) {
   if (!container) return;
   const data = window._agendaData[key] || [];
   container.innerHTML = '';
+  // Reindex only non-DB agendas for submission (DB records already saved)
+  let submitIdx = 0;
   data.forEach((ag, i) => {
-    if (i === activeIdx) return; // active slot has real inputs
+    if (ag.fromDB) return; // skip — sudah ada di DB
+    if (i === activeIdx) { submitIdx++; return; } // active slot punya real inputs
     const fields = ['tanggal_kerja','user_id','waktu_shift','jam_mulai','jam_selesai','status','deskripsi'];
     fields.forEach(f => {
       const inp = document.createElement('input');
       inp.type  = 'hidden';
-      inp.name  = `jadwal[${key}][${i}][${f}]`;
+      inp.name  = `jadwal[${key}][${submitIdx}][${f}]`;
       inp.value = f === 'tanggal_kerja' ? getDateForDay(key) : (ag[f] || (f==='status'?'Aktif':''));
       container.appendChild(inp);
     });
+    submitIdx++;
   });
 }
 
@@ -646,15 +744,14 @@ function addAgenda(key, prefill = {}) {
   if (!window._agendaData[key]) window._agendaData[key] = [];
 
   const data = window._agendaData[key];
-  if (data.length >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari.`, 'warn'); return; }
+  if (data.length >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari (sudah penuh).`, 'warn'); return; }
 
-  // Cek apakah agenda sebelumnya sudah diisi (user_id) — kecuali prefill (dari QF)
+  // Cek apakah agenda baru (non-DB) sebelumnya sudah diisi — kecuali prefill (dari QF)
   const isPrefill = Object.keys(prefill).length > 0;
   if (!isPrefill && data.length > 0) {
-    const prev = data[data.length - 1];
-    if (!prev.user_id && !prev.filled) {
-      // Fokus ke bubble yang belum diisi
-      activateBubble(key, data.length - 1);
+    const lastNew = [...data].reverse().find(ag => !ag.fromDB);
+    if (lastNew && !lastNew.user_id && !lastNew.filled) {
+      activateBubble(key, data.indexOf(lastNew));
       showToast('Isi agenda sebelumnya dulu ya.', 'warn');
       return;
     }
@@ -778,10 +875,15 @@ function onStatusChange(key, si, val) {
 //  UI HELPERS
 // ══════════════════════════════════════════════════════
 function updateAgendaCount(key) {
-  const data  = window._agendaData?.[key] || [];
-  const count = data.length;
-  const el    = document.getElementById('agendaCount_' + key);
-  if (el) el.textContent = count > 0 ? `${count}/${MAX_PER_DAY}` : '';
+  const data    = window._agendaData?.[key] || [];
+  const total   = data.length;
+  const dbCount = data.filter(ag => ag.fromDB).length;
+  const el      = document.getElementById('agendaCount_' + key);
+  if (!el) return;
+  if (total === 0) { el.textContent = ''; return; }
+  // Tampilkan: "2/4" atau "2/4 (+1 baru)" kalau ada yang baru
+  const newCount = total - dbCount;
+  el.textContent = newCount > 0 ? `${total}/${MAX_PER_DAY} (+${newCount})` : `${total}/${MAX_PER_DAY}`;
 }
 
 function uncheckDay(key) {
@@ -795,8 +897,16 @@ function updateSubmitSection() {
   const summary = document.getElementById('submitSummary');
   if (checked.length > 0) {
     section.classList.remove('hidden');
-    const total = checked.reduce((s,k) => s + (window._agendaData?.[k]?.length || 0), 0);
-    summary.textContent = `${checked.length} hari · ${total} agenda total`;
+    // Hitung hanya agenda baru (bukan dari DB)
+    const total = checked.reduce((s,k) => {
+      const data = window._agendaData?.[k] || [];
+      return s + data.filter(ag => !ag.fromDB).length;
+    }, 0);
+    if (total === 0) {
+      summary.textContent = 'Belum ada agenda baru yang ditambahkan.';
+    } else {
+      summary.textContent = `${checked.length} hari · ${total} agenda baru akan disimpan`;
+    }
   } else {
     section.classList.add('hidden');
   }
@@ -817,10 +927,17 @@ function openQF(userId, username) {
 
   qfDayGrid.innerHTML = '';
   DAY_KEYS.forEach(key => {
-    const data     = window._agendaData?.[key] || [];
-    const count    = data.length;
-    const hasTutup = data.some(ag => ag.status === 'Tutup');
-    const disabled = count >= MAX_PER_DAY || hasTutup;
+    // Gabungkan data dari state (kalau hari sudah dibuka) + EXISTING_BY_DATE (kalau belum dibuka)
+    const dateForDay  = getDateForDay(key);
+    const stateData   = window._agendaData?.[key];
+    const data        = stateData || (EXISTING_BY_DATE[dateForDay] || []);
+    const count       = data.length;
+    const hasTutup    = data.some(ag => (ag.status || '').toLowerCase() === 'tutup');
+    const isFull      = count >= MAX_PER_DAY;
+    const disabled    = isFull || hasTutup;
+
+    // Hitung slot tersisa
+    const remaining = MAX_PER_DAY - count;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -829,10 +946,10 @@ function openQF(userId, username) {
 
     let note = hasTutup
       ? `<span class="text-[10px] text-rose-500 block mt-0.5">TUTUP</span>`
-      : count >= MAX_PER_DAY
-        ? `<span class="text-[10px] text-amber-600 block mt-0.5">PENUH</span>`
+      : isFull
+        ? `<span class="text-[10px] text-amber-600 block mt-0.5">PENUH (${MAX_PER_DAY}/${MAX_PER_DAY})</span>`
         : count > 0
-          ? `<span class="text-[10px] text-slate-400 block mt-0.5">${count}/${MAX_PER_DAY} agenda</span>`
+          ? `<span class="text-[10px] text-slate-400 block mt-0.5">${count}/${MAX_PER_DAY} · sisa ${remaining}</span>`
           : `<span class="text-[10px] text-slate-400 block mt-0.5">Kosong</span>`;
 
     btn.innerHTML = `<div class="text-xs font-semibold text-slate-700">${DAY_LABELS[key]}</div>${note}`;
@@ -943,6 +1060,7 @@ function validateAndSubmit(form) {
   checked.forEach(key => {
     const data = window._agendaData?.[key] || [];
     data.forEach((ag, i) => {
+      if (ag.fromDB) return; // skip — already saved
       const isTutup    = ag.status === 'Tutup';
       const isRestrict = ['Catatan','Tutup'].includes(ag.status);
       const label      = DAY_LABELS[key] + ' agenda ' + (i+1);
