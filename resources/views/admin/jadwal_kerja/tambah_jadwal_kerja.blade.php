@@ -281,6 +281,15 @@
   .status-opt.is-active-amber   { outline: 2px solid #f59e0b; }
   .status-opt.is-active-rose    { outline: 2px solid #f43f5e; }
 
+  /* Validation errors */
+  .v-error-field { border-color: #f43f5e !important; background: #fff5f5 !important; }
+  .bubble-error  { outline: 2px solid #f43f5e !important; animation: bubbleShake .3s ease; }
+  @keyframes bubbleShake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-4px); }
+    75%      { transform: translateX(4px); }
+  }
+
   /* QF day button */
   .qf-day-btn { transition: all .15s; cursor: pointer; }
   .qf-day-btn.selected {
@@ -380,6 +389,8 @@ function onDayCheck(key, checked) {
     if (!document.getElementById('dayForm_'+key)) renderDayBlock(key);
   } else {
     document.getElementById('dayForm_'+key)?.remove();
+    if (window._agendaData) window._agendaData[key] = [];
+    if (window._activeSlot) delete window._activeSlot[key];
     updateAgendaCount(key);
   }
   updateSubmitSection();
@@ -410,18 +421,17 @@ function renderDayBlock(key) {
         ✕ Hapus hari
       </button>
     </div>
-    <div class="p-4 space-y-3" id="agendaList_${key}"></div>
-    <div class="px-4 pb-4" id="addBtnWrap_${key}">
-      <button type="button" onclick="addAgenda('${key}')"
-              id="addAgendaBtn_${key}"
-              class="w-full h-10 rounded-xl border-2 border-dashed border-slate-200
-                     hover:border-slate-400 hover:bg-slate-50 transition text-sm font-semibold text-slate-400
-                     flex items-center justify-center gap-2">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-        </svg>
-        Tambah Agenda
-      </button>
+
+    {{-- BUBBLE ROW --}}
+    <div class="px-4 pt-4 pb-1">
+      <div class="flex items-center gap-2 flex-wrap" id="bubbleRow_${key}">
+        {{-- bubbles rendered by JS --}}
+      </div>
+    </div>
+
+    {{-- FORM PANEL (below bubbles, always visible, switches per active bubble) --}}
+    <div class="px-4 pb-4 pt-3" id="agendaList_${key}">
+      {{-- form injected here --}}
     </div>
   `;
 
@@ -433,26 +443,86 @@ function renderDayBlock(key) {
   }
   if (!inserted) container.appendChild(wrap);
 
-  addAgenda(key); // 1 agenda default
+  // state: berapa agenda sudah dibuat untuk hari ini
+  if (!window._agendaData) window._agendaData = {};
+  window._agendaData[key] = [];
+
+  addAgenda(key); // agenda 1 default, langsung aktif
 }
 
 // ══════════════════════════════════════════════════════
-//  ADD AGENDA SLOT
+//  BUBBLE HELPERS
 // ══════════════════════════════════════════════════════
-function addAgenda(key, prefill = {}) {
-  const list = document.getElementById('agendaList_' + key);
-  if (!list) return;
-  const count = list.querySelectorAll('.agenda-slot').length;
-  if (count >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari.`, 'warn'); return; }
+const STATUS_COLOR = { Aktif:'emerald', Catatan:'amber', Tutup:'rose' };
 
-  const si         = count;
-  const statusVal  = prefill.status || 'Aktif';
-  const isTutup    = statusVal === 'Tutup';
+function renderBubbleRow(key) {
+  const row = document.getElementById('bubbleRow_' + key);
+  if (!row) return;
+  const data    = window._agendaData[key] || [];
+  const active  = window._activeSlot?.[key] ?? 0;
+  const maxed   = data.length >= MAX_PER_DAY;
+
+  row.innerHTML = '';
+
+  data.forEach((ag, i) => {
+    const isActive  = i === active;
+    const isFilled  = ag.filled; // true once user_id is set
+    const statusVal = ag.status || 'Aktif';
+    const col       = STATUS_COLOR[statusVal] || 'slate';
+    const colMap    = {
+      emerald: isActive ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100',
+      amber:   isActive ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200'   : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100',
+      rose:    isActive ? 'bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-200'     : 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100',
+      slate:   isActive ? 'bg-slate-800 border-slate-800 text-white shadow-md'                   : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200',
+    };
+    const cls = colMap[col] || colMap.slate;
+
+    const pill = document.createElement('button');
+    pill.type      = 'button';
+    pill.className = `agenda-bubble inline-flex items-center gap-1.5 h-9 px-3 rounded-full border text-xs font-bold transition-all duration-150 ${cls}`;
+    pill.dataset.idx = i;
+
+    // Label: angka + nama user kalau sudah diisi
+    const uName = ag.username || '';
+    pill.innerHTML = `
+      <span class="agenda-bubble-num">${i+1}</span>
+      ${uName ? `<span class="max-w-[72px] truncate opacity-90 font-semibold">${uName}</span>` : ''}
+      ${ag.status === 'Tutup' ? `<span class="text-[10px] opacity-80">✕</span>` : ''}
+    `;
+    pill.addEventListener('click', () => activateBubble(key, i));
+    row.appendChild(pill);
+  });
+
+  // Tombol tambah bubble (kalau belum maks)
+  if (!maxed) {
+    const addPill = document.createElement('button');
+    addPill.type      = 'button';
+    addPill.id        = 'addBubbleBtn_' + key;
+    addPill.className = 'inline-flex items-center gap-1 h-9 px-3 rounded-full border-2 border-dashed border-slate-300 text-slate-400 text-xs font-bold hover:border-slate-500 hover:text-slate-600 transition-all duration-150';
+    addPill.innerHTML = `<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>`;
+    addPill.addEventListener('click', () => addAgenda(key));
+    row.appendChild(addPill);
+  }
+}
+
+function activateBubble(key, idx) {
+  if (!window._activeSlot) window._activeSlot = {};
+  window._activeSlot[key] = idx;
+  renderBubbleRow(key);
+  renderActiveForm(key, idx);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER ACTIVE FORM PANEL
+// ══════════════════════════════════════════════════════
+function renderActiveForm(key, si) {
+  const panel = document.getElementById('agendaList_' + key);
+  if (!panel) return;
+  const data      = window._agendaData[key] || [];
+  const ag        = data[si] || {};
+  const statusVal = ag.status || 'Aktif';
+  const isTutup   = statusVal === 'Tutup';
   const isRestrict = ['Catatan','Tutup'].includes(statusVal);
-
-  const slot = document.createElement('div');
-  slot.className     = 'agenda-slot p-4';
-  slot.dataset.slot  = si;
 
   const statuses = [
     {val:'Aktif',  col:'emerald', desc:'Normal'},
@@ -460,142 +530,214 @@ function addAgenda(key, prefill = {}) {
     {val:'Tutup',  col:'rose',    desc:'Libur'},
   ];
 
-  slot.innerHTML = `
-    <div class="flex items-center justify-between gap-2 mb-3">
-      <div class="flex items-center gap-2">
-        <span class="agenda-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 grid place-items-center text-[10px] font-bold shrink-0">${count+1}</span>
-        <span class="agenda-label text-xs font-semibold text-slate-500">Agenda ${count+1}</span>
-      </div>
-      ${count > 0 ? `<button type="button" onclick="removeAgenda(this,'${key}')"
-        class="h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400">Hapus</button>` : ''}
-    </div>
-
-    <input type="hidden" name="jadwal[${key}][${si}][tanggal_kerja]" value="${getDateForDay(key)}">
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-      <div>
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama</label>
-        <select name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}"
-                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                       focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition ${isRestrict?'locked':''}">
-          <option value="">Pilih user</option>
-          ${USERS.map(u=>`<option value="${u.user_id}"${String(u.user_id)===String(isRestrict?AUTH_USER_ID:(prefill.user_id||''))?'selected':''}>${u.username}</option>`).join('')}
-        </select>
-        ${isRestrict?`<input type="hidden" id="hUser_${key}_${si}" name="jadwal[${key}][${si}][user_id]" value="${AUTH_USER_ID}">` : ''}
+  panel.innerHTML = `
+    <div class="agenda-slot p-4" data-slot="${si}">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Agenda ${si+1}</span>
+        ${si > 0 ? `<button type="button" onclick="removeBubble('${key}',${si})"
+          class="h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400">Hapus</button>` : ''}
       </div>
 
-      <div id="swWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Waktu Shift</label>
-        <select name="jadwal[${key}][${si}][waktu_shift]" id="swSel_${key}_${si}"
-                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                       focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
-          <option value="">Pilih shift</option>
-          ${['Pagi','Siang','Sore','Malam'].map(s=>`<option value="${s}"${(prefill.waktu_shift||'')===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
+      <input type="hidden" name="jadwal[${key}][${si}][tanggal_kerja]" value="${getDateForDay(key)}">
 
-      <div id="jmWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Mulai</label>
-        <input type="time" name="jadwal[${key}][${si}][jam_mulai]" id="jm_${key}_${si}"
-               value="${isTutup?'':(prefill.jam_mulai||'')}"
-               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
-      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-      <div id="jsWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Selesai</label>
-        <input type="time" name="jadwal[${key}][${si}][jam_selesai]" id="js_${key}_${si}"
-               value="${isTutup?'':(prefill.jam_selesai||'')}"
-               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
-      </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama</label>
+          <select name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}"
+                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                         focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition ${isRestrict?'locked':''}"
+                  onchange="onUserChange('${key}',${si},this)">
+            <option value="">Pilih user</option>
+            ${USERS.map(u=>`<option value="${u.user_id}"${String(u.user_id)===String(isRestrict?AUTH_USER_ID:(ag.user_id||''))?'selected':''}>${u.username}</option>`).join('')}
+          </select>
+          ${isRestrict?`<input type="hidden" id="hUser_${key}_${si}" name="jadwal[${key}][${si}][user_id]" value="${AUTH_USER_ID}">` : ''}
+        </div>
 
-      <div class="sm:col-span-2">
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
-        <div class="flex gap-2" id="statusRow_${key}_${si}">
-          ${statuses.map(s=>`
-            <label class="flex-1 cursor-pointer">
-              <input type="radio" name="jadwal[${key}][${si}][status]" value="${s.val}"
-                     class="sr-only" ${statusVal===s.val?'checked':''}
-                     onchange="onStatusChange('${key}',${si},'${s.val}')">
-              <div class="status-opt rounded-xl border border-${s.col}-200 bg-${s.col}-50 px-2 py-2 text-center
-                          hover:bg-${s.col}-100 transition ${statusVal===s.val?`is-active-${s.col}`:''}">
-                <div class="text-xs font-bold text-${s.col}-800">${s.val}</div>
-                <div class="text-[10px] text-${s.col}-600">${s.desc}</div>
-              </div>
-            </label>`).join('')}
+        <div id="swWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Waktu Shift</label>
+          <select name="jadwal[${key}][${si}][waktu_shift]" id="swSel_${key}_${si}"
+                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                         focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition"
+                  onchange="syncField('${key}',${si},'waktu_shift',this.value)">
+            <option value="">Pilih shift</option>
+            ${['Pagi','Siang','Sore','Malam'].map(s=>`<option value="${s}"${(ag.waktu_shift||'')===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+
+        <div id="jmWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Mulai</label>
+          <input type="time" name="jadwal[${key}][${si}][jam_mulai]" id="jm_${key}_${si}"
+                 value="${isTutup?'':(ag.jam_mulai||'')}"
+                 onchange="syncField('${key}',${si},'jam_mulai',this.value)"
+                 class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                        focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+        </div>
+
+        <div id="jsWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Selesai</label>
+          <input type="time" name="jadwal[${key}][${si}][jam_selesai]" id="js_${key}_${si}"
+                 value="${isTutup?'':(ag.jam_selesai||'')}"
+                 onchange="syncField('${key}',${si},'jam_selesai',this.value)"
+                 class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                        focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
+          <div class="flex gap-2" id="statusRow_${key}_${si}">
+            ${statuses.map(s=>`
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="jadwal[${key}][${si}][status]" value="${s.val}"
+                       class="sr-only" ${statusVal===s.val?'checked':''}
+                       onchange="onStatusChange('${key}',${si},'${s.val}')">
+                <div class="status-opt rounded-xl border border-${s.col}-200 bg-${s.col}-50 px-2 py-2 text-center
+                            hover:bg-${s.col}-100 transition ${statusVal===s.val?`is-active-${s.col}`:''}">
+                  <div class="text-xs font-bold text-${s.col}-800">${s.val}</div>
+                  <div class="text-[10px] text-${s.col}-600">${s.desc}</div>
+                </div>
+              </label>`).join('')}
+          </div>
+        </div>
+
+        <div class="sm:col-span-2" id="dWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">Deskripsi <span class="font-normal opacity-50">(opsional)</span></label>
+          <input type="text" name="jadwal[${key}][${si}][deskripsi]"
+                 value="${esc(ag.deskripsi||'')}"
+                 placeholder="Contoh: Service rutin, booking pelanggan..."
+                 onchange="syncField('${key}',${si},'deskripsi',this.value)"
+                 class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                        focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
         </div>
       </div>
-
-      <div class="sm:col-span-2" id="dWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
-        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Deskripsi <span class="font-normal opacity-50">(opsional)</span></label>
-        <input type="text" name="jadwal[${key}][${si}][deskripsi]"
-               value="${esc(prefill.deskripsi||'')}"
-               placeholder="Contoh: Service rutin, booking pelanggan..."
-               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
-                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
-      </div>
     </div>
+
+    {{-- hidden inputs for NON-active agendas (so all data gets submitted) --}}
+    <div id="hiddenInputs_${key}"></div>
   `;
 
-  list.appendChild(slot);
-  refreshAddBtn(key);
+  renderHiddenInputs(key, si);
+}
+
+// Render hidden inputs for all slots except the active one (so form submission captures everything)
+function renderHiddenInputs(key, activeIdx) {
+  const container = document.getElementById('hiddenInputs_' + key);
+  if (!container) return;
+  const data = window._agendaData[key] || [];
+  container.innerHTML = '';
+  data.forEach((ag, i) => {
+    if (i === activeIdx) return; // active slot has real inputs
+    const fields = ['tanggal_kerja','user_id','waktu_shift','jam_mulai','jam_selesai','status','deskripsi'];
+    fields.forEach(f => {
+      const inp = document.createElement('input');
+      inp.type  = 'hidden';
+      inp.name  = `jadwal[${key}][${i}][${f}]`;
+      inp.value = f === 'tanggal_kerja' ? getDateForDay(key) : (ag[f] || (f==='status'?'Aktif':''));
+      container.appendChild(inp);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  ADD AGENDA (new bubble UX)
+// ══════════════════════════════════════════════════════
+function addAgenda(key, prefill = {}) {
+  if (!window._agendaData) window._agendaData = {};
+  if (!window._agendaData[key]) window._agendaData[key] = [];
+
+  const data = window._agendaData[key];
+  if (data.length >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari.`, 'warn'); return; }
+
+  // Cek apakah agenda sebelumnya sudah diisi (user_id) — kecuali prefill (dari QF)
+  const isPrefill = Object.keys(prefill).length > 0;
+  if (!isPrefill && data.length > 0) {
+    const prev = data[data.length - 1];
+    if (!prev.user_id && !prev.filled) {
+      // Fokus ke bubble yang belum diisi
+      activateBubble(key, data.length - 1);
+      showToast('Isi agenda sebelumnya dulu ya.', 'warn');
+      return;
+    }
+  }
+
+  const ag = {
+    user_id:     prefill.user_id     || '',
+    username:    prefill.username    || getUserName(prefill.user_id),
+    waktu_shift: prefill.waktu_shift || '',
+    jam_mulai:   prefill.jam_mulai   || '',
+    jam_selesai: prefill.jam_selesai || '',
+    status:      prefill.status      || 'Aktif',
+    deskripsi:   prefill.deskripsi   || '',
+    filled:      !!prefill.user_id,
+  };
+  data.push(ag);
+
+  const newIdx = data.length - 1;
+  if (!window._activeSlot) window._activeSlot = {};
+  window._activeSlot[key] = newIdx;
+
+  renderBubbleRow(key);
+  renderActiveForm(key, newIdx);
   updateAgendaCount(key);
   updateSubmitSection();
 }
 
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const getUserName = id => { const u = USERS.find(u => String(u.user_id) === String(id)); return u ? u.username : ''; };
 
 // ══════════════════════════════════════════════════════
-//  REMOVE AGENDA
+//  SYNC FIELD → state (called on input change)
 // ══════════════════════════════════════════════════════
-function removeAgenda(btn, key) {
-  btn.closest('.agenda-slot')?.remove();
-  renumber(key);
-  refreshAddBtn(key);
-  updateAgendaCount(key);
-  updateSubmitSection();
+function syncField(key, si, field, val) {
+  if (!window._agendaData?.[key]?.[si]) return;
+  window._agendaData[key][si][field] = val;
+  renderHiddenInputs(key, si); // keep hidden inputs in sync
 }
 
-function renumber(key) {
-  const slots = document.querySelectorAll(`#agendaList_${key} .agenda-slot`);
-  slots.forEach((slot, i) => {
-    slot.dataset.slot = i;
-    slot.querySelector('.agenda-num').textContent    = i + 1;
-    slot.querySelector('.agenda-label').textContent  = `Agenda ${i + 1}`;
-    // Rename semua name dan id
-    slot.querySelectorAll('[name]').forEach(el => {
-      el.name = el.name.replace(new RegExp(`\\[${key}\\]\\[\\d+\\]`), `[${key}][${i}]`);
-    });
-    slot.querySelectorAll('[id]').forEach(el => {
-      el.id = el.id.replace(new RegExp(`_${key}_\\d+$`), `_${key}_${i}`);
-    });
-    // Tombol hapus: tampilkan hanya untuk bukan index 0
-    const rmBtn = slot.querySelector('button[onclick^="removeAgenda"]');
-    if (i === 0) { rmBtn?.remove(); }
-    else if (!rmBtn) {
-      const hdr = slot.querySelector('.flex.items-center.justify-between');
-      if (hdr) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.setAttribute('onclick', `removeAgenda(this,'${key}')`);
-        b.className = 'h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400';
-        b.textContent = 'Hapus';
-        hdr.appendChild(b);
-      }
-    }
-  });
+function onUserChange(key, si, sel) {
+  if (!window._agendaData?.[key]?.[si]) return;
+  const uid = sel.value;
+  window._agendaData[key][si].user_id  = uid;
+  window._agendaData[key][si].username = getUserName(uid);
+  window._agendaData[key][si].filled   = !!uid;
+  renderBubbleRow(key);
+  renderHiddenInputs(key, si);
+}
+
+// ══════════════════════════════════════════════════════
+//  REMOVE BUBBLE / AGENDA
+// ══════════════════════════════════════════════════════
+function removeBubble(key, si) {
+  const data = window._agendaData[key];
+  if (!data || si === 0) return;
+  data.splice(si, 1);
+
+  if (!window._activeSlot) window._activeSlot = {};
+  window._activeSlot[key] = Math.min(window._activeSlot[key] ?? 0, data.length - 1);
+
+  renderBubbleRow(key);
+  renderActiveForm(key, window._activeSlot[key]);
+  updateAgendaCount(key);
+  updateSubmitSection();
 }
 
 // ══════════════════════════════════════════════════════
 //  STATUS CHANGE
 // ══════════════════════════════════════════════════════
 function onStatusChange(key, si, val) {
+  // Persist to state
+  if (window._agendaData?.[key]?.[si]) {
+    window._agendaData[key][si].status = val;
+    if (val === 'Tutup') {
+      window._agendaData[key][si].waktu_shift = '';
+      window._agendaData[key][si].jam_mulai   = '';
+      window._agendaData[key][si].jam_selesai = '';
+    }
+  }
+
   const isTutup    = val === 'Tutup';
   const isRestrict = ['Catatan','Tutup'].includes(val);
 
-  // Show/hide fields
   ['swWrap','jmWrap','jsWrap','dWrap'].forEach(p => {
     document.getElementById(`${p}_${key}_${si}`)?.classList.toggle('field-hidden', isTutup);
   });
@@ -613,41 +755,31 @@ function onStatusChange(key, si, val) {
         const h = document.createElement('input');
         h.type='hidden'; h.id=`hUser_${key}_${si}`; h.name=`jadwal[${key}][${si}][user_id]`; h.value=AUTH_USER_ID;
         uSel.parentNode.appendChild(h);
-      } else { hUser.value = AUTH_USER_ID; }
+      }
     } else {
       uSel.classList.remove('locked'); uSel.disabled = false; hUser?.remove();
     }
   }
 
-  // Update status card active ring
+  // Active ring on status card
   const row = document.getElementById(`statusRow_${key}_${si}`);
   if (row) {
     const colorMap = {Aktif:'emerald', Catatan:'amber', Tutup:'rose'};
-    row.querySelectorAll('.status-opt').forEach(div => {
-      ['emerald','amber','rose'].forEach(c => div.classList.remove(`is-active-${c}`));
-    });
-    const checkedRadio = row.querySelector(`input[value="${val}"]`);
-    checkedRadio?.nextElementSibling?.classList.add(`is-active-${colorMap[val]||'emerald'}`);
+    row.querySelectorAll('.status-opt').forEach(d => ['emerald','amber','rose'].forEach(c => d.classList.remove(`is-active-${c}`)));
+    row.querySelector(`input[value="${val}"]`)?.nextElementSibling?.classList.add(`is-active-${colorMap[val]||'emerald'}`);
   }
+
+  // Refresh bubble to show new color
+  renderBubbleRow(key);
+  renderHiddenInputs(key, si);
 }
 
 // ══════════════════════════════════════════════════════
 //  UI HELPERS
 // ══════════════════════════════════════════════════════
-function refreshAddBtn(key) {
-  const list  = document.getElementById('agendaList_' + key);
-  const count = list ? list.querySelectorAll('.agenda-slot').length : 0;
-  const btn   = document.getElementById('addAgendaBtn_' + key);
-  if (!btn) return;
-  const full = count >= MAX_PER_DAY;
-  btn.disabled = full;
-  btn.classList.toggle('opacity-40', full);
-  btn.classList.toggle('cursor-not-allowed', full);
-}
-
 function updateAgendaCount(key) {
-  const list  = document.getElementById('agendaList_' + key);
-  const count = list ? list.querySelectorAll('.agenda-slot').length : 0;
+  const data  = window._agendaData?.[key] || [];
+  const count = data.length;
   const el    = document.getElementById('agendaCount_' + key);
   if (el) el.textContent = count > 0 ? `${count}/${MAX_PER_DAY}` : '';
 }
@@ -663,10 +795,7 @@ function updateSubmitSection() {
   const summary = document.getElementById('submitSummary');
   if (checked.length > 0) {
     section.classList.remove('hidden');
-    const total = checked.reduce((s,k) => {
-      const l = document.getElementById('agendaList_'+k);
-      return s + (l ? l.querySelectorAll('.agenda-slot').length : 0);
-    }, 0);
+    const total = checked.reduce((s,k) => s + (window._agendaData?.[k]?.length || 0), 0);
     summary.textContent = `${checked.length} hari · ${total} agenda total`;
   } else {
     section.classList.add('hidden');
@@ -688,12 +817,9 @@ function openQF(userId, username) {
 
   qfDayGrid.innerHTML = '';
   DAY_KEYS.forEach(key => {
-    const list    = document.getElementById('agendaList_'+key);
-    const count   = list ? list.querySelectorAll('.agenda-slot').length : 0;
-    const hasTutup = list && Array.from(list.querySelectorAll('.agenda-slot')).some(s => {
-      const r = s.querySelector('input[type=radio]:checked');
-      return r && r.value === 'Tutup';
-    });
+    const data     = window._agendaData?.[key] || [];
+    const count    = data.length;
+    const hasTutup = data.some(ag => ag.status === 'Tutup');
     const disabled = count >= MAX_PER_DAY || hasTutup;
 
     const btn = document.createElement('button');
@@ -736,27 +862,21 @@ document.getElementById('qfApply').addEventListener('click', () => {
     const cb = document.getElementById('check_'+key);
     if (cb && !cb.checked) { cb.checked = true; if(!document.getElementById('dayForm_'+key)) renderDayBlock(key); }
 
-    // Prefill: copy dari slot pertama (siapapun), ganti user_id ke yang dipilih
-    const list = document.getElementById('agendaList_'+key);
-    let prefill = { user_id: qfUserId };
-    if (list) {
-      const first = list.querySelector('.agenda-slot');
-      if (first) {
-        const sw = first.querySelector(`select[name*="[waktu_shift]"]`);
-        const jm = first.querySelector(`input[name*="[jam_mulai]"]`);
-        const js = first.querySelector(`input[name*="[jam_selesai]"]`);
-        const st = first.querySelector('input[type=radio]:checked');
-        const ds = first.querySelector(`input[name*="[deskripsi]"]`);
-        const stVal = st?.value || 'Aktif';
-        prefill = {
-          user_id:     qfUserId,
-          waktu_shift: stVal==='Tutup' ? '' : (sw?.value||''),
-          jam_mulai:   stVal==='Tutup' ? '' : (jm?.value||''),
-          jam_selesai: stVal==='Tutup' ? '' : (js?.value||''),
-          status:      stVal,
-          deskripsi:   stVal==='Tutup' ? '' : (ds?.value||''),
-        };
-      }
+    // Prefill: copy dari slot pertama, ganti user_id ke yang dipilih
+    const data = window._agendaData?.[key];
+    let prefill = { user_id: qfUserId, username: getUserName(qfUserId) };
+    if (data && data.length > 0) {
+      const first = data[0];
+      const stVal = first.status || 'Aktif';
+      prefill = {
+        user_id:     qfUserId,
+        username:    getUserName(qfUserId),
+        waktu_shift: stVal==='Tutup' ? '' : (first.waktu_shift||''),
+        jam_mulai:   stVal==='Tutup' ? '' : (first.jam_mulai||''),
+        jam_selesai: stVal==='Tutup' ? '' : (first.jam_selesai||''),
+        status:      stVal,
+        deskripsi:   stVal==='Tutup' ? '' : (first.deskripsi||''),
+      };
     }
     addAgenda(key, prefill);
   });
@@ -774,14 +894,122 @@ document.querySelectorAll('.qf-btn').forEach(btn =>
 // ══════════════════════════════════════════════════════
 //  FORM SUBMIT
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  CLIENT-SIDE VALIDATION + SUBMIT
+// ══════════════════════════════════════════════════════
+function clearValidationErrors() {
+  document.querySelectorAll('.v-error-msg').forEach(el => el.remove());
+  document.querySelectorAll('.v-error-field').forEach(el => {
+    el.classList.remove('v-error-field');
+    el.style.borderColor = '';
+  });
+  document.querySelectorAll('.bubble-error').forEach(el => el.classList.remove('bubble-error'));
+}
+
+function markFieldError(fieldEl, msg) {
+  if (!fieldEl) return;
+  fieldEl.classList.add('v-error-field');
+  fieldEl.style.borderColor = '#f43f5e';
+  const existing = fieldEl.parentNode.querySelector('.v-error-msg');
+  if (!existing) {
+    const span = document.createElement('p');
+    span.className = 'v-error-msg text-[11px] text-rose-500 mt-1 font-medium';
+    span.textContent = msg;
+    fieldEl.parentNode.appendChild(span);
+  }
+}
+
+function validateAndSubmit(form) {
+  clearValidationErrors();
+
+  const checked = DAY_KEYS.filter(k => document.getElementById('check_'+k)?.checked);
+  if (!checked.length) { showToast('Pilih minimal 1 hari.', 'warn'); return; }
+
+  const validationErrors = [];
+
+  checked.forEach(key => {
+    const data = window._agendaData?.[key] || [];
+    data.forEach((ag, i) => {
+      const isTutup    = ag.status === 'Tutup';
+      const isRestrict = ['Catatan','Tutup'].includes(ag.status);
+      const label      = DAY_LABELS[key] + ' agenda ' + (i+1);
+      const activeIdx  = window._activeSlot?.[key] ?? 0;
+      const isActive   = i === activeIdx;
+
+      if (!ag.user_id && !isRestrict) {
+        validationErrors.push({ key, si: i, fieldId: isActive ? 'uSel_'+key+'_'+i : null, msg: 'Nama belum dipilih — '+label });
+      }
+      if (!isTutup) {
+        if (!ag.waktu_shift)
+          validationErrors.push({ key, si: i, fieldId: isActive ? 'swSel_'+key+'_'+i : null, msg: 'Waktu shift belum diisi — '+label });
+        if (!ag.jam_mulai)
+          validationErrors.push({ key, si: i, fieldId: isActive ? 'jm_'+key+'_'+i : null, msg: 'Jam mulai belum diisi — '+label });
+        if (!ag.jam_selesai)
+          validationErrors.push({ key, si: i, fieldId: isActive ? 'js_'+key+'_'+i : null, msg: 'Jam selesai belum diisi — '+label });
+        if (ag.jam_mulai && ag.jam_selesai && ag.jam_selesai <= ag.jam_mulai)
+          validationErrors.push({ key, si: i, fieldId: isActive ? 'js_'+key+'_'+i : null, msg: 'Jam selesai harus setelah jam mulai — '+label });
+      }
+    });
+  });
+
+  if (validationErrors.length === 0) {
+    const total = checked.reduce((s,k) => s + (window._agendaData?.[k]?.length||0), 0);
+    showConfirm('Simpan '+total+' agenda ('+checked.length+' hari)?', () => {
+      form.dataset.confirmed = '1';
+      form.submit();
+    });
+    return;
+  }
+
+  // Switch ke bubble yang bermasalah pertama
+  const firstErr = validationErrors[0];
+  activateBubble(firstErr.key, firstErr.si);
+
+  // Tandai semua bubble error
+  const errBubbles = new Set(validationErrors.map(e => e.key+'|'+e.si));
+  errBubbles.forEach(bk => {
+    const [k, siStr] = bk.split('|');
+    const row = document.getElementById('bubbleRow_' + k);
+    if (row) {
+      const pills = row.querySelectorAll('.agenda-bubble');
+      if (pills[+siStr]) pills[+siStr].classList.add('bubble-error');
+    }
+  });
+
+  // Highlight field error di DOM aktif
+  validationErrors.forEach(err => {
+    if (err.fieldId) {
+      const el = document.getElementById(err.fieldId);
+      if (el) markFieldError(el, err.msg.split(' — ')[0]);
+    }
+  });
+
+  // Scroll ke hari yang bermasalah
+  requestAnimationFrame(() => {
+    const dayCard = document.getElementById('dayForm_' + firstErr.key);
+    if (dayCard) dayCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (firstErr.fieldId) document.getElementById(firstErr.fieldId)?.focus();
+  });
+
+  const uniqueDays = [...new Set(validationErrors.map(e => DAY_LABELS[e.key]))];
+  showToast(validationErrors.length + ' kolom belum lengkap (' + uniqueDays.join(', ') + ')', 'warn');
+}
+
 document.getElementById('mainForm').addEventListener('submit', function(e) {
   if (this.dataset.confirmed === '1') return;
   e.preventDefault();
-  const checked = DAY_KEYS.filter(k => document.getElementById('check_'+k)?.checked);
-  if (!checked.length) { showToast('Pilih minimal 1 hari.','warn'); return; }
-  const total = checked.reduce((s,k)=>{const l=document.getElementById('agendaList_'+k);return s+(l?l.querySelectorAll('.agenda-slot').length:0);},0);
-  showConfirm(`Simpan ${total} agenda (${checked.length} hari)?`, () => { this.dataset.confirmed='1'; this.submit(); });
+  validateAndSubmit(this);
 });
+
+// Hapus error highlight saat user mulai isi field
+document.getElementById('mainForm').addEventListener('change', function(e) {
+  const field = e.target;
+  if (field.classList.contains('v-error-field')) {
+    field.classList.remove('v-error-field');
+    field.style.borderColor = '';
+    field.parentNode.querySelector('.v-error-msg')?.remove();
+  }
+}, true);
 
 // ══════════════════════════════════════════════════════
 //  TOAST + CONFIRM

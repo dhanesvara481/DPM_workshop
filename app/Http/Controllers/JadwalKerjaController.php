@@ -45,7 +45,7 @@ class JadwalKerjaController extends Controller
 
     public function getTambahJadwalKerja(Request $request)
     {
-        $users = User::where('is_active', 1)
+        $users = User::aktif()
              ->orderBy('username')
              ->get(['user_id', 'username', 'role']);
 
@@ -57,7 +57,6 @@ class JadwalKerjaController extends Controller
 
     public function simpanJadwalKerja(Request $request)
     {
-        // Ambil data per hari dari input jadwal[senin][...], jadwal[selasa][...], dst.
         $jadwalInput = $request->input('jadwal', []);
 
         if (empty($jadwalInput)) {
@@ -66,54 +65,76 @@ class JadwalKerjaController extends Controller
                 ->withErrors(['days' => 'Pilih minimal 1 hari.']);
         }
 
-        $dayKeys = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
-        $errors  = [];
-        $toSave  = [];
+        $dayKeys  = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+        $dayLabel = [
+            'senin'  => 'Senin',  'selasa' => 'Selasa', 'rabu'   => 'Rabu',
+            'kamis'  => 'Kamis',  'jumat'  => 'Jumat',  'sabtu'  => 'Sabtu',
+            'minggu' => 'Minggu',
+        ];
+
+        $errors = [];
+        $toSave = [];
 
         foreach ($dayKeys as $key) {
             if (!isset($jadwalInput[$key])) continue;
 
-            $item    = $jadwalInput[$key];
-            $isTutup = ($item['status'] ?? '') === 'Tutup';
-            $prefix  = "jadwal.{$key}";
+            $agendas = $jadwalInput[$key]; // array of agendas: [0 => [...], 1 => [...], ...]
 
-            // Validasi per hari
-            if (empty($item['user_id'])) {
-                $errors["{$prefix}.user_id"] = "User wajib dipilih untuk hari " . ucfirst($key) . ".";
-            }
-            if (empty($item['tanggal_kerja'])) {
-                $errors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk hari " . ucfirst($key) . ".";
-            }
-            if (empty($item['status'])) {
-                $errors["{$prefix}.status"] = "Status wajib dipilih untuk hari " . ucfirst($key) . ".";
-            }
-            if (!$isTutup) {
-                if (empty($item['waktu_shift'])) {
-                    $errors["{$prefix}.waktu_shift"] = "Waktu shift wajib diisi untuk hari " . ucfirst($key) . ".";
+            // Pastikan format array berindeks (bukan flat lama)
+            if (!is_array($agendas) || empty($agendas)) continue;
+
+            foreach ($agendas as $i => $item) {
+                $isTutup = ($item['status'] ?? '') === 'Tutup';
+                $label   = $dayLabel[$key] . ' agenda ke-' . ($i + 1);
+                $prefix  = "jadwal.{$key}.{$i}";
+
+                // ── Validasi ──────────────────────────────────────────────────
+                if (empty($item['user_id'])) {
+                    $errors["{$prefix}.user_id"] = "Nama wajib dipilih untuk {$label}.";
                 }
-                if (empty($item['jam_mulai'])) {
-                    $errors["{$prefix}.jam_mulai"] = "Jam mulai wajib diisi untuk hari " . ucfirst($key) . ".";
+
+                if (empty($item['tanggal_kerja'])) {
+                    $errors["{$prefix}.tanggal_kerja"] = "Tanggal tidak ditemukan untuk {$label}.";
                 }
-                if (empty($item['jam_selesai'])) {
-                    $errors["{$prefix}.jam_selesai"] = "Jam selesai wajib diisi untuk hari " . ucfirst($key) . ".";
+
+                if (empty($item['status'])) {
+                    $errors["{$prefix}.status"] = "Status wajib dipilih untuk {$label}.";
                 }
-                if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
-                    if ($item['jam_selesai'] <= $item['jam_mulai']) {
-                        $errors["{$prefix}.jam_selesai"] = "Jam selesai harus setelah jam mulai untuk hari " . ucfirst($key) . ".";
+
+                if (!$isTutup) {
+                    if (empty($item['waktu_shift'])) {
+                        $errors["{$prefix}.waktu_shift"] = "Waktu shift wajib diisi untuk {$label}.";
+                    }
+                    if (empty($item['jam_mulai'])) {
+                        $errors["{$prefix}.jam_mulai"] = "Jam mulai wajib diisi untuk {$label}.";
+                    }
+                    if (empty($item['jam_selesai'])) {
+                        $errors["{$prefix}.jam_selesai"] = "Jam selesai wajib diisi untuk {$label}.";
+                    }
+                    if (!empty($item['jam_mulai']) && !empty($item['jam_selesai'])) {
+                        if ($item['jam_selesai'] <= $item['jam_mulai']) {
+                            $errors["{$prefix}.jam_selesai"] = "Jam selesai harus setelah jam mulai untuk {$label}.";
+                        }
                     }
                 }
-            }
 
-            // Validasi user exists
-            if (!empty($item['user_id'])) {
-                $userExists = \App\Models\User::where('user_id', $item['user_id'])->exists();
-                if (!$userExists) {
-                    $errors["{$prefix}.user_id"] = "User tidak valid untuk hari " . ucfirst($key) . ".";
+                // ── Validasi user exists & aktif ──────────────────────────────
+                if (!empty($item['user_id'])) {
+                    $userExists = \App\Models\User::aktif()
+                        ->where('user_id', $item['user_id'])
+                        ->exists();
+                    if (!$userExists) {
+                        $errors["{$prefix}.user_id"] = "User tidak valid atau tidak aktif untuk {$label}.";
+                    }
                 }
-            }
 
-            if (empty($errors)) {
-                $toSave[$key] = $item;
+                if (empty($errors)) {
+                    $toSave[] = [
+                        'day'  => $key,
+                        'idx'  => $i,
+                        'item' => $item,
+                    ];
+                }
             }
         }
 
@@ -123,8 +144,9 @@ class JadwalKerjaController extends Controller
                 ->withErrors($errors);
         }
 
-        // Simpan semua record
-        foreach ($toSave as $key => $item) {
+        // ── Simpan semua record ───────────────────────────────────────────────────
+        foreach ($toSave as $entry) {
+            $item    = $entry['item'];
             $isTutup = ($item['status'] ?? '') === 'Tutup';
 
             \App\Models\JadwalKerja::create([
@@ -141,7 +163,7 @@ class JadwalKerjaController extends Controller
         $count = count($toSave);
 
         return redirect()->route('kelola_jadwal_kerja')
-            ->with('success', "{$count} jadwal berhasil ditambahkan.");
+            ->with('success', "{$count} agenda jadwal berhasil ditambahkan.");
     }
 
     // ─── Ubah ────────────────────────────────────────────────────────────────
@@ -155,10 +177,9 @@ class JadwalKerjaController extends Controller
             ->orderBy('jam_mulai')
             ->get();
 
-        $users = User::where('is_active', 1)
+       $users = User::aktif()
              ->orderBy('username')
              ->get(['user_id', 'username', 'role']);
-
 
         return view('admin.jadwal_kerja.ubah_jadwal_kerja',
             compact('jadwalKerjas', 'users', 'date') + ['authUser' => auth()->user()]
