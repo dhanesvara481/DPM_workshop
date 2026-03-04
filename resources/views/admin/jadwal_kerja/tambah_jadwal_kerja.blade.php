@@ -1,498 +1,819 @@
 {{-- resources/views/admin/jadwal_kerja/tambah_jadwal_kerja.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'DPM Workshop - Admin')
+@section('title', 'DPM Workshop - Tambah Jadwal')
 
 @section('content')
 
-{{-- TOPBAR --}}
 <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
   <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
     <div class="flex items-center gap-3 min-w-0">
       <button id="btnSidebar" type="button"
-              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              aria-label="Buka menu">
+              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center">
         <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Tambah Jadwal Kerja</h1>
-        <p class="text-xs text-slate-500">Isi form untuk menambahkan kegiatan / shift.</p>
+        <p class="text-xs text-slate-500">Pilih minggu → centang hari → isi agenda (maks 4/hari).</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button type="button"
-              class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              data-tip="Notifikasi">
-        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
+      <a href="{{ route('kelola_jadwal_kerja') }}"
+         class="inline-flex items-center gap-2 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition px-3 text-sm font-medium">
+        <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
-      </button>
+        Kembali
+      </a>
     </div>
   </div>
 </header>
 
 <section class="relative p-4 sm:p-6">
-  {{-- BACKGROUND --}}
   <div class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-    <div class="absolute inset-0 opacity-[0.12]"
-         style="background-image:
-            linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-            background-size: 56px 56px;"></div>
-    <div class="absolute inset-0 opacity-[0.20] mix-blend-screen animate-grid-scan"
-         style="background-image:
-            repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
-            repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-            background-size: 112px 112px, 112px 112px;"></div>
-    <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-    <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
-                bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
+    <div class="absolute inset-0 opacity-[0.10]"
+         style="background-image:linear-gradient(to right,rgba(2,6,23,.06) 1px,transparent 1px),linear-gradient(to bottom,rgba(2,6,23,.06) 1px,transparent 1px);background-size:56px 56px"></div>
   </div>
 
-  <div class="max-w-[980px] mx-auto w-full">
+  <div class="max-w-[1280px] mx-auto w-full">
 
-    @php $prefillDate = $selectedDate ?? request('date') ?? null; @endphp
+    @if(session('success'))
+      <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 text-sm">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+      <div class="mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
+        <ul class="list-disc pl-5 space-y-1">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+      </div>
+    @endif
 
-    <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
-                shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
+    <div class="flex gap-5 items-start">
 
-      <div class="px-5 sm:px-6 py-5 border-b border-slate-200">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">Form Tambah Jadwal</div>
-            <div class="text-xs text-slate-500 mt-1">Minimal isi: Nama dan Tanggal. Jam & Shift wajib kecuali status Tutup.</div>
+      {{-- ══════════════════════════════════════
+           SIDEBAR QUICK FILL (desktop only)
+      ══════════════════════════════════════ --}}
+      <aside class="hidden lg:flex flex-col w-52 shrink-0 gap-3 sticky top-24">
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(2,6,23,0.07)] overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+            <p class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <svg class="h-3.5 w-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+              </svg>
+              Quick Fill
+            </p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Klik nama → pilih hari</p>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="inline-flex items-center gap-2 text-xs text-slate-600">
-              <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Aktif
-            </span>
-            <span class="inline-flex items-center gap-2 text-xs text-slate-600">
-              <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Catatan
-            </span>
-            <span class="inline-flex items-center gap-2 text-xs text-slate-600">
-              <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Tutup
-            </span>
+          <div class="p-3 space-y-1.5" id="quickFillList">
+            @foreach(($users ?? []) as $u)
+              <button type="button"
+                      class="qf-btn w-full text-left px-3 py-2 rounded-xl border border-slate-100 bg-white
+                             hover:border-slate-300 hover:shadow-sm transition text-xs font-semibold text-slate-700
+                             flex items-center gap-2.5"
+                      data-user-id="{{ $u->user_id }}"
+                      data-username="{{ $u->username }}">
+                <span class="h-6 w-6 rounded-full bg-slate-100 text-slate-600 grid place-items-center text-[10px] font-bold shrink-0 border border-slate-200">
+                  {{ strtoupper(substr($u->username, 0, 1)) }}
+                </span>
+                <span class="truncate">{{ $u->username }}</span>
+              </button>
+            @endforeach
           </div>
         </div>
-      </div>
+        <div class="rounded-xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-500 leading-relaxed">
+          <span class="font-semibold text-slate-700">Tips:</span> Quick Fill copy setting agenda pertama di hari tujuan. Hari TUTUP &amp; hari penuh (4 agenda) tidak bisa dipilih.
+        </div>
+      </aside>
 
-      <div class="p-5 sm:p-6">
-        {{-- flash messages --}}
-        @if(session('success'))
-          <div class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 text-sm">
-            {{ session('success') }}
-          </div>
-        @endif
-        @if(session('error'))
-          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
-            {{ session('error') }}
-          </div>
-        @endif
-        @if($errors->any())
-          <div class="rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-4 text-sm">
-            <ul class="list-disc pl-5 space-y-1">
-              @foreach($errors->all() as $err) <li>{{ $err }}</li> @endforeach
-            </ul>
-          </div>
-        @endif
+      {{-- ══════════════════════════════════════
+           MAIN
+      ══════════════════════════════════════ --}}
+      <div class="flex-1 min-w-0 space-y-5">
 
-        <form id="createForm" action="{{ route('simpan_jadwal_kerja') }}" method="POST" class="space-y-5">
+        {{-- STEP 1: MINGGU --}}
+        <div class="rounded-2xl bg-white border border-slate-200 shadow-[0_4px_16px_rgba(2,6,23,0.06)] overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
+            <span class="h-6 w-6 rounded-lg bg-slate-900 text-white grid place-items-center text-[11px] font-bold shrink-0">1</span>
+            <p class="text-sm font-semibold text-slate-900">Pilih Minggu</p>
+          </div>
+          <div class="p-5 flex flex-col sm:flex-row sm:items-end gap-3">
+            <div class="flex-1">
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1.5">Minggu</label>
+              <input type="week" id="weekPicker"
+                     value="{{ old('week', now()->format('Y-\WW')) }}"
+                     class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm
+                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
+            </div>
+            <div class="inline-flex items-center gap-2 h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-600 whitespace-nowrap">
+              <svg class="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span id="weekRangeText">—</span>
+            </div>
+          </div>
+        </div>
+
+        {{-- STEP 2: PILIH HARI --}}
+        <div class="rounded-2xl bg-white border border-slate-200 shadow-[0_4px_16px_rgba(2,6,23,0.06)] overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span class="h-6 w-6 rounded-lg bg-slate-900 text-white grid place-items-center text-[11px] font-bold shrink-0">2</span>
+              <p class="text-sm font-semibold text-slate-900">Pilih Hari <span class="text-xs font-normal text-slate-400 ml-1">maks 4 agenda/hari</span></p>
+            </div>
+            <div class="flex gap-1.5">
+              <button type="button" id="btnCheckAll"
+                      class="h-7 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold">Semua</button>
+              <button type="button" id="btnUncheckAll"
+                      class="h-7 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold">Reset</button>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              @php
+                $dayDefs = [
+                  ['key'=>'senin',  'short'=>'Sen','label'=>'Senin',  'offset'=>0],
+                  ['key'=>'selasa', 'short'=>'Sel','label'=>'Selasa', 'offset'=>1],
+                  ['key'=>'rabu',   'short'=>'Rab','label'=>'Rabu',   'offset'=>2],
+                  ['key'=>'kamis',  'short'=>'Kam','label'=>'Kamis',  'offset'=>3],
+                  ['key'=>'jumat',  'short'=>'Jum','label'=>'Jumat',  'offset'=>4],
+                  ['key'=>'sabtu',  'short'=>'Sab','label'=>'Sabtu',  'offset'=>5],
+                  ['key'=>'minggu', 'short'=>'Min','label'=>'Minggu', 'offset'=>6],
+                ];
+              @endphp
+              @foreach($dayDefs as $d)
+                <label class="cursor-pointer select-none" data-day="{{ $d['key'] }}">
+                  <input type="checkbox" class="day-check sr-only"
+                         id="check_{{ $d['key'] }}"
+                         data-day="{{ $d['key'] }}"
+                         data-offset="{{ $d['offset'] }}">
+                  <div class="day-check-card rounded-xl border border-slate-200 bg-slate-50 p-3 text-center hover:border-slate-300 transition-all">
+                    <div class="text-lg font-bold text-slate-300 leading-none mb-0.5" id="dayNum_{{ $d['key'] }}">—</div>
+                    <div class="text-[11px] font-semibold text-slate-600">{{ $d['short'] }}</div>
+                    <div class="text-[10px] text-slate-400">{{ $d['label'] }}</div>
+                    <div class="mt-2 h-4 w-4 rounded-full border-2 border-slate-200 mx-auto grid place-items-center transition-all day-check-dot">
+                      <svg class="h-2.5 w-2.5 text-white hidden day-check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </div>
+                    <div class="mt-1 text-[10px] text-slate-400 leading-none day-agenda-count" id="agendaCount_{{ $d['key'] }}"></div>
+                  </div>
+                </label>
+              @endforeach
+            </div>
+          </div>
+        </div>
+
+        {{-- STEP 3: FORM PER HARI --}}
+        <form id="mainForm" action="{{ route('simpan_jadwal_kerja') }}" method="POST">
           @csrf
+          <input type="hidden" name="week" id="weekInput" value="{{ old('week', now()->format('Y-\WW')) }}">
 
-          {{-- Auth info untuk JS --}}
-          <input type="hidden" id="defaultStatus" value="Aktif">
-          <input type="hidden" id="authUserId"    value="{{ $authUser->user_id ?? '' }}">
-          <input type="hidden" id="authUserRole"  value="{{ $authUser->role ?? '' }}">
+          <div id="dayFormsContainer" class="space-y-4"></div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {{-- Nama --}}
-            <div>
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Nama</label>
-              <div class="relative">
-                <select name="user_id" id="userSelect"
-                        class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 pr-10
-                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300
-                               transition appearance-none">
-                  <option value="">Pilih user</option>
-                  @foreach(($users ?? []) as $u)
-                    <option value="{{ $u->user_id }}"
-                            data-role="{{ $u->role }}"
-                            @selected(old('user_id') == $u->user_id)>
-                      {{ $u->username ?? 'User' }}
-                    </option>
-                  @endforeach
-                </select>
-                <span id="lockIcon" class="hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                  </svg>
-                </span>
-              </div>
-              <p class="text-[11px] mt-1" id="userSelectHint" style="color:#64748b">Pilih admin/staff yang dijadwalkan.</p>
-            </div>
-
-            {{-- Tanggal --}}
-            <div>
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Tanggal Kerja</label>
-              <input type="date" name="tanggal_kerja"
-                     value="{{ old('tanggal_kerja', $prefillDate ?? date('Y-m-d')) }}"
-                     readonly
-                     class="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-4
-                            text-slate-500 cursor-not-allowed
-                            focus:outline-none transition">
-              <p class="text-[11px] text-slate-500 mt-1">Otomatis terisi jika datang dari kalender.</p>
-            </div>
-
-            {{-- Jam Mulai — disembunyikan saat status Tutup --}}
-            <div id="jamMulaiWrapper">
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Jam Mulai</label>
-              <input type="time" name="jam_mulai" id="jamMulaiInput"
-                     value="{{ old('jam_mulai') }}"
-                     class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-            </div>
-
-            {{-- Jam Selesai — disembunyikan saat status Tutup --}}
-            <div id="jamSelesaiWrapper">
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Jam Selesai</label>
-              <input type="time" name="jam_selesai" id="jamSelesaiInput"
-                     value="{{ old('jam_selesai') }}"
-                     class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-            </div>
-
-            {{-- Shift — disembunyikan saat status Tutup --}}
-            <div class="md:col-span-2" id="shiftWrapper">
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Waktu Shift</label>
-              <select name="waktu_shift" id="shiftSelect"
-                      class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4
-                             focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">
-                <option value="">Pilih shift</option>
-                <option value="Pagi"  @selected(old('waktu_shift') === 'Pagi')>Pagi</option>
-                <option value="Siang" @selected(old('waktu_shift') === 'Siang')>Siang</option>
-                <option value="Sore"  @selected(old('waktu_shift') === 'Sore')>Sore</option>
-                <option value="Malam" @selected(old('waktu_shift') === 'Malam')>Malam</option>
-              </select>
-              <p class="text-[11px] text-slate-500 mt-1">Pilih sesuai jam kerja yang diinput.</p>
-            </div>
-
-            {{-- Status --}}
-            <div class="md:col-span-2">
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Status</label>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
-                {{-- AKTIF --}}
-                <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="Aktif" class="peer sr-only"
-                         @checked(old('status', 'Aktif') === 'Aktif')>
-                  <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 hover:bg-emerald-100 transition
-                              peer-checked:ring-2 peer-checked:ring-emerald-400 peer-checked:border-emerald-400
-                              peer-checked:[&_.radio-dot]:bg-emerald-500">
-                    <div class="flex items-center gap-3">
-                      <span class="radio-dot h-4 w-4 rounded-full border-2 border-emerald-500 bg-transparent transition"></span>
-                      <div>
-                        <div class="font-semibold text-emerald-900">Aktif</div>
-                        <div class="text-[11px] text-emerald-700">Jadwal kerja normal.</div>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-
-                {{-- CATATAN --}}
-                <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="Catatan" class="peer sr-only"
-                         @checked(old('status') === 'Catatan')>
-                  <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 hover:bg-amber-100 transition
-                              peer-checked:ring-2 peer-checked:ring-amber-400 peer-checked:border-amber-400
-                              peer-checked:[&_.radio-dot]:bg-amber-500">
-                    <div class="flex items-center gap-3">
-                      <span class="radio-dot h-4 w-4 rounded-full border-2 border-amber-500 bg-transparent transition"></span>
-                      <div>
-                        <div class="font-semibold text-amber-900">Catatan</div>
-                        <div class="text-[11px] text-amber-700">Info / reminder penting.</div>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-
-                {{-- TUTUP --}}
-                <label class="group cursor-pointer">
-                  <input type="radio" name="status" value="Tutup" class="peer sr-only"
-                         @checked(old('status') === 'Tutup')>
-                  <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 hover:bg-rose-100 transition
-                              peer-checked:ring-2 peer-checked:ring-rose-400 peer-checked:border-rose-400
-                              peer-checked:[&_.radio-dot]:bg-rose-500">
-                    <div class="flex items-center gap-3">
-                      <span class="radio-dot h-4 w-4 rounded-full border-2 border-rose-500 bg-transparent transition"></span>
-                      <div>
-                        <div class="font-semibold text-rose-900">Tutup</div>
-                        <div class="text-[11px] text-rose-700">Libur / tidak operasional.</div>
-                      </div>
-                    </div>
-                  </div>
-                </label>
+          <div id="submitSection" class="hidden rounded-2xl bg-white border border-slate-200 shadow-[0_4px_16px_rgba(2,6,23,0.06)] overflow-hidden mt-5">
+            <div class="px-5 py-3 border-b border-slate-100 flex items-center gap-3">
+              <span class="h-6 w-6 rounded-lg bg-emerald-600 text-white grid place-items-center text-[11px] font-bold shrink-0">✓</span>
+              <div>
+                <p class="text-sm font-semibold text-slate-900">Simpan Jadwal</p>
+                <p class="text-xs text-slate-500" id="submitSummary">—</p>
               </div>
             </div>
-
-            {{-- Deskripsi — disembunyikan saat status Tutup --}}
-            <div class="md:col-span-2" id="descWrapper">
-              <label class="block text-sm font-semibold text-slate-800 mb-1">Deskripsi</label>
-              <textarea name="deskripsi" id="descArea" rows="5"
-                        placeholder="Contoh: Pekerjaan service rutin, booking pelanggan, dll..."
-                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3
-                               focus:outline-none focus:ring-4 focus:ring-slate-200/60 focus:border-slate-300 transition">{{ old('deskripsi') }}</textarea>
+            <div class="p-5 flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <a href="{{ route('kelola_jadwal_kerja') }}"
+                 class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
+                Batal
+              </a>
+              <button type="submit"
+                      class="h-11 px-6 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
+                Simpan Semua Jadwal
+              </button>
             </div>
-
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
-            <a id="btnBatal" href="{{ route('kelola_jadwal_kerja') }}"
-               class="h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center">
-              Batal
-            </a>
-            <button type="submit"
-                    class="h-11 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold
-                           shadow-[0_12px_24px_rgba(2,6,23,0.14)]">
-              Simpan
-            </button>
           </div>
         </form>
-      </div>
 
-      <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
-        Tips: Pilih Status Sesuai dengan kebutuhan. "Aktif" untuk jadwal kerja normal, "Catatan" untuk info penting, dan "Tutup" untuk hari libur atau non-operasional. 
+      </div>{{-- /main --}}
+    </div>{{-- /flex --}}
+  </div>
+</section>
+
+{{-- ══ QUICK FILL POPUP ════════════════════════════════════ --}}
+<div id="qfPopup" class="fixed inset-0 z-[80] hidden">
+  <div id="qfOverlay" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="relative min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-xs rounded-2xl bg-white border border-slate-200 shadow-[0_24px_64px_rgba(2,6,23,0.20)] overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Quick Fill</p>
+          <p class="text-xs text-slate-500 mt-0.5">Terapkan <span id="qfUsername" class="font-semibold text-slate-800">—</span> ke hari:</p>
+        </div>
+        <button type="button" id="qfClose"
+                class="h-8 w-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center">
+          <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <div class="grid grid-cols-2 gap-2" id="qfDayGrid"></div>
+        <div class="mt-4 flex gap-2 justify-end">
+          <button type="button" id="qfCancel"
+                  class="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+            Batal
+          </button>
+          <button type="button" id="qfApply"
+                  class="h-9 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
+            Terapkan
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 @endsection
 
 @push('head')
 <style>
-  @media (prefers-reduced-motion: reduce) { .animate-grid-scan { animation: none !important; } }
-  @keyframes gridScan {
-    0%   { background-position: 0 0, 0 0; opacity: 0.10; }
-    40%  { opacity: 0.22; }
-    60%  { opacity: 0.18; }
-    100% { background-position: 220px 220px, -260px 260px; opacity: 0.10; }
+  /* Day checkbox */
+  .day-check:checked + .day-check-card {
+    border-color: rgba(2,6,23,.4);
+    background: rgba(2,6,23,.03);
   }
-  .animate-grid-scan { animation: gridScan 8.5s ease-in-out infinite; }
-
-  .tip { position: relative; }
-  .tip[data-tip]::after {
-    content: attr(data-tip);
-    position: absolute; right: 0; top: calc(100% + 10px);
-    background: rgba(15,23,42,.92); color: rgba(255,255,255,.92);
-    font-size: 11px; padding: 6px 10px; border-radius: 10px;
-    white-space: nowrap; opacity: 0; transform: translateY(-4px);
-    pointer-events: none; transition: .15s ease;
+  .day-check:checked + .day-check-card .day-agenda-count,
+  .day-check:checked + .day-check-card div { color: inherit; }
+  .day-check:checked + .day-check-card #dayNum_senin,
+  .day-check:checked + .day-check-card .text-slate-300 { color: rgba(2,6,23,.85)!important; }
+  .day-check:checked + .day-check-card .day-check-dot {
+    background: rgba(2,6,23,.85); border-color: rgba(2,6,23,.85);
   }
-  .tip:hover::after { opacity: 1; transform: translateY(0); }
+  .day-check:checked + .day-check-card .day-check-icon { display: block; }
 
-  /* ✅ Visual dropdown terkunci */
-  select.is-locked {
-    background-color: #f1f5f9 !important;
-    border-color:     #94a3b8 !important;
-    color:            #475569 !important;
-    cursor: not-allowed !important;
-    pointer-events: none;
-    opacity: 1 !important;
+  /* Day form */
+  .day-form-card {
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 18px;
+    background: #fff;
+    overflow: hidden;
   }
 
-  /* ✅ Animasi smooth hide/show field */
-  .field-hidden {
-    display: none !important;
+  /* Agenda slot */
+  .agenda-slot {
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 14px;
+    background: rgba(248,250,252,.9);
+    animation: slotIn .18s ease;
   }
+  @keyframes slotIn {
+    from { opacity:0; transform:translateY(-5px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* Locked select */
+  select.locked {
+    background:#f1f5f9!important; border-color:#cbd5e1!important;
+    color:#64748b!important; cursor:not-allowed!important; pointer-events:none;
+  }
+  .field-hidden { display:none!important; }
+
+  /* Radio status — Tailwind peer workaround via JS class */
+  .status-opt.is-active-emerald { outline: 2px solid #10b981; }
+  .status-opt.is-active-amber   { outline: 2px solid #f59e0b; }
+  .status-opt.is-active-rose    { outline: 2px solid #f43f5e; }
+
+  /* QF day button */
+  .qf-day-btn { transition: all .15s; cursor: pointer; }
+  .qf-day-btn.selected {
+    border-color: rgba(2,6,23,.45)!important;
+    background: rgba(2,6,23,.04)!important;
+    font-weight: 700;
+  }
+  .qf-day-btn.qf-disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-  // ─── Auth admin yang login ─────────────────────────────────────────────────
-  const authUserId    = document.getElementById('authUserId')?.value  ?? '';
-  const authUserRole  = document.getElementById('authUserRole')?.value ?? '';
-  const defaultStatus = document.getElementById('defaultStatus')?.value ?? 'Aktif';
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const USERS        = @json($users ?? []);
+const AUTH_USER_ID = "{{ $authUser->user_id ?? '' }}";
+const MAX_PER_DAY  = 4;
+const MONTHS_ID    = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+const DAY_KEYS     = ['senin','selasa','rabu','kamis','jumat','sabtu','minggu'];
+const DAY_LABELS   = {senin:'Senin',selasa:'Selasa',rabu:'Rabu',kamis:'Kamis',jumat:'Jumat',sabtu:'Sabtu',minggu:'Minggu'};
 
-  // ─── Elemen ────────────────────────────────────────────────────────────────
-  const userSelect        = document.getElementById('userSelect');
-  const userSelectHint    = document.getElementById('userSelectHint');
-  const lockIcon          = document.getElementById('lockIcon');
-  const jamMulaiWrapper   = document.getElementById('jamMulaiWrapper');
-  const jamSelesaiWrapper = document.getElementById('jamSelesaiWrapper');
-  const shiftWrapper      = document.getElementById('shiftWrapper');
-  const descWrapper       = document.getElementById('descWrapper');
-  const jamMulaiInput     = document.getElementById('jamMulaiInput');
-  const jamSelesaiInput   = document.getElementById('jamSelesaiInput');
-  const shiftSelect       = document.getElementById('shiftSelect');
-  const descArea          = document.getElementById('descArea');
+// ══════════════════════════════════════════════════════
+//  WEEK HELPERS
+// ══════════════════════════════════════════════════════
+function parseWeek(val) {
+  if (!val) return null;
+  const [yr, wkStr] = val.split('-W');
+  const year = +yr, week = +wkStr;
+  const jan4 = new Date(year, 0, 4);
+  const iso1 = new Date(jan4);
+  iso1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  const mon = new Date(iso1);
+  mon.setDate(iso1.getDate() + (week - 1) * 7);
+  return mon;
+}
+const pad2 = n => String(n).padStart(2,'0');
+const ymd  = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 
-  // ─── 1. Kunci / buka dropdown Nama ────────────────────────────────────────
-  function filterUserDropdown(statusValue) {
-    if (!userSelect) return;
-    const isRestricted = ['Catatan', 'Tutup'].includes(statusValue);
+function getDateForDay(key) {
+  const mon = parseWeek(weekPicker.value);
+  if (!mon) return '';
+  const d = new Date(mon);
+  d.setDate(mon.getDate() + DAY_KEYS.indexOf(key));
+  return ymd(d);
+}
+function getDateLabelForDay(key) {
+  const mon = parseWeek(weekPicker.value);
+  if (!mon) return DAY_LABELS[key];
+  const d = new Date(mon);
+  d.setDate(mon.getDate() + DAY_KEYS.indexOf(key));
+  return `${DAY_LABELS[key]}, ${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
+}
 
-    if (isRestricted) {
-      userSelect.value    = authUserId;
-      userSelect.disabled = true;
-      userSelect.classList.add('is-locked');
-      lockIcon?.classList.remove('hidden');
+const weekPicker    = document.getElementById('weekPicker');
+const weekInput     = document.getElementById('weekInput');
+const weekRangeText = document.getElementById('weekRangeText');
 
-      // Hidden input agar user_id tetap terkirim (disabled tidak ikut submit)
-      let h = document.getElementById('hiddenUserId');
-      if (!h) {
-        h = document.createElement('input');
-        h.type = 'hidden'; h.name = 'user_id'; h.id = 'hiddenUserId';
-        userSelect.parentNode.appendChild(h);
-      }
-      h.value = authUserId;
-
-      if (userSelectHint) userSelectHint.textContent = '';
-    } else {
-      userSelect.disabled = false;
-      userSelect.classList.remove('is-locked');
-      lockIcon?.classList.add('hidden');
-      document.getElementById('hiddenUserId')?.remove();
-
-      if (userSelectHint) {
-        userSelectHint.textContent = 'Pilih admin/staff yang dijadwalkan.';
-        userSelectHint.style.color = '#64748b';
-      }
+function updateWeekUI() {
+  weekInput.value = weekPicker.value;
+  const mon = parseWeek(weekPicker.value);
+  if (!mon) { weekRangeText.textContent = '—'; return; }
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  weekRangeText.textContent = `${mon.getDate()} ${MONTHS_ID[mon.getMonth()]} – ${sun.getDate()} ${MONTHS_ID[sun.getMonth()]} ${sun.getFullYear()}`;
+  // Update semua tanggal tersimpan + label di form yang sudah terbuka
+  DAY_KEYS.forEach(key => {
+    document.querySelectorAll(`input[name^="jadwal[${key}]"][name$="[tanggal_kerja]"]`)
+      .forEach(el => el.value = getDateForDay(key));
+    const lbl = document.getElementById('formDateLabel_' + key);
+    if (lbl) lbl.textContent = getDateLabelForDay(key);
+    const numEl = document.getElementById('dayNum_' + key);
+    if (numEl) {
+      const d = new Date(mon); d.setDate(mon.getDate() + DAY_KEYS.indexOf(key));
+      numEl.textContent = pad2(d.getDate());
     }
-  }
-
-  // ─── 2. Sembunyikan / tampilkan field saat status Tutup ───────────────────
-  function filterFields(statusValue) {
-    const isTutup = statusValue === 'Tutup';
-
-    // Toggle semua field yang disembunyikan saat Tutup
-    [jamMulaiWrapper, jamSelesaiWrapper, shiftWrapper, descWrapper].forEach(el => {
-      if (el) el.classList.toggle('field-hidden', isTutup);
-    });
-
-    // Kosongkan value agar tidak ikut terkirim / tidak gagal validasi
-    if (isTutup) {
-      if (jamMulaiInput)   jamMulaiInput.value   = '';
-      if (jamSelesaiInput) jamSelesaiInput.value  = '';
-      if (shiftSelect)     shiftSelect.value      = '';
-      if (descArea)        descArea.value         = '';
-    }
-  }
-
-  // ─── Bind radio status ────────────────────────────────────────────────────
-  document.querySelectorAll('input[name="status"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        filterUserDropdown(radio.value);
-        filterFields(radio.value);
-      }
-    });
   });
+}
+weekPicker.addEventListener('change', updateWeekUI);
+updateWeekUI();
 
-  // Jalankan saat halaman load (termasuk old() dari validasi gagal)
-  const checkedStatus = document.querySelector('input[name="status"]:checked');
-  if (checkedStatus) {
-    filterUserDropdown(checkedStatus.value);
-    filterFields(checkedStatus.value);
+// ══════════════════════════════════════════════════════
+//  DAY CHECKLIST
+// ══════════════════════════════════════════════════════
+document.getElementById('btnCheckAll').addEventListener('click', () =>
+  DAY_KEYS.forEach(k => { const cb = document.getElementById('check_'+k); if(cb&&!cb.checked){cb.checked=true;onDayCheck(k,true);} })
+);
+document.getElementById('btnUncheckAll').addEventListener('click', () =>
+  DAY_KEYS.forEach(k => { const cb = document.getElementById('check_'+k); if(cb&&cb.checked){cb.checked=false;onDayCheck(k,false);} })
+);
+DAY_KEYS.forEach(key =>
+  document.getElementById('check_'+key)?.addEventListener('change', function(){ onDayCheck(key, this.checked); })
+);
+
+function onDayCheck(key, checked) {
+  if (checked) {
+    if (!document.getElementById('dayForm_'+key)) renderDayBlock(key);
+  } else {
+    document.getElementById('dayForm_'+key)?.remove();
+    updateAgendaCount(key);
   }
+  updateSubmitSection();
+}
 
-  // ─── Confirm modal ─────────────────────────────────────────────────────────
-  function showConfirmModal({ title, message, confirmText, cancelText, note, tone = "neutral", onConfirm }) {
-    const toneMap = {
-      neutral: { btn: "bg-slate-900 hover:bg-slate-800", noteBg: "bg-slate-50", noteBr: "border-slate-200", noteTx: "text-slate-600" },
-      danger:  { btn: "bg-rose-600 hover:bg-rose-700",  noteBg: "bg-rose-50",  noteBr: "border-rose-200",  noteTx: "text-rose-700"  },
-    };
-    const t = toneMap[tone] || toneMap.neutral;
+// ══════════════════════════════════════════════════════
+//  RENDER DAY BLOCK
+// ══════════════════════════════════════════════════════
+function renderDayBlock(key) {
+  const container = document.getElementById('dayFormsContainer');
+  const idx       = DAY_KEYS.indexOf(key);
 
-    const wrap = document.createElement('div');
-    wrap.className = "fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3";
-    wrap.innerHTML = `
-      <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
-        <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
-          <div>
-            <div class="text-lg font-semibold text-slate-900">${title}</div>
-            <div class="text-sm text-slate-600 mt-1">${message}</div>
-          </div>
-          <button type="button" class="btn-x h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 grid place-items-center">
-            <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <div class="p-5">
-          <div class="rounded-xl border ${t.noteBr} ${t.noteBg} p-4 text-xs ${t.noteTx}">
-            ${note || 'Pastikan data yang kamu isi sudah benar.'}
-          </div>
-          <div class="mt-4 flex justify-end gap-2">
-            <button type="button" class="btn-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">${cancelText}</button>
-            <button type="button" class="btn-ok h-10 px-5 rounded-xl ${t.btn} text-white text-sm font-semibold">${confirmText}</button>
-          </div>
+  const wrap = document.createElement('div');
+  wrap.id        = 'dayForm_' + key;
+  wrap.className = 'day-form-card';
+  wrap.dataset.day = key;
+  wrap.dataset.idx = idx;
+  wrap.innerHTML = `
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50">
+      <div class="flex items-center gap-2">
+        <svg class="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-sm font-semibold text-slate-900" id="formDateLabel_${key}">${getDateLabelForDay(key)}</span>
+      </div>
+      <button type="button" onclick="uncheckDay('${key}')"
+              class="h-7 px-3 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs font-medium text-slate-400">
+        ✕ Hapus hari
+      </button>
+    </div>
+    <div class="p-4 space-y-3" id="agendaList_${key}"></div>
+    <div class="px-4 pb-4" id="addBtnWrap_${key}">
+      <button type="button" onclick="addAgenda('${key}')"
+              id="addAgendaBtn_${key}"
+              class="w-full h-10 rounded-xl border-2 border-dashed border-slate-200
+                     hover:border-slate-400 hover:bg-slate-50 transition text-sm font-semibold text-slate-400
+                     flex items-center justify-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Tambah Agenda
+      </button>
+    </div>
+  `;
+
+  // Sisipkan urut
+  const existing = Array.from(container.querySelectorAll('.day-form-card'));
+  let inserted = false;
+  for (const el of existing) {
+    if (+el.dataset.idx > idx) { container.insertBefore(wrap, el); inserted = true; break; }
+  }
+  if (!inserted) container.appendChild(wrap);
+
+  addAgenda(key); // 1 agenda default
+}
+
+// ══════════════════════════════════════════════════════
+//  ADD AGENDA SLOT
+// ══════════════════════════════════════════════════════
+function addAgenda(key, prefill = {}) {
+  const list = document.getElementById('agendaList_' + key);
+  if (!list) return;
+  const count = list.querySelectorAll('.agenda-slot').length;
+  if (count >= MAX_PER_DAY) { showToast(`Maks ${MAX_PER_DAY} agenda per hari.`, 'warn'); return; }
+
+  const si         = count;
+  const statusVal  = prefill.status || 'Aktif';
+  const isTutup    = statusVal === 'Tutup';
+  const isRestrict = ['Catatan','Tutup'].includes(statusVal);
+
+  const slot = document.createElement('div');
+  slot.className     = 'agenda-slot p-4';
+  slot.dataset.slot  = si;
+
+  const statuses = [
+    {val:'Aktif',  col:'emerald', desc:'Normal'},
+    {val:'Catatan',col:'amber',   desc:'Info'},
+    {val:'Tutup',  col:'rose',    desc:'Libur'},
+  ];
+
+  slot.innerHTML = `
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="agenda-num h-5 w-5 rounded-full bg-slate-200 text-slate-600 grid place-items-center text-[10px] font-bold shrink-0">${count+1}</span>
+        <span class="agenda-label text-xs font-semibold text-slate-500">Agenda ${count+1}</span>
+      </div>
+      ${count > 0 ? `<button type="button" onclick="removeAgenda(this,'${key}')"
+        class="h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400">Hapus</button>` : ''}
+    </div>
+
+    <input type="hidden" name="jadwal[${key}][${si}][tanggal_kerja]" value="${getDateForDay(key)}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+      <div>
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama</label>
+        <select name="jadwal[${key}][${si}][user_id]" id="uSel_${key}_${si}"
+                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                       focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition ${isRestrict?'locked':''}">
+          <option value="">Pilih user</option>
+          ${USERS.map(u=>`<option value="${u.user_id}"${String(u.user_id)===String(isRestrict?AUTH_USER_ID:(prefill.user_id||''))?'selected':''}>${u.username}</option>`).join('')}
+        </select>
+        ${isRestrict?`<input type="hidden" id="hUser_${key}_${si}" name="jadwal[${key}][${si}][user_id]" value="${AUTH_USER_ID}">` : ''}
+      </div>
+
+      <div id="swWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Waktu Shift</label>
+        <select name="jadwal[${key}][${si}][waktu_shift]" id="swSel_${key}_${si}"
+                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                       focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+          <option value="">Pilih shift</option>
+          ${['Pagi','Siang','Sore','Malam'].map(s=>`<option value="${s}"${(prefill.waktu_shift||'')===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+
+      <div id="jmWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Mulai</label>
+        <input type="time" name="jadwal[${key}][${si}][jam_mulai]" id="jm_${key}_${si}"
+               value="${isTutup?'':(prefill.jam_mulai||'')}"
+               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+      </div>
+
+      <div id="jsWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Selesai</label>
+        <input type="time" name="jadwal[${key}][${si}][jam_selesai]" id="js_${key}_${si}"
+               value="${isTutup?'':(prefill.jam_selesai||'')}"
+               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
+        <div class="flex gap-2" id="statusRow_${key}_${si}">
+          ${statuses.map(s=>`
+            <label class="flex-1 cursor-pointer">
+              <input type="radio" name="jadwal[${key}][${si}][status]" value="${s.val}"
+                     class="sr-only" ${statusVal===s.val?'checked':''}
+                     onchange="onStatusChange('${key}',${si},'${s.val}')">
+              <div class="status-opt rounded-xl border border-${s.col}-200 bg-${s.col}-50 px-2 py-2 text-center
+                          hover:bg-${s.col}-100 transition ${statusVal===s.val?`is-active-${s.col}`:''}">
+                <div class="text-xs font-bold text-${s.col}-800">${s.val}</div>
+                <div class="text-[10px] text-${s.col}-600">${s.desc}</div>
+              </div>
+            </label>`).join('')}
         </div>
       </div>
-    `;
-    function close() { wrap.remove(); }
-    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
-    wrap.querySelector('.btn-x')?.addEventListener('click', close);
-    wrap.querySelector('.btn-cancel')?.addEventListener('click', close);
-    wrap.querySelector('.btn-ok')?.addEventListener('click', () => { close(); onConfirm?.(); });
-    document.body.appendChild(wrap);
+
+      <div class="sm:col-span-2" id="dWrap_${key}_${si}" ${isTutup?'class="field-hidden"':''}>
+        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Deskripsi <span class="font-normal opacity-50">(opsional)</span></label>
+        <input type="text" name="jadwal[${key}][${si}][deskripsi]"
+               value="${esc(prefill.deskripsi||'')}"
+               placeholder="Contoh: Service rutin, booking pelanggan..."
+               class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                      focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+      </div>
+    </div>
+  `;
+
+  list.appendChild(slot);
+  refreshAddBtn(key);
+  updateAgendaCount(key);
+  updateSubmitSection();
+}
+
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ══════════════════════════════════════════════════════
+//  REMOVE AGENDA
+// ══════════════════════════════════════════════════════
+function removeAgenda(btn, key) {
+  btn.closest('.agenda-slot')?.remove();
+  renumber(key);
+  refreshAddBtn(key);
+  updateAgendaCount(key);
+  updateSubmitSection();
+}
+
+function renumber(key) {
+  const slots = document.querySelectorAll(`#agendaList_${key} .agenda-slot`);
+  slots.forEach((slot, i) => {
+    slot.dataset.slot = i;
+    slot.querySelector('.agenda-num').textContent    = i + 1;
+    slot.querySelector('.agenda-label').textContent  = `Agenda ${i + 1}`;
+    // Rename semua name dan id
+    slot.querySelectorAll('[name]').forEach(el => {
+      el.name = el.name.replace(new RegExp(`\\[${key}\\]\\[\\d+\\]`), `[${key}][${i}]`);
+    });
+    slot.querySelectorAll('[id]').forEach(el => {
+      el.id = el.id.replace(new RegExp(`_${key}_\\d+$`), `_${key}_${i}`);
+    });
+    // Tombol hapus: tampilkan hanya untuk bukan index 0
+    const rmBtn = slot.querySelector('button[onclick^="removeAgenda"]');
+    if (i === 0) { rmBtn?.remove(); }
+    else if (!rmBtn) {
+      const hdr = slot.querySelector('.flex.items-center.justify-between');
+      if (hdr) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('onclick', `removeAgenda(this,'${key}')`);
+        b.className = 'h-7 px-2.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition text-xs text-slate-400';
+        b.textContent = 'Hapus';
+        hdr.appendChild(b);
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  STATUS CHANGE
+// ══════════════════════════════════════════════════════
+function onStatusChange(key, si, val) {
+  const isTutup    = val === 'Tutup';
+  const isRestrict = ['Catatan','Tutup'].includes(val);
+
+  // Show/hide fields
+  ['swWrap','jmWrap','jsWrap','dWrap'].forEach(p => {
+    document.getElementById(`${p}_${key}_${si}`)?.classList.toggle('field-hidden', isTutup);
+  });
+  if (isTutup) {
+    ['swSel','jm','js'].forEach(p => { const el = document.getElementById(`${p}_${key}_${si}`); if(el) el.value=''; });
   }
 
-  // ─── Submit ────────────────────────────────────────────────────────────────
-  const createForm = document.getElementById('createForm');
-  createForm?.addEventListener('submit', (e) => {
-    if (createForm.dataset.confirmed === "1") return;
-    e.preventDefault();
-    showConfirmModal({
-      title: "Simpan jadwal baru?",
-      message: "Jadwal akan ditambahkan ke sistem.",
-      confirmText: "Ya, Simpan",
-      cancelText: "Batal",
-      note: "Cek lagi Nama, Tanggal, dan jam-nya. Kalau sudah benar, lanjut simpan.",
-      onConfirm: () => { createForm.dataset.confirmed = "1"; createForm.submit(); }
+  // User lock
+  const uSel  = document.getElementById(`uSel_${key}_${si}`);
+  const hUser = document.getElementById(`hUser_${key}_${si}`);
+  if (uSel) {
+    if (isRestrict) {
+      uSel.value = AUTH_USER_ID; uSel.classList.add('locked'); uSel.disabled = true;
+      if (!hUser) {
+        const h = document.createElement('input');
+        h.type='hidden'; h.id=`hUser_${key}_${si}`; h.name=`jadwal[${key}][${si}][user_id]`; h.value=AUTH_USER_ID;
+        uSel.parentNode.appendChild(h);
+      } else { hUser.value = AUTH_USER_ID; }
+    } else {
+      uSel.classList.remove('locked'); uSel.disabled = false; hUser?.remove();
+    }
+  }
+
+  // Update status card active ring
+  const row = document.getElementById(`statusRow_${key}_${si}`);
+  if (row) {
+    const colorMap = {Aktif:'emerald', Catatan:'amber', Tutup:'rose'};
+    row.querySelectorAll('.status-opt').forEach(div => {
+      ['emerald','amber','rose'].forEach(c => div.classList.remove(`is-active-${c}`));
     });
+    const checkedRadio = row.querySelector(`input[value="${val}"]`);
+    checkedRadio?.nextElementSibling?.classList.add(`is-active-${colorMap[val]||'emerald'}`);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function refreshAddBtn(key) {
+  const list  = document.getElementById('agendaList_' + key);
+  const count = list ? list.querySelectorAll('.agenda-slot').length : 0;
+  const btn   = document.getElementById('addAgendaBtn_' + key);
+  if (!btn) return;
+  const full = count >= MAX_PER_DAY;
+  btn.disabled = full;
+  btn.classList.toggle('opacity-40', full);
+  btn.classList.toggle('cursor-not-allowed', full);
+}
+
+function updateAgendaCount(key) {
+  const list  = document.getElementById('agendaList_' + key);
+  const count = list ? list.querySelectorAll('.agenda-slot').length : 0;
+  const el    = document.getElementById('agendaCount_' + key);
+  if (el) el.textContent = count > 0 ? `${count}/${MAX_PER_DAY}` : '';
+}
+
+function uncheckDay(key) {
+  const cb = document.getElementById('check_' + key);
+  if (cb) { cb.checked = false; onDayCheck(key, false); }
+}
+
+function updateSubmitSection() {
+  const checked = DAY_KEYS.filter(k => document.getElementById('check_'+k)?.checked);
+  const section = document.getElementById('submitSection');
+  const summary = document.getElementById('submitSummary');
+  if (checked.length > 0) {
+    section.classList.remove('hidden');
+    const total = checked.reduce((s,k) => {
+      const l = document.getElementById('agendaList_'+k);
+      return s + (l ? l.querySelectorAll('.agenda-slot').length : 0);
+    }, 0);
+    summary.textContent = `${checked.length} hari · ${total} agenda total`;
+  } else {
+    section.classList.add('hidden');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  QUICK FILL
+// ══════════════════════════════════════════════════════
+let qfUserId = null, qfUserName = null;
+const qfPopup      = document.getElementById('qfPopup');
+const qfOverlay    = document.getElementById('qfOverlay');
+const qfDayGrid    = document.getElementById('qfDayGrid');
+const qfUsernameEl = document.getElementById('qfUsername');
+
+function openQF(userId, username) {
+  qfUserId = userId; qfUserName = username;
+  qfUsernameEl.textContent = username;
+
+  qfDayGrid.innerHTML = '';
+  DAY_KEYS.forEach(key => {
+    const list    = document.getElementById('agendaList_'+key);
+    const count   = list ? list.querySelectorAll('.agenda-slot').length : 0;
+    const hasTutup = list && Array.from(list.querySelectorAll('.agenda-slot')).some(s => {
+      const r = s.querySelector('input[type=radio]:checked');
+      return r && r.value === 'Tutup';
+    });
+    const disabled = count >= MAX_PER_DAY || hasTutup;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.day = key;
+    btn.className = `qf-day-btn w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center ${disabled?'qf-disabled':'hover:border-slate-300'}`;
+
+    let note = hasTutup
+      ? `<span class="text-[10px] text-rose-500 block mt-0.5">TUTUP</span>`
+      : count >= MAX_PER_DAY
+        ? `<span class="text-[10px] text-amber-600 block mt-0.5">PENUH</span>`
+        : count > 0
+          ? `<span class="text-[10px] text-slate-400 block mt-0.5">${count}/${MAX_PER_DAY} agenda</span>`
+          : `<span class="text-[10px] text-slate-400 block mt-0.5">Kosong</span>`;
+
+    btn.innerHTML = `<div class="text-xs font-semibold text-slate-700">${DAY_LABELS[key]}</div>${note}`;
+    if (!disabled) btn.addEventListener('click', () => btn.classList.toggle('selected'));
+    qfDayGrid.appendChild(btn);
   });
 
-  // ─── Tombol Batal ─────────────────────────────────────────────────────────
-  const btnBatal    = document.getElementById('btnBatal');
-  const prefillDate = "{{ $prefillDate ?? '' }}";
+  qfPopup.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+}
 
-  btnBatal?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const go = btnBatal.getAttribute('href');
+function closeQF() {
+  qfPopup.classList.add('hidden');
+  document.body.classList.remove('overflow-hidden');
+}
 
-    const hasAnyValue = Array.from(createForm.querySelectorAll('input, select, textarea'))
-      .some(el => {
-        if (!el.name || el.type === 'hidden' || el.type === 'submit' || el.type === 'button') return false;
-        if (el.type === 'radio') return el.checked && el.value !== defaultStatus;
-        if (el.name === 'tanggal_kerja' && prefillDate && el.value === prefillDate) return false;
-        return String(el.value || '').trim().length > 0;
-      });
+document.getElementById('qfClose').addEventListener('click', closeQF);
+document.getElementById('qfCancel').addEventListener('click', closeQF);
+qfOverlay.addEventListener('click', closeQF);
 
-    if (!hasAnyValue) { window.location.href = go; return; }
+document.getElementById('qfApply').addEventListener('click', () => {
+  const selected = Array.from(qfDayGrid.querySelectorAll('.qf-day-btn.selected')).map(b => b.dataset.day);
+  if (!selected.length) { closeQF(); return; }
 
-    showConfirmModal({
-      title: "Batalkan pembuatan jadwal?",
-      message: "Kalau kamu keluar sekarang, data yang sudah diisi akan hilang.",
-      confirmText: "Ya, Keluar",
-      cancelText: "Tetap di sini",
-      note: "Kalau mau lanjut isi, klik \"Tetap di sini\".",
-      onConfirm: () => window.location.href = go
-    });
+  selected.forEach(key => {
+    // Aktifkan hari kalau belum
+    const cb = document.getElementById('check_'+key);
+    if (cb && !cb.checked) { cb.checked = true; if(!document.getElementById('dayForm_'+key)) renderDayBlock(key); }
+
+    // Prefill: copy dari slot pertama (siapapun), ganti user_id ke yang dipilih
+    const list = document.getElementById('agendaList_'+key);
+    let prefill = { user_id: qfUserId };
+    if (list) {
+      const first = list.querySelector('.agenda-slot');
+      if (first) {
+        const sw = first.querySelector(`select[name*="[waktu_shift]"]`);
+        const jm = first.querySelector(`input[name*="[jam_mulai]"]`);
+        const js = first.querySelector(`input[name*="[jam_selesai]"]`);
+        const st = first.querySelector('input[type=radio]:checked');
+        const ds = first.querySelector(`input[name*="[deskripsi]"]`);
+        const stVal = st?.value || 'Aktif';
+        prefill = {
+          user_id:     qfUserId,
+          waktu_shift: stVal==='Tutup' ? '' : (sw?.value||''),
+          jam_mulai:   stVal==='Tutup' ? '' : (jm?.value||''),
+          jam_selesai: stVal==='Tutup' ? '' : (js?.value||''),
+          status:      stVal,
+          deskripsi:   stVal==='Tutup' ? '' : (ds?.value||''),
+        };
+      }
+    }
+    addAgenda(key, prefill);
   });
-</script>
 
-<script>
-document.querySelectorAll('input[type="date"][readonly]').forEach(el => {
-    el.addEventListener('keydown', e => e.preventDefault());
-    el.addEventListener('mousedown', e => e.preventDefault());
+  updateSubmitSection();
+  closeQF();
+  showToast(`Quick Fill: ${selected.map(k=>DAY_LABELS[k]).join(', ')}`, 'success');
 });
+
+// Bind QF buttons
+document.querySelectorAll('.qf-btn').forEach(btn =>
+  btn.addEventListener('click', () => openQF(btn.dataset.userId, btn.dataset.username))
+);
+
+// ══════════════════════════════════════════════════════
+//  FORM SUBMIT
+// ══════════════════════════════════════════════════════
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+  if (this.dataset.confirmed === '1') return;
+  e.preventDefault();
+  const checked = DAY_KEYS.filter(k => document.getElementById('check_'+k)?.checked);
+  if (!checked.length) { showToast('Pilih minimal 1 hari.','warn'); return; }
+  const total = checked.reduce((s,k)=>{const l=document.getElementById('agendaList_'+k);return s+(l?l.querySelectorAll('.agenda-slot').length:0);},0);
+  showConfirm(`Simpan ${total} agenda (${checked.length} hari)?`, () => { this.dataset.confirmed='1'; this.submit(); });
+});
+
+// ══════════════════════════════════════════════════════
+//  TOAST + CONFIRM
+// ══════════════════════════════════════════════════════
+function showToast(msg, type='info') {
+  const bg = {success:'bg-emerald-800',warn:'bg-amber-700',info:'bg-slate-900'}[type]||'bg-slate-900';
+  const t = document.createElement('div');
+  t.className = `fixed bottom-6 right-6 z-[999] px-4 py-3 rounded-xl text-white text-sm font-medium shadow-xl ${bg} transition-opacity duration-300`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0', 2200);
+  setTimeout(()=>t.remove(), 2600);
+}
+function showConfirm(msg, onOk) {
+  const wrap = document.createElement('div');
+  wrap.className = 'fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4';
+  wrap.innerHTML = `
+    <div class="w-full max-w-sm bg-white rounded-2xl border border-slate-200 shadow-[0_24px_64px_rgba(2,6,23,0.25)] overflow-hidden">
+      <div class="p-5 border-b border-slate-100">
+        <p class="text-base font-semibold text-slate-900">Konfirmasi</p>
+        <p class="text-sm text-slate-500 mt-1">${msg}</p>
+      </div>
+      <div class="p-4 flex gap-2 justify-end">
+        <button class="c-cancel h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold">Batal</button>
+        <button class="c-ok h-10 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold">Simpan</button>
+      </div>
+    </div>`;
+  const close = ()=>wrap.remove();
+  wrap.addEventListener('click', e=>{ if(e.target===wrap) close(); });
+  wrap.querySelector('.c-cancel').addEventListener('click', close);
+  wrap.querySelector('.c-ok').addEventListener('click', ()=>{ close(); onOk(); });
+  document.body.appendChild(wrap);
+}
 </script>
 @endpush

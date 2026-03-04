@@ -5,8 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@yield('title', 'DPM Workshop')</title>
 
+  {{-- Sembunyiin body sampai CSS load --}}
+  <style>
+    body { opacity: 0; }
+  </style>
+
+  <script>
+    window.addEventListener('load', function() {
+      document.body.style.opacity = '1';
+      document.body.style.transition = 'opacity 0.2s ease';
+    });
+  </script>
+
   @vite('resources/js/app.js')
   @stack('head')
+
 
   <style>
     /* ===== NAV ACTIVE (GLOBAL) ===== */

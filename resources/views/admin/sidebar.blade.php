@@ -10,10 +10,14 @@
   {{-- HEADER --}}
   <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
     <div class="flex items-center gap-3">
-      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden">
+      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden shrink-0">
         <img src="{{ asset('asset/DPM Workshop Logo.jpeg') }}"
             class="w-full h-full object-cover"
-            alt="Logo">
+            alt="Logo"
+            width="36"
+            height="36"
+            loading="eager"
+            decoding="async">
       </div>
       <div class="leading-tight">
         <p class="font-semibold tracking-tight">DPM Workshop</p>
@@ -35,7 +39,7 @@
     {{-- Profile --}}
     <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
       <div class="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 
-            border border-white/20 grid place-items-center shadow-lg">
+            border border-white/20 grid place-items-center shadow-lg shrink-0">
         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <!-- Kepala -->
           <path stroke-linecap="round" stroke-linejoin="round"
@@ -242,7 +246,7 @@
     // 1. Inject style cloak ke <head> — ini override semua Tailwind class
     var style = document.createElement('style');
     style.id = 'sidebar-cloak';
-    style.textContent = '#sidebar { transition: none !important; }';
+    style.textContent = '#sidebar { transition: none !important; opacity: 0; }';
     document.head.appendChild(style);
 
     // 2. Langsung posisikan — tidak ada animasi karena cloak aktif
@@ -257,6 +261,7 @@
       requestAnimationFrame(function () {
         var el = document.getElementById('sidebar-cloak');
         if (el) el.remove();
+        sidebar.style.opacity = '1'; // ← tambahin ini
       });
     });
   })();

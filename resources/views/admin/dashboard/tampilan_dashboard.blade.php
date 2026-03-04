@@ -542,10 +542,11 @@
      ========================= */
   #adminDashboard [data-animate]{
     opacity: 0; transform: translateY(14px) scale(.985); filter: blur(3px);
+    visibility: hidden;  /* ← tambah ini */
     transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
     will-change: opacity, transform, filter;
   }
-  #adminDashboard [data-animate].in{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  #adminDashboard [data-animate].in{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); visibility: visible; }
   @media (prefers-reduced-motion: reduce){
     #adminDashboard [data-animate]{ opacity: 1 !important; transform: none !important; filter: none !important; transition:none !important; }
   }
@@ -570,7 +571,11 @@
     if (reduce) return;
     const items = Array.from(document.querySelectorAll('[data-animate]'));
     items.forEach((el, i) => { el.style.transitionDelay = (80 + i * 60) + 'ms'; });
-    requestAnimationFrame(() => { items.forEach(el => el.classList.add('in')); });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        items.forEach(el => el.classList.add('in'));
+      });
+    });
   })();
 
   // ── Charts ────────────────────────────────────────────────────────────────
