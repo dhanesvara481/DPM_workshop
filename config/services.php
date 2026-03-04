@@ -39,9 +39,14 @@ return [
     //     'token' => env('FONNTE_TOKEN'),
     // ],
 
-//     'waha' => [
-//       'base_url' => env('WAHA_BASE_URL'),
-//       'api_key'  => env('WAHA_API_KEY'),
-//       'session'  => env('WAHA_SESSION', 'default'),
-//     ],
+    'waha' => [
+      'base_url' => env('WAHA_BASE_URL'),
+      'api_key'  => env('WAHA_API_KEY'),
+      'session'  => env('WAHA_SESSION', 'default'),
+    ],
+
+    'notif_channel' => [
+        'email'     => env('NOTIF_CHANNEL_EMAIL',    true),
+        'whatsapp'  => env('NOTIF_CHANNEL_WHATSAPP', true),
+    ],
 ];
