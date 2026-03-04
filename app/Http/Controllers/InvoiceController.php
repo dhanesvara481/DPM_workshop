@@ -263,8 +263,8 @@ class InvoiceController extends Controller
                 'harga_satuan'   => 0,
                 'total'          => 0,
                 'tipe_transaksi' => 'Jasa',
-                'diskon'         => $diskon, // ── FIX: simpan 0 bukan null
-                'pajak'          => $pajak,  // ── FIX: simpan 0 bukan null
+                'diskon'         => $diskon,
+                'pajak'          => $pajak,
             ]);
 
             RiwayatTransaksi::create([
