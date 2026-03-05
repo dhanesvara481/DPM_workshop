@@ -13,13 +13,12 @@ class WahaNotifikasiService
         $this->waha = $waha;
     }
 
-    public function kirimManual(
+   public function kirimManual(
         string $nomorHp,
         string $pesan,
         string $jenisNotifikasi,
         string $judulNotif
     ): bool {
-        // Hanya kirim WA, simpan notifikasi dilakukan di Observer (1x)
         return $this->waha->sendText($nomorHp, $pesan);
     }
 }

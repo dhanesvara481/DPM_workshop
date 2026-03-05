@@ -91,43 +91,64 @@ class JadwalKerjaGmailObserver
     // ─── Helper: broadcast ke semua user AKTIF (global) ──────────────────────
 
     private function kirimKeSemuaUser(
-        GmailNotifikasiService $notif,
-        JadwalKerja $jadwal,
-        string $aksi
-    ) {
-        // FIX: tambah filter status aktif
-        $users   = User::where('status', 'aktif')->whereNotNull('email')->get();
-        $tanggal = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
-        $isTutup = strtolower($jadwal->status) === 'tutup';
+    GmailNotifikasiService $notif,
+    JadwalKerja $jadwal,
+    string $aksi
+) {
+    $users   = User::where('status', 'aktif')->whereNotNull('email')->get();
+    $tanggal = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
+    $isTutup = strtolower($jadwal->status) === 'tutup';
 
-        $icon    = $isTutup ? '🔴' : '🟡';
-        $subject = "{$icon} Info Jadwal [{$jadwal->status}] – {$tanggal}";
+    $icon    = $isTutup ? '🔴' : '🟡';
+    $subject = "{$icon} Info Jadwal [{$jadwal->status}] – {$tanggal}";
 
-        foreach ($users as $user) {
-            $isi  = "Halo {$user->username},\n\n";
-            $isi .= $isTutup
-                ? "Workshop *tidak beroperasi* pada tanggal berikut:\n\n"
-                : "Terdapat catatan penting pada jadwal berikut:\n\n";
+    // ── Kirim email per user (personal, ada nama) ──
+    foreach ($users as $user) {
+        $isi  = "Halo {$user->username},\n\n";
+        $isi .= $isTutup
+            ? "Workshop *tidak beroperasi* pada tanggal berikut:\n\n"
+            : "Terdapat catatan penting pada jadwal berikut:\n\n";
 
-            $isi .= "──────────────────────\n";
-            $isi .= "📆 Tanggal    : {$tanggal}\n";
-            $isi .= "🏷️  Status    : {$jadwal->status}\n";
+        $isi .= "──────────────────────\n";
+        $isi .= "📆 Tanggal    : {$tanggal}\n";
+        $isi .= "🏷️  Status    : {$jadwal->status}\n";
 
-            if ($jadwal->deskripsi) {
-                $isi .= "📝 Keterangan : {$jadwal->deskripsi}\n";
-            }
-
-            $isi .= "──────────────────────\n\n";
-            $isi .= "Untuk info lebih lanjut, cek aplikasi DPM Workshop.\n\n";
-            $isi .= "Salam,\nTim DPM Workshop";
-
-            $notif->kirimManual(
-                $user->email,
-                $subject,
-                $isi,
-                'jadwal',
-                'Info Jadwal ' . $jadwal->status
-            );
+        if ($jadwal->deskripsi) {
+            $isi .= "📝 Keterangan : {$jadwal->deskripsi}\n";
         }
+
+        $isi .= "──────────────────────\n\n";
+        $isi .= "Untuk info lebih lanjut, cek aplikasi DPM Workshop.\n\n";
+        $isi .= "Salam,\nTim DPM Workshop";
+
+        $notif->kirimManual(
+            $user->email,
+            $subject,
+            $isi,
+            'jadwal',
+            'Info Jadwal ' . $jadwal->status
+        );
     }
+
+    // ── Simpan 1x ke DB notifikasi (generic, tanpa nama user) ──
+    if ($users->isNotEmpty()) {
+        $pesanLog  = $isTutup
+            ? "Workshop tidak beroperasi pada tanggal berikut:\n\n"
+            : "Terdapat catatan penting pada jadwal berikut:\n\n";
+        $pesanLog .= "──────────────────────\n";
+        $pesanLog .= "📆 Tanggal    : {$tanggal}\n";
+        $pesanLog .= "🏷️  Status    : {$jadwal->status}\n";
+        $pesanLog .= $jadwal->deskripsi ? "📝 Keterangan : {$jadwal->deskripsi}\n" : '';
+        $pesanLog .= "──────────────────────\n\n";
+        $pesanLog .= "Untuk info lebih lanjut, cek aplikasi DPM Workshop.\n\nSalam,\nTim DPM Workshop";
+
+        \App\Models\Notifikasi::create([
+            'jenis_notifikasi' => 'jadwal',
+            'judul_notif'      => mb_substr('Info Jadwal ' . $jadwal->status, 0, 100, 'UTF-8'),
+            'isi_pesan'        => $pesanLog,
+            'tanggal_dibuat'   => now(),
+            'tanggal_dikirim'  => now(),
+        ]);
+    }
+}
 }
