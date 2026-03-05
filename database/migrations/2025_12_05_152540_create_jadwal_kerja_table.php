@@ -21,6 +21,11 @@ return new class extends Migration
             $table->string('deskripsi', 100)->nullable();
             $table->enum('status', ['Aktif', 'Catatan', 'Tutup'])->default('Aktif');
             $table->timestamps();
+
+            // Tidak ada unique constraint di sini.
+            // Validasi duplikat untuk status Aktif ditangani di application level (controller).
+            // Status Catatan boleh duplikat user+tanggal (bisa ada 2+ catatan oleh admin yg sama).
+            // Status Tutup pakai user_id = null sehingga tidak bentrok.
         });
     }
 
