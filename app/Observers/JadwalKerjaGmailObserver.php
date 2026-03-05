@@ -10,33 +10,29 @@ use Carbon\Carbon;
 
 class JadwalKerjaGmailObserver
 {
-    // ─── CREATED: dipanggil saat jadwal baru disimpan ─────────────────────────
+    // ─── CREATED ─────────────────────────────────────────────────────────────
 
     public function created(JadwalKerja $jadwal)
     {
         if (in_array($jadwal->status, ['Catatan', 'Tutup'])) {
-            // Global → simpan ke notifikasi
             $notif = app(GmailNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'buat');
         } else {
-            // Personal (Aktif) → kirim email saja, TIDAK simpan ke notifikasi
             $gmail = app(GmailService::class);
             $this->kirimKeStaffTerkait($gmail, $jadwal, 'buat');
         }
     }
 
-    // ─── UPDATED: dipanggil saat jadwal diubah ────────────────────────────────
+    // ─── UPDATED ─────────────────────────────────────────────────────────────
 
     public function updated(JadwalKerja $jadwal)
     {
-        // Status berubah ke Catatan/Tutup → broadcast semua user, simpan notifikasi
         if ($jadwal->isDirty('status') && in_array($jadwal->status, ['Catatan', 'Tutup'])) {
             $notif = app(GmailNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'ubah');
             return;
         }
 
-        // Data jadwal Aktif berubah → kirim ke staff terkait, TIDAK simpan ke notifikasi
         if (
             $jadwal->isDirty('tanggal_kerja') ||
             $jadwal->isDirty('waktu_shift')   ||
@@ -49,7 +45,7 @@ class JadwalKerjaGmailObserver
         }
     }
 
-    // ─── Helper: kirim ke staff terkait (personal — TIDAK simpan ke notifikasi) ─
+    // ─── Helper: kirim ke staff terkait (personal) ───────────────────────────
 
     private function kirimKeStaffTerkait(
         GmailService $gmail,
@@ -58,6 +54,9 @@ class JadwalKerjaGmailObserver
     ) {
         $user = $jadwal->user;
         if (!$user || !$user->email) return;
+
+        // Jangan kirim ke user non-aktif
+        if ($user->status !== 'aktif') return;
 
         $tanggal    = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
         $jamMulai   = substr($jadwal->jam_mulai   ?? '', 0, 5);
@@ -86,19 +85,18 @@ class JadwalKerjaGmailObserver
         $isi .= "Silakan cek jadwal kamu di aplikasi DPM Workshop.\n\n";
         $isi .= "Salam,\nTim DPM Workshop";
 
-        // Langsung kirim via GmailService — TIDAK lewat GmailNotifikasiService
-        // agar tidak tersimpan ke tabel notifikasi
         $gmail->sendText($user->email, $subject, $isi);
     }
 
-    // ─── Helper: broadcast ke semua user (global — simpan ke notifikasi) ──────
+    // ─── Helper: broadcast ke semua user AKTIF (global) ──────────────────────
 
     private function kirimKeSemuaUser(
         GmailNotifikasiService $notif,
         JadwalKerja $jadwal,
         string $aksi
     ) {
-        $users   = User::whereNotNull('email')->get();
+        // FIX: tambah filter status aktif
+        $users   = User::where('status', 'aktif')->whereNotNull('email')->get();
         $tanggal = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
         $isTutup = strtolower($jadwal->status) === 'tutup';
 

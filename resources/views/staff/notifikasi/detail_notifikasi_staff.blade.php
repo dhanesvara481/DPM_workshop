@@ -3,9 +3,8 @@
 
 @section('title', 'Detail Notifikasi - DPM Workshop')
 
-@section('content')
-
-{{-- TOPBAR --}}
+{{-- Override topbar bawaan layout --}}
+@section('topbar')
 <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
   <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
 
@@ -40,10 +39,12 @@
 
   </div>
 </header>
+@endsection
+
+@section('content')
 
 <section class="relative p-4 sm:p-6">
 
-  {{-- BACKGROUND --}}
   <div class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
     <div class="absolute inset-0 opacity-[0.10]"
@@ -116,7 +117,6 @@
 
     @if (!($notif ?? null))
 
-      {{-- NOT FOUND --}}
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
                   shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
         <div class="px-6 py-6">
@@ -171,15 +171,12 @@
           <div class="rounded-2xl border border-slate-200 bg-white p-5">
             <div class="flex flex-col sm:flex-row sm:items-start gap-4">
 
-              {{-- Icon --}}
               <div class="h-14 w-14 rounded-xl border grid place-items-center shrink-0 {{ $iconWrap }}">
                 {!! $iconSvg !!}
               </div>
 
-              {{-- Content --}}
               <div class="min-w-0 flex-1">
 
-                {{-- Judul + Badge --}}
                 <div class="flex flex-wrap items-center gap-2 mb-3">
                   <div class="text-xl sm:text-2xl font-extrabold text-slate-900">
                     {{ $judul ?: 'Judul Notifikasi' }}
@@ -189,10 +186,8 @@
                   </span>
                 </div>
 
-                {{-- Divider --}}
                 <div class="h-px bg-slate-100 mb-4"></div>
 
-                {{-- Pesan --}}
                 <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 mb-5">
                   <div class="text-xs font-semibold text-slate-500 mb-1.5">Isi Pesan</div>
                   <p class="text-sm leading-relaxed text-slate-800">
@@ -200,7 +195,6 @@
                   </p>
                 </div>
 
-                {{-- Tanggal Grid --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                   <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div class="flex items-center gap-2 mb-1">
@@ -222,7 +216,6 @@
                   </div>
                 </div>
 
-                {{-- Back Button --}}
                 <a href="/staff/notifikasi"
                    class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -246,28 +239,5 @@
 
   </div>
 </section>
-
-{{-- Sidebar JS --}}
-<script>
-  const sidebar         = document.getElementById('sidebar');
-  const overlay         = document.getElementById('overlay');
-  const btnSidebar      = document.getElementById('btnSidebar');
-  const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-  const openSidebar  = () => { sidebar?.classList.remove('-translate-x-full'); overlay?.classList.remove('hidden'); document.body.classList.add('overflow-hidden'); };
-  const closeSidebar = () => { sidebar?.classList.add('-translate-x-full'); overlay?.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-
-  btnSidebar?.addEventListener('click', openSidebar);
-  btnCloseSidebar?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
-
-  const syncOnResize = () => {
-    if (window.innerWidth >= 768) { overlay?.classList.add('hidden'); sidebar?.classList.remove('-translate-x-full'); document.body.classList.remove('overflow-hidden'); }
-    else { sidebar?.classList.add('-translate-x-full'); }
-  };
-  window.addEventListener('resize', syncOnResize);
-  syncOnResize();
-</script>
 
 @endsection

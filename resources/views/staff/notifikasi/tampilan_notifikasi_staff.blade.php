@@ -3,9 +3,8 @@
 
 @section('title', 'Notifikasi - DPM Workshop')
 
-@section('content')
-
-{{-- TOPBAR --}}
+{{-- Override topbar bawaan layout --}}
+@section('topbar')
 <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
   <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
     <div class="flex items-center gap-3 min-w-0">
@@ -36,6 +35,9 @@
     </div>
   </div>
 </header>
+@endsection
+
+@section('content')
 
 <section class="relative p-4 sm:p-6">
   <div class="pointer-events-none absolute inset-0 -z-10">
@@ -154,27 +156,33 @@
                 };
               @endphp
 
-              <div class="py-4 first:pt-0">
-                <div class="flex gap-4 items-start">
-                  <div class="h-11 w-11 rounded-xl border grid place-items-center shrink-0 {{ $iconWrap }}">
-                    {!! $iconSvg !!}
+              {{-- Item notifikasi — bisa diklik ke detail --}}
+              <a href="/staff/notifikasi/{{ $id }}"
+                 class="py-4 first:pt-0 flex gap-4 items-start group hover:bg-slate-50 -mx-6 px-6 transition rounded-xl">
+                <div class="h-11 w-11 rounded-xl border grid place-items-center shrink-0 {{ $iconWrap }}">
+                  {!! $iconSvg !!}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="text-base font-bold text-slate-900 group-hover:text-slate-700 transition">{{ $judul ?: 'Notifikasi' }}</span>
+                    <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold {{ $badgeColor }}">
+                      {{ $jenis ?: '-' }}
+                    </span>
                   </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-2 mb-1">
-                      <span class="text-base font-bold text-slate-900">{{ $judul ?: 'Notifikasi' }}</span>
-                      <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold {{ $badgeColor }}">
-                        {{ $jenis ?: '-' }}
-                      </span>
-                    </div>
-                    <p class="text-sm text-slate-700 leading-relaxed">{{ $pesan ?: '-' }}</p>
-                    <div class="mt-2">
-                      <span class="text-xs text-slate-400">
-                        {{ $tgl ? \Carbon\Carbon::parse($tgl)->translatedFormat('d F Y') : '' }}
-                      </span>
-                    </div>
+                  <p class="text-sm text-slate-700 leading-relaxed line-clamp-2">{{ $pesan ?: '-' }}</p>
+                  <div class="mt-2 flex items-center justify-between gap-2">
+                    <span class="text-xs text-slate-400">
+                      {{ $tgl ? \Carbon\Carbon::parse($tgl)->translatedFormat('d F Y') : '' }}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400 group-hover:text-slate-600 transition flex items-center gap-1">
+                      Lihat detail
+                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </span>
                   </div>
                 </div>
-              </div>
+              </a>
             @endforeach
           </div>
 
@@ -182,7 +190,6 @@
           @if ($isPaginator && $notifs->lastPage() > 1)
             <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
 
-              {{-- Info --}}
               <p class="text-xs text-slate-500 order-2 sm:order-1">
                 Menampilkan
                 <span class="font-semibold text-slate-700">{{ $notifs->firstItem() }}–{{ $notifs->lastItem() }}</span>
@@ -191,61 +198,37 @@
                 notifikasi
               </p>
 
-              {{-- Page links --}}
               <div class="flex items-center gap-1 order-1 sm:order-2">
 
-                {{-- Prev --}}
                 @if ($notifs->onFirstPage())
                   <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 cursor-not-allowed">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                    </svg>
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                   </span>
                 @else
                   <a href="{{ $notifs->previousPageUrl() }}"
                      class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-600">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                    </svg>
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                   </a>
                 @endif
 
-                {{-- Page numbers --}}
                 @foreach ($notifs->getUrlRange(1, $notifs->lastPage()) as $page => $url)
                   @if ($page == $notifs->currentPage())
-                    <span class="h-9 w-9 rounded-xl border border-slate-900 bg-slate-900 grid place-items-center text-xs font-bold text-white">
-                      {{ $page }}
-                    </span>
-                  @elseif (
-                    $page == 1 ||
-                    $page == $notifs->lastPage() ||
-                    abs($page - $notifs->currentPage()) <= 1
-                  )
-                    <a href="{{ $url }}"
-                       class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-xs font-semibold text-slate-700">
-                      {{ $page }}
-                    </a>
-                  @elseif (
-                    $page == $notifs->currentPage() - 2 ||
-                    $page == $notifs->currentPage() + 2
-                  )
+                    <span class="h-9 w-9 rounded-xl border border-slate-900 bg-slate-900 grid place-items-center text-xs font-bold text-white">{{ $page }}</span>
+                  @elseif ($page == 1 || $page == $notifs->lastPage() || abs($page - $notifs->currentPage()) <= 1)
+                    <a href="{{ $url }}" class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-xs font-semibold text-slate-700">{{ $page }}</a>
+                  @elseif ($page == $notifs->currentPage() - 2 || $page == $notifs->currentPage() + 2)
                     <span class="h-9 w-9 grid place-items-center text-xs text-slate-400">…</span>
                   @endif
                 @endforeach
 
-                {{-- Next --}}
                 @if ($notifs->hasMorePages())
                   <a href="{{ $notifs->nextPageUrl() }}"
                      class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-600">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                   </a>
                 @else
                   <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 cursor-not-allowed">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                    </svg>
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                   </span>
                 @endif
 
@@ -262,27 +245,5 @@
     </div>
   </div>
 </section>
-
-<script>
-  const sidebar         = document.getElementById('sidebar');
-  const overlay         = document.getElementById('overlay');
-  const btnSidebar      = document.getElementById('btnSidebar');
-  const btnCloseSidebar = document.getElementById('btnCloseSidebar');
-
-  const openSidebar  = () => { sidebar?.classList.remove('-translate-x-full'); overlay?.classList.remove('hidden'); document.body.classList.add('overflow-hidden'); };
-  const closeSidebar = () => { sidebar?.classList.add('-translate-x-full'); overlay?.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-
-  btnSidebar?.addEventListener('click', openSidebar);
-  btnCloseSidebar?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
-
-  const syncOnResize = () => {
-    if (window.innerWidth >= 768) { overlay?.classList.add('hidden'); sidebar?.classList.remove('-translate-x-full'); document.body.classList.remove('overflow-hidden'); }
-    else { sidebar?.classList.add('-translate-x-full'); }
-  };
-  window.addEventListener('resize', syncOnResize);
-  syncOnResize();
-</script>
 
 @endsection

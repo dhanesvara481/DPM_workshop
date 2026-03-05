@@ -1018,18 +1018,29 @@ function onStatusChange(key, si, val) {
 //  UI HELPERS
 // ══════════════════════════════════════════════════════
 function updateAgendaCount(key) {
-  const data    = window._agendaData?.[key] || [];
-  const total   = data.length;
-  if (total === 0) { const el = document.getElementById('agendaCount_' + key); if(el) el.textContent=''; return; }
-  const aktifNew = data.filter(ag => !ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
-  const aktifDB  = data.filter(ag => ag.fromDB  && (ag.status||'Aktif') === 'Aktif').length;
-  const catNew   = data.filter(ag => !ag.fromDB && ag.status === 'Catatan').length;
-  const el       = document.getElementById('agendaCount_' + key);
+  const data = window._agendaData?.[key] || [];
+  const el   = document.getElementById('agendaCount_' + key);
   if (!el) return;
+
+  if (data.length === 0) { el.textContent = ''; el.style.color = ''; return; }
+
+  const hasTutup   = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  const aktifNew   = data.filter(ag => !ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
+  const aktifDB    = data.filter(ag => ag.fromDB  && (ag.status||'Aktif') === 'Aktif').length;
+  const totalAktif = aktifDB + aktifNew;
+  const catNew     = data.filter(ag => !ag.fromDB && ag.status === 'Catatan').length;
+
+  if (hasTutup) {
+    el.textContent = 'TUTUP';
+    el.style.color = '#f43f5e';
+    return;
+  }
+
   const parts = [];
-  if (aktifDB + aktifNew > 0) parts.push(`${aktifDB+aktifNew}/${MAX_PER_DAY_AKTIF} Aktif`);
+  if (totalAktif > 0) parts.push(`${totalAktif}/${MAX_PER_DAY_AKTIF} Aktif`);
   if (catNew > 0) parts.push(`+${catNew} Catatan`);
   el.textContent = parts.join(' · ');
+  el.style.color = totalAktif >= MAX_PER_DAY_AKTIF ? '#f59e0b' : '#94a3b8';
 }
 
 function uncheckDay(key) {

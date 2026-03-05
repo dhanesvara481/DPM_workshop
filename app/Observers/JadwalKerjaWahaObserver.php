@@ -16,11 +16,9 @@ class JadwalKerjaWahaObserver
     public function created(JadwalKerja $jadwal): void
     {
         if (in_array($jadwal->status, ['Catatan', 'Tutup'])) {
-            // Global → simpan ke notifikasi
             $notif = app(WahaNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'buat');
         } else {
-            // Personal (Aktif) → buffer ke cache, kirim setelah request selesai
             $this->bufferJadwal($jadwal, 'buat');
         }
     }
@@ -30,7 +28,6 @@ class JadwalKerjaWahaObserver
     public function updated(JadwalKerja $jadwal): void
     {
         if ($jadwal->isDirty('status') && in_array($jadwal->status, ['Catatan', 'Tutup'])) {
-            // Global → simpan ke notifikasi
             $notif = app(WahaNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'ubah');
             return;
@@ -43,7 +40,6 @@ class JadwalKerjaWahaObserver
             $jadwal->isDirty('jam_selesai')   ||
             $jadwal->isDirty('status')
         ) {
-            // Personal (Aktif) → buffer ke cache, kirim setelah request selesai
             $this->bufferJadwal($jadwal, 'ubah');
         }
     }
@@ -55,34 +51,33 @@ class JadwalKerjaWahaObserver
         $user = $jadwal->user;
         if (!$user || !$user->kontak) return;
 
-        $cacheKey = "wa_jadwal_buffer_{$user->id}_{$aksi}";
+        // Jangan kirim ke user non-aktif
+        if ($user->status !== 'aktif') return;
 
-        // Ambil buffer yang sudah ada, tambahkan jadwal baru
+        $cacheKey = "wa_jadwal_buffer_{$user->user_id}_{$aksi}";
+
         $buffer = Cache::get($cacheKey, []);
         $buffer[] = [
-            'tanggal'    => $jadwal->tanggal_kerja,
-            'shift'      => $jadwal->waktu_shift ?? '-',
-            'jam_mulai'  => substr($jadwal->jam_mulai   ?? '', 0, 5),
-            'jam_selesai'=> substr($jadwal->jam_selesai ?? '', 0, 5),
-            'status'     => $jadwal->status,
-            'deskripsi'  => $jadwal->deskripsi,
+            'tanggal'     => $jadwal->tanggal_kerja,
+            'shift'       => $jadwal->waktu_shift ?? '-',
+            'jam_mulai'   => substr($jadwal->jam_mulai   ?? '', 0, 5),
+            'jam_selesai' => substr($jadwal->jam_selesai ?? '', 0, 5),
+            'status'      => $jadwal->status,
+            'deskripsi'   => $jadwal->deskripsi,
         ];
 
-        // Simpan buffer selama 5 menit (lebih dari cukup untuk 1 request)
         Cache::put($cacheKey, $buffer, now()->addMinutes(5));
 
-        // Daftarkan terminating callback — hanya 1x per user per aksi per request
-        $flagKey = "wa_jadwal_registered_{$user->id}_{$aksi}";
+        $flagKey = "wa_jadwal_registered_{$user->user_id}_{$aksi}";
         if (!Cache::has($flagKey)) {
             Cache::put($flagKey, true, now()->addMinutes(5));
 
-            // Capture data yang dibutuhkan untuk closure
-            $userId   = $user->id;
+            $userId   = $user->user_id;
             $kontak   = $user->kontak;
             $username = $user->username;
 
             app()->terminating(function () use ($userId, $kontak, $username, $aksi, $cacheKey, $flagKey) {
-                $buffer = Cache::pull($cacheKey); // ambil & hapus
+                $buffer = Cache::pull($cacheKey);
                 Cache::forget($flagKey);
 
                 if (empty($buffer)) return;
@@ -98,7 +93,6 @@ class JadwalKerjaWahaObserver
 
     private function buildPesanBatch(string $username, array $buffer, string $aksi): string
     {
-        // Urutkan berdasarkan tanggal
         usort($buffer, fn($a, $b) => $a['tanggal'] <=> $b['tanggal']);
 
         $jumlah = count($buffer);
@@ -126,14 +120,15 @@ class JadwalKerjaWahaObserver
         return $isi;
     }
 
-    // ─── Helper: broadcast ke semua user (global — simpan ke notifikasi) ──────
+    // ─── Helper: broadcast ke semua user AKTIF (global) ──────────────────────
 
     private function kirimKeSemuaUser(
         WahaNotifikasiService $notif,
         JadwalKerja $jadwal,
         string $aksi
     ): void {
-        $users   = User::whereNotNull('kontak')->get();
+        // FIX: tambah filter status aktif
+        $users   = User::where('status', 'aktif')->whereNotNull('kontak')->get();
         $tanggal = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
         $isTutup = strtolower($jadwal->status) === 'tutup';
 
