@@ -131,13 +131,6 @@
               <p class="text-sm text-slate-500">Data tidak tersedia atau ID tidak valid.</p>
             </div>
           </div>
-          <a href="/staff/notifikasi"
-             class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-            <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-            Kembali ke Notifikasi
-          </a>
         </div>
         <div class="text-xs text-slate-400 pt-4 pb-6 px-6 border-t border-slate-100">
           © DPM Workshop 2025
@@ -195,7 +188,7 @@
                   </p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div class="flex items-center gap-2 mb-1">
                       <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -215,14 +208,7 @@
                     <div class="text-sm font-bold text-slate-900">{{ $fmtTanggal($tglK) }}</div>
                   </div>
                 </div>
-
-                <a href="/staff/notifikasi"
-                   class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-                  <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                  </svg>
-                  Kembali
-                </a>
+                {{-- Tombol Kembali di dalam card DIHAPUS --}}
 
               </div>
             </div>

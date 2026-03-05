@@ -973,7 +973,6 @@ function removeBubble(key, si) {
 function onStatusChange(key, si, val) {
   const isTutup    = val === 'Tutup';
   const isCatatan  = val === 'Catatan';
-  const isRestrict = isTutup || isCatatan;
 
   if (window._agendaData?.[key]?.[si]) {
     window._agendaData[key][si].status = val;
@@ -989,17 +988,34 @@ function onStatusChange(key, si, val) {
     }
   }
 
+  // ✅ FIX 1: Sync badge TUTUP di header hari (formDateLabel)
+  const lbl = document.getElementById('formDateLabel_' + key);
+  if (lbl) {
+    const existingBadge = lbl.querySelector('span.bg-rose-100');
+    if (!isTutup && existingBadge) {
+      // Ganti status dari Tutup → lainnya: hapus badge
+      existingBadge.remove();
+    } else if (isTutup && !existingBadge) {
+      // Ganti status ke Tutup: tambah badge
+      const newBadge = document.createElement('span');
+      newBadge.className = 'ml-2 text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full';
+      newBadge.textContent = 'TUTUP';
+      lbl.appendChild(newBadge);
+    }
+  }
+
   if (isTutup) {
     renderBubbleRow(key);
     renderActiveForm(key, si);
     updateAgendaCount(key);
+    // ✅ FIX 2: Update tampilan day card di step 2 saat jadi Tutup
+    updateDayCardStatus(key);
     updateSubmitSection();
     return;
   }
 
-  ['swWrap','jmWrap','jsWrap','dWrap'].forEach(p => {
-    document.getElementById(`${p}_${key}_${si}`)?.classList.toggle('field-hidden', isTutup);
-  });
+  // ✅ FIX 2: Update tampilan day card di step 2 saat KELUAR dari Tutup
+  updateDayCardStatus(key);
 
   renderActiveForm(key, si);
 
@@ -1012,6 +1028,49 @@ function onStatusChange(key, si, val) {
 
   renderBubbleRow(key);
   renderHiddenInputs(key, si);
+  updateAgendaCount(key);
+  updateSubmitSection();
+}
+
+// ✅ FUNGSI BARU: Update tampilan kotak hari di step 2 berdasarkan data session terkini
+function updateDayCardStatus(key) {
+  const data    = window._agendaData?.[key] || [];
+  const dateKey = getDateForDay(key);
+
+  // Gabung data DB + agenda baru di session ini
+  const dbData     = EXISTING_BY_DATE[dateKey] || [];
+  const sessionNew = data.filter(ag => !ag.fromDB);
+  const combined   = [...dbData, ...sessionNew];
+
+  const hasTutup   = combined.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+  const aktifCount = combined.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+  const isFull     = aktifCount >= MAX_PER_DAY_AKTIF;
+
+  const countEl = document.getElementById('agendaCount_' + key);
+  const card    = document.querySelector(`label[data-day="${key}"] .day-check-card`);
+  const cb      = document.getElementById('check_' + key);
+  const label   = document.querySelector(`label[data-day="${key}"]`);
+
+  if (hasTutup) {
+    if (countEl) { countEl.textContent = 'TUTUP'; countEl.style.color = '#f43f5e'; }
+    if (card)  { card.classList.add('!border-rose-200', '!bg-rose-50'); card.classList.remove('!border-amber-200', '!bg-amber-50/50'); }
+    if (label) label.classList.add('day-disabled-tutup');
+    if (cb)    cb.disabled = true;
+  } else if (isFull) {
+    if (countEl) { countEl.textContent = `${aktifCount}/${MAX_PER_DAY_AKTIF} penuh`; countEl.style.color = '#f59e0b'; }
+    if (card)  { card.classList.add('!border-amber-200', '!bg-amber-50/50'); card.classList.remove('!border-rose-200', '!bg-rose-50'); }
+    if (label) { label.classList.remove('day-disabled-tutup'); label.classList.add('day-disabled-full'); }
+    if (cb)    cb.disabled = true;
+  } else {
+    // ✅ Normal: hapus semua visual warning
+    if (countEl) {
+      countEl.textContent = aktifCount > 0 ? `${aktifCount}/${MAX_PER_DAY_AKTIF}` : '';
+      countEl.style.color = '#94a3b8';
+    }
+    if (card)  card.classList.remove('!border-rose-200', '!bg-rose-50', '!border-amber-200', '!bg-amber-50/50');
+    if (label) { label.classList.remove('day-disabled-tutup', 'day-disabled-full'); label.classList.add('cursor-pointer'); }
+    if (cb)    cb.disabled = false;
+  }
 }
 
 // ══════════════════════════════════════════════════════

@@ -296,6 +296,10 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [NotifikasiController::class, 'getNotifikasiStaff']
         )->name('notifikasi_staff');
 
+        Route::get('/staff/notifikasi/{id}',
+            [NotifikasiController::class, 'getDetailNotifikasiStaff']
+        )->name('detail_notifikasi_staff');
+
     });
 
 });
