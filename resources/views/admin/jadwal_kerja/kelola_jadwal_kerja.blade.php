@@ -380,7 +380,7 @@
     if (!isClosedDay(dateStr)) return all;
     return all.filter(e => String(e?.status || '').toLowerCase() === 'tutup');
   };
-  const usedCount        = (dateStr) => isClosedDay(dateStr) ? 0 : getVisibleEvents(dateStr).length;
+  const usedCount        = (dateStr) => isClosedDay(dateStr) ? 0 : getVisibleEvents(dateStr).filter(e => (e.status||'aktif').toLowerCase() === 'aktif').length;
   const remainingQuota   = (dateStr) => isClosedDay(dateStr) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
   const isFull           = (dateStr) => isClosedDay(dateStr) ? true : (remainingQuota(dateStr) <= 0);
 

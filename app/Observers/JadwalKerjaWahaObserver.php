@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\JadwalKerja;
+use App\Models\Notifikasi;
 use App\Models\User;
 use App\Services\WahaNotifikasiService;
 use App\Services\WahaService;
@@ -44,14 +45,12 @@ class JadwalKerjaWahaObserver
         }
     }
 
-    // ─── Buffer jadwal ke cache & daftarkan terminating callback (1x per request) ─
+    // ─── Buffer jadwal ke cache ───────────────────────────────────────────────
 
     private function bufferJadwal(JadwalKerja $jadwal, string $aksi): void
     {
         $user = $jadwal->user;
         if (!$user || !$user->kontak) return;
-
-        // Jangan kirim ke user non-aktif
         if ($user->status !== 'aktif') return;
 
         $cacheKey = "wa_jadwal_buffer_{$user->user_id}_{$aksi}";
@@ -127,7 +126,6 @@ class JadwalKerjaWahaObserver
         JadwalKerja $jadwal,
         string $aksi
     ): void {
-        // FIX: tambah filter status aktif
         $users   = User::where('status', 'aktif')->whereNotNull('kontak')->get();
         $tanggal = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
         $isTutup = strtolower($jadwal->status) === 'tutup';
@@ -137,11 +135,12 @@ class JadwalKerjaWahaObserver
             ? "{$icon} *WORKSHOP TUTUP*"
             : "{$icon} *INFO JADWAL - CATATAN*";
 
-        foreach ($users as $user) {
-            $intro = $isTutup
-                ? "Workshop *tidak beroperasi* pada tanggal berikut:\n\n"
-                : "Terdapat catatan penting pada jadwal berikut:\n\n";
+        $intro = $isTutup
+            ? "Workshop *tidak beroperasi* pada tanggal berikut:\n\n"
+            : "Terdapat catatan penting pada jadwal berikut:\n\n";
 
+        // ── Kirim WA per user (personal, ada nama) ──
+        foreach ($users as $user) {
             $pesan = "Halo *{$user->username}*,\n\n"
                 . $judul . "\n\n"
                 . $intro
@@ -159,6 +158,25 @@ class JadwalKerjaWahaObserver
                 'jadwal',
                 'Info Jadwal ' . $jadwal->status
             );
+        }
+
+        // ── Simpan 1x ke DB notifikasi (generic, tanpa nama user) ──
+        if ($users->isNotEmpty()) {
+            Notifikasi::create([
+                'jenis_notifikasi' => 'jadwal',
+                'judul_notif'      => mb_substr('Info Jadwal ' . $jadwal->status, 0, 100, 'UTF-8'),
+                'isi_pesan'        => $judul . "\n\n"
+                    . $intro
+                    . "──────────────────────\n"
+                    . "📆 Tanggal    : {$tanggal}\n"
+                    . "🏷️  Status    : {$jadwal->status}\n"
+                    . ($jadwal->deskripsi ? "📝 Keterangan : {$jadwal->deskripsi}\n" : '')
+                    . "──────────────────────\n\n"
+                    . "Info lebih lanjut di sistem DPM Workshop.\n"
+                    . "_Tim DPM Workshop_",
+                'tanggal_dibuat'   => now(),
+                'tanggal_dikirim'  => now(),
+            ]);
         }
     }
 }
