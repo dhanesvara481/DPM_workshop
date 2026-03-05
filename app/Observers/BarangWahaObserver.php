@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Barang;
+use App\Models\Notifikasi;
 use App\Models\User;
 use App\Services\WahaNotifikasiService;
 
@@ -43,6 +44,17 @@ class BarangWahaObserver
                 );
             }
 
+            // ── Simpan 1x ke DB ──
+            if ($users->isNotEmpty()) {
+                Notifikasi::create([
+                    'jenis_notifikasi' => 'stok',
+                    'judul_notif'      => mb_substr('Stok Habis: ' . $barang->nama_barang, 0, 100, 'UTF-8'),
+                    'isi_pesan'        => $pesan,
+                    'tanggal_dibuat'   => now(),
+                    'tanggal_dikirim'  => now(),
+                ]);
+            }
+
             return;
         }
 
@@ -57,6 +69,17 @@ class BarangWahaObserver
                     'stok',
                     'Stok Menipis: ' . $barang->nama_barang
                 );
+            }
+
+            // ── Simpan 1x ke DB ──
+            if ($users->isNotEmpty()) {
+                Notifikasi::create([
+                    'jenis_notifikasi' => 'stok',
+                    'judul_notif'      => mb_substr('Stok Menipis: ' . $barang->nama_barang, 0, 100, 'UTF-8'),
+                    'isi_pesan'        => $pesan,
+                    'tanggal_dibuat'   => now(),
+                    'tanggal_dikirim'  => now(),
+                ]);
             }
         }
     }
