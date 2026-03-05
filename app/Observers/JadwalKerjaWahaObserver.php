@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\WahaNotifikasiService;
 use App\Services\WahaService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class JadwalKerjaWahaObserver
 {
@@ -19,9 +20,8 @@ class JadwalKerjaWahaObserver
             $notif = app(WahaNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'buat');
         } else {
-            // Personal (Aktif) → kirim WA saja, TIDAK simpan ke notifikasi
-            $waha = app(WahaService::class);
-            $this->kirimKeStaffTerkait($waha, $jadwal, 'buat');
+            // Personal (Aktif) → buffer ke cache, kirim setelah request selesai
+            $this->bufferJadwal($jadwal, 'buat');
         }
     }
 
@@ -43,44 +43,87 @@ class JadwalKerjaWahaObserver
             $jadwal->isDirty('jam_selesai')   ||
             $jadwal->isDirty('status')
         ) {
-            // Personal (Aktif) → kirim WA saja, TIDAK simpan ke notifikasi
-            $waha = app(WahaService::class);
-            $this->kirimKeStaffTerkait($waha, $jadwal, 'ubah');
+            // Personal (Aktif) → buffer ke cache, kirim setelah request selesai
+            $this->bufferJadwal($jadwal, 'ubah');
         }
     }
 
-    // ─── Helper: kirim ke staff terkait (personal — TIDAK simpan ke notifikasi) ─
+    // ─── Buffer jadwal ke cache & daftarkan terminating callback (1x per request) ─
 
-    private function kirimKeStaffTerkait(
-        WahaService $waha,
-        JadwalKerja $jadwal,
-        string $aksi
-    ): void {
+    private function bufferJadwal(JadwalKerja $jadwal, string $aksi): void
+    {
         $user = $jadwal->user;
         if (!$user || !$user->kontak) return;
 
-        $tanggal    = Carbon::parse($jadwal->tanggal_kerja)->translatedFormat('l, d F Y');
-        $jamMulai   = substr($jadwal->jam_mulai   ?? '', 0, 5);
-        $jamSelesai = substr($jadwal->jam_selesai ?? '', 0, 5);
+        $cacheKey = "wa_jadwal_buffer_{$user->id}_{$aksi}";
 
-        $intro = $aksi === 'buat'
-            ? "📅 *JADWAL KERJA BARU*\n\nHalo *{$user->username}*, jadwal baru telah ditambahkan untuk kamu.\n\n"
-            : "🔄 *PERUBAHAN JADWAL KERJA*\n\nHalo *{$user->username}*, jadwal kamu telah diperbarui.\n\n";
+        // Ambil buffer yang sudah ada, tambahkan jadwal baru
+        $buffer = Cache::get($cacheKey, []);
+        $buffer[] = [
+            'tanggal'    => $jadwal->tanggal_kerja,
+            'shift'      => $jadwal->waktu_shift ?? '-',
+            'jam_mulai'  => substr($jadwal->jam_mulai   ?? '', 0, 5),
+            'jam_selesai'=> substr($jadwal->jam_selesai ?? '', 0, 5),
+            'status'     => $jadwal->status,
+            'deskripsi'  => $jadwal->deskripsi,
+        ];
 
-        $pesan = $intro
-            . "──────────────────────\n"
-            . "📆 Tanggal  : {$tanggal}\n"
-            . "⏰ Shift    : " . ($jadwal->waktu_shift ?? '-') . "\n"
-            . "🕐 Jam      : {$jamMulai} – {$jamSelesai}\n"
-            . "✅ Status   : {$jadwal->status}\n"
-            . ($jadwal->deskripsi ? "📝 Catatan  : {$jadwal->deskripsi}\n" : '')
-            . "──────────────────────\n\n"
+        // Simpan buffer selama 5 menit (lebih dari cukup untuk 1 request)
+        Cache::put($cacheKey, $buffer, now()->addMinutes(5));
+
+        // Daftarkan terminating callback — hanya 1x per user per aksi per request
+        $flagKey = "wa_jadwal_registered_{$user->id}_{$aksi}";
+        if (!Cache::has($flagKey)) {
+            Cache::put($flagKey, true, now()->addMinutes(5));
+
+            // Capture data yang dibutuhkan untuk closure
+            $userId   = $user->id;
+            $kontak   = $user->kontak;
+            $username = $user->username;
+
+            app()->terminating(function () use ($userId, $kontak, $username, $aksi, $cacheKey, $flagKey) {
+                $buffer = Cache::pull($cacheKey); // ambil & hapus
+                Cache::forget($flagKey);
+
+                if (empty($buffer)) return;
+
+                $waha  = app(WahaService::class);
+                $pesan = $this->buildPesanBatch($username, $buffer, $aksi);
+                $waha->sendText($kontak, $pesan);
+            });
+        }
+    }
+
+    // ─── Build pesan WA gabungan (batch) ─────────────────────────────────────
+
+    private function buildPesanBatch(string $username, array $buffer, string $aksi): string
+    {
+        // Urutkan berdasarkan tanggal
+        usort($buffer, fn($a, $b) => $a['tanggal'] <=> $b['tanggal']);
+
+        $jumlah = count($buffer);
+        $header = $aksi === 'buat'
+            ? "📅 *JADWAL KERJA BARU*\n\nHalo *{$username}*, {$jumlah} jadwal baru telah ditambahkan untuk kamu.\n\n"
+            : "🔄 *PERUBAHAN JADWAL KERJA*\n\nHalo *{$username}*, {$jumlah} jadwal kamu telah diperbarui.\n\n";
+
+        $isi = $header;
+
+        foreach ($buffer as $j) {
+            $tanggal = Carbon::parse($j['tanggal'])->translatedFormat('l, d F Y');
+
+            $isi .= "──────────────────────\n"
+                . "📆 Tanggal  : {$tanggal}\n"
+                . "⏰ Shift    : {$j['shift']}\n"
+                . "🕐 Jam      : {$j['jam_mulai']} – {$j['jam_selesai']}\n"
+                . "✅ Status   : {$j['status']}\n"
+                . ($j['deskripsi'] ? "📝 Catatan  : {$j['deskripsi']}\n" : '');
+        }
+
+        $isi .= "──────────────────────\n\n"
             . "Cek jadwal kamu di aplikasi DPM Workshop.\n"
             . "_Tim DPM Workshop_";
 
-        // Langsung kirim via WahaService — TIDAK lewat WahaNotifikasiService
-        // agar tidak tersimpan ke tabel notifikasi
-        $waha->sendText($user->kontak, $pesan);
+        return $isi;
     }
 
     // ─── Helper: broadcast ke semua user (global — simpan ke notifikasi) ──────
