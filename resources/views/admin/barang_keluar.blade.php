@@ -387,7 +387,15 @@
 
               {{-- Foto Bukti --}}
               <td class="px-5 py-4 text-center">
-                @if($fotoUrl)
+                @if($k->ref_invoice)
+                  {{-- Dari Invoice --}}
+                  <span class="tip inline-flex items-center justify-center h-10 w-10 rounded-lg
+                               border border-violet-200 bg-violet-50 text-violet-600"
+                        data-tip="Invoice: {{ $k->ref_invoice }}">
+                    <i class="fa-solid fa-file-invoice text-base"></i>
+                  </span>
+                @elseif($fotoUrl)
+                  {{-- Ada foto bukti --}}
                   <button type="button"
                           class="btn-lihat-foto group relative inline-block"
                           data-src="{{ $fotoUrl }}"
@@ -406,6 +414,7 @@
                     </span>
                   </button>
                 @else
+                  {{-- Tidak ada bukti --}}
                   <span class="inline-flex items-center justify-center h-10 w-10 rounded-lg
                                border border-dashed border-slate-200 bg-slate-50">
                     <svg class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\JadwalKerja;
 use App\Models\User;
 use App\Services\WahaNotifikasiService;
+use App\Services\WahaService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -15,7 +16,7 @@ class KirimReminderH1JadwalWahaCommand extends Command
 
     protected $description = 'Kirim reminder H-1 jadwal kerja via WhatsApp (WAHA).';
 
-    public function handle(WahaNotifikasiService $notif): int
+    public function handle(WahaNotifikasiService $notif, WahaService $waha): int
     {
         $besok = $this->option('date')
             ? Carbon::parse($this->option('date'))
@@ -40,7 +41,7 @@ class KirimReminderH1JadwalWahaCommand extends Command
             $isTutup = strtolower($j->status) === 'tutup';
 
             if ($isTutup) {
-                // Broadcast ke semua user
+                // Broadcast ke semua user → SIMPAN ke notifikasi (global)
                 User::whereNotNull('kontak')->each(function ($user) use ($notif, $j, $tanggal, &$terkirim) {
                     $pesan = "🔴 *WORKSHOP TUTUP BESOK*\n\n"
                         . "Halo *{$user->username}*,\n\n"
@@ -62,6 +63,7 @@ class KirimReminderH1JadwalWahaCommand extends Command
             }
 
             // Aktif / Catatan → kirim ke staff terkait
+            // TIDAK simpan ke notifikasi (personal)
             $user = $j->user;
             if (!$user || !$user->kontak) continue;
 
@@ -83,7 +85,9 @@ class KirimReminderH1JadwalWahaCommand extends Command
                 . "Hadir tepat waktu ya! Semangat! 💪\n"
                 . "_Tim DPM Workshop_";
 
-            $notif->kirimManual($user->kontak, $pesan, 'jadwal', 'Reminder H-1 Jadwal');
+            // Langsung kirim via WahaService — TIDAK lewat WahaNotifikasiService
+            // agar tidak tersimpan ke tabel notifikasi
+            $waha->sendText($user->kontak, $pesan);
 
             $this->line("  ✓ Reminder H-1 → {$user->kontak} ({$user->username})");
             $terkirim++;

@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\JadwalKerja;
 use App\Models\User;
 use App\Services\WahaNotifikasiService;
+use App\Services\WahaService;
 use Carbon\Carbon;
 
 class JadwalKerjaWahaObserver
@@ -13,12 +14,14 @@ class JadwalKerjaWahaObserver
 
     public function created(JadwalKerja $jadwal): void
     {
-        $notif = app(WahaNotifikasiService::class);
-
         if (in_array($jadwal->status, ['Catatan', 'Tutup'])) {
+            // Global → simpan ke notifikasi
+            $notif = app(WahaNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'buat');
         } else {
-            $this->kirimKeStaffTerkait($notif, $jadwal, 'buat');
+            // Personal (Aktif) → kirim WA saja, TIDAK simpan ke notifikasi
+            $waha = app(WahaService::class);
+            $this->kirimKeStaffTerkait($waha, $jadwal, 'buat');
         }
     }
 
@@ -26,9 +29,9 @@ class JadwalKerjaWahaObserver
 
     public function updated(JadwalKerja $jadwal): void
     {
-        $notif = app(WahaNotifikasiService::class);
-
         if ($jadwal->isDirty('status') && in_array($jadwal->status, ['Catatan', 'Tutup'])) {
+            // Global → simpan ke notifikasi
+            $notif = app(WahaNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'ubah');
             return;
         }
@@ -40,14 +43,16 @@ class JadwalKerjaWahaObserver
             $jadwal->isDirty('jam_selesai')   ||
             $jadwal->isDirty('status')
         ) {
-            $this->kirimKeStaffTerkait($notif, $jadwal, 'ubah');
+            // Personal (Aktif) → kirim WA saja, TIDAK simpan ke notifikasi
+            $waha = app(WahaService::class);
+            $this->kirimKeStaffTerkait($waha, $jadwal, 'ubah');
         }
     }
 
-    // ─── Helper: kirim ke staff terkait ──────────────────────────────────────
+    // ─── Helper: kirim ke staff terkait (personal — TIDAK simpan ke notifikasi) ─
 
     private function kirimKeStaffTerkait(
-        WahaNotifikasiService $notif,
+        WahaService $waha,
         JadwalKerja $jadwal,
         string $aksi
     ): void {
@@ -73,15 +78,12 @@ class JadwalKerjaWahaObserver
             . "Cek jadwal kamu di aplikasi DPM Workshop.\n"
             . "_Tim DPM Workshop_";
 
-        $notif->kirimManual(
-            $user->kontak,
-            $pesan,
-            'jadwal',
-            $aksi === 'buat' ? 'Jadwal Baru' : 'Perubahan Jadwal'
-        );
+        // Langsung kirim via WahaService — TIDAK lewat WahaNotifikasiService
+        // agar tidak tersimpan ke tabel notifikasi
+        $waha->sendText($user->kontak, $pesan);
     }
 
-    // ─── Helper: broadcast ke semua user ─────────────────────────────────────
+    // ─── Helper: broadcast ke semua user (global — simpan ke notifikasi) ──────
 
     private function kirimKeSemuaUser(
         WahaNotifikasiService $notif,

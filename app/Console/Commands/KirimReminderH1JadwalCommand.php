@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\JadwalKerja;
 use App\Models\User;
 use App\Services\GmailNotifikasiService;
+use App\Services\GmailService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -15,7 +16,7 @@ class KirimReminderH1JadwalCommand extends Command
 
     protected $description = 'Kirim reminder H-1 ke staff yang punya jadwal besok.';
 
-    public function handle(GmailNotifikasiService $notif): int
+    public function handle(GmailNotifikasiService $notif, GmailService $gmail): int
     {
         $besok = $this->option('date')
             ? Carbon::parse($this->option('date'))
@@ -40,7 +41,7 @@ class KirimReminderH1JadwalCommand extends Command
             $isTutup = strtolower($j->status) === 'tutup';
 
             if ($isTutup) {
-                // Tutup → broadcast ke semua user
+                // Tutup → broadcast ke semua user → SIMPAN ke notifikasi (global)
                 User::whereNotNull('email')->each(function ($user) use ($notif, $j, $tanggal, &$terkirim) {
                     $isi  = "Halo {$user->username},\n\n";
                     $isi .= "Pengingat: workshop *tidak beroperasi* besok.\n\n";
@@ -67,10 +68,11 @@ class KirimReminderH1JadwalCommand extends Command
                     $terkirim++;
                 });
 
-                continue; // lanjut ke jadwal berikutnya
+                continue;
             }
 
             // Aktif / Catatan → kirim ke staff terkait saja
+            // TIDAK simpan ke notifikasi (personal)
             $user = $j->user;
             if (!$user || !$user->email) continue;
 
@@ -97,13 +99,9 @@ class KirimReminderH1JadwalCommand extends Command
             $icon    = $isCatatan ? '🟡' : '📅';
             $subject = "{$icon} Reminder Jadwal Besok – {$tanggal}";
 
-            $notif->kirimManual(
-                $user->email,
-                $subject,
-                $isi,
-                'jadwal',
-                'Reminder H-1 Jadwal'
-            );
+            // Langsung kirim via GmailService — TIDAK lewat GmailNotifikasiService
+            // agar tidak tersimpan ke tabel notifikasi
+            $gmail->sendText($user->email, $subject, $isi);
 
             $this->line("  ✓ Reminder H-1 → {$user->email} ({$user->username})");
             $terkirim++;

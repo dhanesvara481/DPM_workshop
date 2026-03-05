@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\JadwalKerja;
 use App\Models\User;
 use App\Services\GmailNotifikasiService;
+use App\Services\GmailService;
 use Carbon\Carbon;
 
 class JadwalKerjaGmailObserver
@@ -13,12 +14,14 @@ class JadwalKerjaGmailObserver
 
     public function created(JadwalKerja $jadwal)
     {
-        $notif = app(GmailNotifikasiService::class);
-
         if (in_array($jadwal->status, ['Catatan', 'Tutup'])) {
+            // Global → simpan ke notifikasi
+            $notif = app(GmailNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'buat');
         } else {
-            $this->kirimKeStaffTerkait($notif, $jadwal, 'buat');
+            // Personal (Aktif) → kirim email saja, TIDAK simpan ke notifikasi
+            $gmail = app(GmailService::class);
+            $this->kirimKeStaffTerkait($gmail, $jadwal, 'buat');
         }
     }
 
@@ -26,15 +29,14 @@ class JadwalKerjaGmailObserver
 
     public function updated(JadwalKerja $jadwal)
     {
-        $notif = app(GmailNotifikasiService::class);
-
-        // Status berubah ke Catatan/Tutup → broadcast semua user
+        // Status berubah ke Catatan/Tutup → broadcast semua user, simpan notifikasi
         if ($jadwal->isDirty('status') && in_array($jadwal->status, ['Catatan', 'Tutup'])) {
+            $notif = app(GmailNotifikasiService::class);
             $this->kirimKeSemuaUser($notif, $jadwal, 'ubah');
             return;
         }
 
-        // Data jadwal Aktif berubah → kirim ke staff terkait saja
+        // Data jadwal Aktif berubah → kirim ke staff terkait, TIDAK simpan ke notifikasi
         if (
             $jadwal->isDirty('tanggal_kerja') ||
             $jadwal->isDirty('waktu_shift')   ||
@@ -42,14 +44,15 @@ class JadwalKerjaGmailObserver
             $jadwal->isDirty('jam_selesai')   ||
             $jadwal->isDirty('status')
         ) {
-            $this->kirimKeStaffTerkait($notif, $jadwal, 'ubah');
+            $gmail = app(GmailService::class);
+            $this->kirimKeStaffTerkait($gmail, $jadwal, 'ubah');
         }
     }
 
-    // ─── Helper: kirim ke staff terkait ──────────────────────────────────────
+    // ─── Helper: kirim ke staff terkait (personal — TIDAK simpan ke notifikasi) ─
 
     private function kirimKeStaffTerkait(
-        GmailNotifikasiService $notif,
+        GmailService $gmail,
         JadwalKerja $jadwal,
         string $aksi
     ) {
@@ -83,16 +86,12 @@ class JadwalKerjaGmailObserver
         $isi .= "Silakan cek jadwal kamu di aplikasi DPM Workshop.\n\n";
         $isi .= "Salam,\nTim DPM Workshop";
 
-        $notif->kirimManual(
-            $user->email,
-            $subject,
-            $isi,
-            'jadwal',
-            $aksi === 'buat' ? 'Jadwal Baru' : 'Perubahan Jadwal'
-        );
+        // Langsung kirim via GmailService — TIDAK lewat GmailNotifikasiService
+        // agar tidak tersimpan ke tabel notifikasi
+        $gmail->sendText($user->email, $subject, $isi);
     }
 
-    // ─── Helper: broadcast ke semua user ─────────────────────────────────────
+    // ─── Helper: broadcast ke semua user (global — simpan ke notifikasi) ──────
 
     private function kirimKeSemuaUser(
         GmailNotifikasiService $notif,
