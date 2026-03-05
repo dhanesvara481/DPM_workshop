@@ -82,7 +82,7 @@
           </div>
         </div>
         <div class="rounded-xl border border-slate-200 bg-white/80 p-3 text-[11px] text-slate-500 leading-relaxed">
-          <span class="font-semibold text-slate-700">Tips:</span> Quick Fill copy setting agenda pertama di hari tujuan. Hari TUTUP &amp; hari penuh (4 agenda) tidak bisa dipilih.
+          <span class="font-semibold text-slate-700">Tips:</span> Quick Fill bisa isi shift &amp; jam sekaligus. Hari TUTUP &amp; hari penuh (4 agenda) tidak bisa dipilih.
         </div>
       </aside>
 
@@ -201,8 +201,10 @@
 <div id="qfPopup" class="fixed inset-0 z-[80] hidden">
   <div id="qfOverlay" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
   <div class="relative min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-xs rounded-2xl bg-white border border-slate-200 shadow-[0_24px_64px_rgba(2,6,23,0.20)] overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+    <div class="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-[0_24px_64px_rgba(2,6,23,0.20)] overflow-hidden flex flex-col max-h-[90vh]">
+
+      {{-- Header --}}
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
         <div>
           <p class="text-sm font-semibold text-slate-900">Quick Fill</p>
           <p class="text-xs text-slate-500 mt-0.5">Terapkan <span id="qfUsername" class="font-semibold text-slate-800">—</span> ke hari:</p>
@@ -214,18 +216,64 @@
           </svg>
         </button>
       </div>
-      <div class="p-4">
-        <div class="grid grid-cols-2 gap-2" id="qfDayGrid"></div>
-        <div class="mt-4 flex gap-2 justify-end">
-          <button type="button" id="qfCancel"
-                  class="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-            Batal
-          </button>
-          <button type="button" id="qfApply"
-                  class="h-9 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
-            Terapkan
-          </button>
+
+      <div class="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+
+        {{-- ── SHIFT & JAM (NEW) ── --}}
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-3">
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Detail Jadwal <span class="font-normal normal-case text-slate-400">(opsional)</span></p>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Waktu Shift</label>
+            <select id="qfShift"
+                    class="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                           focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+              <option value="">Pilih shift (opsional)</option>
+              <option value="Pagi">Pagi</option>
+              <option value="Siang">Siang</option>
+              <option value="Sore">Sore</option>
+              <option value="Malam">Malam</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Mulai</label>
+              <input type="time" id="qfJamMulai"
+                     class="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jam Selesai</label>
+              <input type="time" id="qfJamSelesai"
+                     class="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm
+                            focus:outline-none focus:ring-4 focus:ring-slate-200/60 transition">
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Kalau dikosongkan, shift &amp; jam akan mengikuti template dari agenda existing di hari tujuan (kalau ada).
+          </p>
         </div>
+
+        {{-- ── PILIH HARI ── --}}
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Pilih Hari</p>
+          <div class="grid grid-cols-2 gap-2" id="qfDayGrid"></div>
+        </div>
+
+      </div>
+
+      {{-- Footer sticky --}}
+      <div class="px-4 pb-4 pt-3 border-t border-slate-100 bg-white shrink-0 flex gap-2 justify-end">
+        <button type="button" id="qfCancel"
+                class="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+          Batal
+        </button>
+        <button type="button" id="qfApply"
+                class="h-9 px-5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold">
+          Terapkan
+        </button>
       </div>
     </div>
   </div>
@@ -276,7 +324,7 @@
   }
   .field-hidden { display:none!important; }
 
-  /* Radio status — Tailwind peer workaround via JS class */
+  /* Radio status */
   .status-opt.is-active-emerald { outline: 2px solid #10b981; }
   .status-opt.is-active-amber   { outline: 2px solid #f59e0b; }
   .status-opt.is-active-rose    { outline: 2px solid #f43f5e; }
@@ -315,7 +363,7 @@
 const USERS           = @json($users ?? []);
 const AUTH_USER_ID    = "{{ $authUser->user_id ?? '' }}";
 const EXISTING_BY_DATE = @json($existingByDate ?? []);
-const MAX_PER_DAY_AKTIF = 4; // maks slot Aktif per hari (Catatan tidak dihitung)
+const MAX_PER_DAY_AKTIF = 4;
 const MAX_PER_DAY  = 4;
 const MONTHS_ID    = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
 const DAY_KEYS     = ['senin','selasa','rabu','kamis','jumat','sabtu','minggu'];
@@ -378,9 +426,7 @@ function updateWeekUI() {
     const dateKey    = getDateForDay(key);
     const existing   = EXISTING_BY_DATE[dateKey] || [];
     const exCount    = existing.length;
-    // Tutup: disable hari. Catatan tidak memblokir hari.
     const exHasTutup = existing.some(ag => (ag.status||'').toLowerCase() === 'tutup');
-    // Hitung hanya Aktif existing untuk quota check
     const exAktifCount = existing.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
     const exIsFull   = exAktifCount >= MAX_PER_DAY_AKTIF;
     const countEl    = document.getElementById('agendaCount_' + key);
@@ -557,7 +603,6 @@ function renderBubbleRow(key) {
   const data   = window._agendaData[key] || [];
   const active = window._activeSlot?.[key] ?? 0;
 
-  // Quota: hanya hitung Aktif
   const aktifCount   = data.filter(ag => !ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
   const dbAktifCount = data.filter(ag => ag.fromDB && (ag.status||'Aktif') === 'Aktif').length;
   const totalAktif   = aktifCount + dbAktifCount;
@@ -595,7 +640,6 @@ function renderBubbleRow(key) {
     row.appendChild(pill);
   });
 
-  // Tombol + : muncul kalau belum ada Tutup DAN Aktif belum penuh
   if (!maxed && !hasTutupAny) {
     const addPill = document.createElement('button');
     addPill.type      = 'button';
@@ -625,10 +669,9 @@ function renderActiveForm(key, si) {
   const statusVal = ag.status || 'Aktif';
   const isTutup   = statusVal === 'Tutup';
   const isCatatan = statusVal === 'Catatan';
-  const isRestrict = isTutup || isCatatan; // user di-lock ke authUser
+  const isRestrict = isTutup || isCatatan;
   const isFromDB   = ag.fromDB === true;
 
-  // ── Read-only untuk agenda dari DB ──────────────────────────────────────
   if (isFromDB) {
     const colMap = { Aktif:'emerald', Catatan:'amber', Tutup:'rose' };
     const col = colMap[statusVal] || 'slate';
@@ -677,7 +720,6 @@ function renderActiveForm(key, si) {
     {val:'Tutup',   col:'rose',    desc:'Libur/tutup'},
   ];
 
-  // Note untuk Catatan & Tutup: user auto-assign
   const userNote = isRestrict
     ? `<p class="text-[11px] text-amber-600 mt-1 font-medium">
         ${isTutup ? 'ℹ️ Jadwal lain di hari ini akan tersembunyi selama Tutup aktif' : '📝 Catatan otomatis tercatat atas nama admin yang login'}
@@ -832,7 +874,6 @@ function addAgenda(key, prefill = {}) {
   const hasTutupAny  = data.some(ag => (ag.status||'').toLowerCase() === 'tutup');
   if (hasTutupAny) { showToast('Hari ini TUTUP. Tidak bisa menambah agenda.', 'warn'); return; }
 
-  // Quota hanya dari Aktif
   const aktifCount = data.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
   if (aktifCount >= MAX_PER_DAY_AKTIF) {
     showToast(`Maks ${MAX_PER_DAY_AKTIF} shift Aktif per hari (Catatan tidak terhitung).`, 'warn');
@@ -861,7 +902,6 @@ function addAgenda(key, prefill = {}) {
     filled:      !!(prefill.user_id || newStatus === 'Tutup' || newStatus === 'Catatan'),
   };
 
-  // Tutup: simpan langsung sebagai bubble baru, jadwal lain tidak dihapus (soft hide)
   if (newStatus === 'Tutup') {
     data.push(ag);
     const newIdx = data.length - 1;
@@ -914,7 +954,6 @@ function onUserChange(key, si, sel) {
 function removeBubble(key, si) {
   const data = window._agendaData[key];
   if (!data) return;
-  // Jangan hapus satu-satunya agenda non-DB
   const nonDB = data.filter(ag => !ag.fromDB);
   if (nonDB.length <= 1 && !data[si]?.fromDB) return;
   data.splice(si, 1);
@@ -950,8 +989,6 @@ function onStatusChange(key, si, val) {
     }
   }
 
-  // Tutup: jadwal lain tidak dihapus dari state (soft hide di display)
-  // Hanya re-render form & bubble untuk update tampilan
   if (isTutup) {
     renderBubbleRow(key);
     renderActiveForm(key, si);
@@ -960,15 +997,12 @@ function onStatusChange(key, si, val) {
     return;
   }
 
-  // Show/hide time fields
   ['swWrap','jmWrap','jsWrap','dWrap'].forEach(p => {
     document.getElementById(`${p}_${key}_${si}`)?.classList.toggle('field-hidden', isTutup);
   });
 
-  // Re-render form untuk ganti tampilan user (lock/unlock)
   renderActiveForm(key, si);
 
-  // Active ring on status card
   const row = document.getElementById(`statusRow_${key}_${si}`);
   if (row) {
     const colorMap = {Aktif:'emerald', Catatan:'amber', Tutup:'rose'};
@@ -1022,25 +1056,39 @@ function updateSubmitSection() {
 }
 
 // ══════════════════════════════════════════════════════
-//  QUICK FILL
+//  QUICK FILL  ← HANYA BAGIAN INI YANG BERUBAH
 // ══════════════════════════════════════════════════════
 let qfUserId = null, qfUserName = null;
 const qfPopup      = document.getElementById('qfPopup');
 const qfOverlay    = document.getElementById('qfOverlay');
 const qfDayGrid    = document.getElementById('qfDayGrid');
 const qfUsernameEl = document.getElementById('qfUsername');
+// Elemen baru
+const qfShift      = document.getElementById('qfShift');
+const qfJamMulai   = document.getElementById('qfJamMulai');
+const qfJamSelesai = document.getElementById('qfJamSelesai');
 
 function openQF(userId, username) {
   qfUserId = userId; qfUserName = username;
   qfUsernameEl.textContent = username;
 
+  // Reset field shift & jam setiap buka popup
+  qfShift.value      = '';
+  qfJamMulai.value   = '';
+  qfJamSelesai.value = '';
+
   qfDayGrid.innerHTML = '';
   DAY_KEYS.forEach(key => {
-    const dateForDay  = getDateForDay(key);
-    const stateData   = window._agendaData?.[key];
-    const data        = stateData || (EXISTING_BY_DATE[dateForDay] || []);
-    const hasTutup    = data.some(ag => (ag.status || '').toLowerCase() === 'tutup');
-    const aktifCount  = data.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+    const dateForDay = getDateForDay(key);
+
+    // Selalu pakai EXISTING_BY_DATE sebagai source of truth untuk data DB (sudah diupdate saat ganti minggu)
+    const dbData      = EXISTING_BY_DATE[dateForDay] || [];
+    // Tambahkan slot baru (non-DB) yang ditambah di sesi ini, kalau ada
+    const sessionNew  = (window._agendaData?.[key] || []).filter(ag => !ag.fromDB);
+    const combined    = [...dbData, ...sessionNew];
+
+    const hasTutup    = combined.some(ag => (ag.status || '').toLowerCase() === 'tutup');
+    const aktifCount  = combined.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
     const isFull      = aktifCount >= MAX_PER_DAY_AKTIF;
     const disabled    = isFull || hasTutup;
     const remaining   = MAX_PER_DAY_AKTIF - aktifCount;
@@ -1080,21 +1128,28 @@ document.getElementById('qfApply').addEventListener('click', () => {
   const selected = Array.from(qfDayGrid.querySelectorAll('.qf-day-btn.selected')).map(b => b.dataset.day);
   if (!selected.length) { closeQF(); return; }
 
+  // Ambil nilai shift & jam dari popup (boleh kosong)
+  const qfShiftVal    = qfShift.value.trim();
+  const qfMulaiVal    = qfJamMulai.value.trim();
+  const qfSelesaiVal  = qfJamSelesai.value.trim();
+
   selected.forEach(key => {
     const cb = document.getElementById('check_'+key);
     if (cb && !cb.checked) { cb.checked = true; if(!document.getElementById('dayForm_'+key)) renderDayBlock(key); }
 
     const data = window._agendaData?.[key] || [];
     const emptyIdx = data.findIndex(ag => !ag.user_id);
+
+    // Kalau field QF dikosongkan → fallback ke template existing (behaviour lama)
     const template = data.find(ag => ag.user_id && ag.status === 'Aktif');
     const prefill = {
       user_id:     qfUserId,
       username:    getUserName(qfUserId),
-      waktu_shift: template?.waktu_shift || '',
-      jam_mulai:   template?.jam_mulai   || '',
-      jam_selesai: template?.jam_selesai || '',
+      waktu_shift: qfShiftVal    || template?.waktu_shift || '',
+      jam_mulai:   qfMulaiVal    || template?.jam_mulai   || '',
+      jam_selesai: qfSelesaiVal  || template?.jam_selesai || '',
       status:      'Aktif',
-      deskripsi:   template?.deskripsi   || '',
+      deskripsi:   template?.deskripsi || '',
     };
 
     if (emptyIdx !== -1) {
@@ -1112,7 +1167,13 @@ document.getElementById('qfApply').addEventListener('click', () => {
 
   updateSubmitSection();
   closeQF();
-  showToast(`Quick Fill: ${selected.map(k=>DAY_LABELS[k]).join(', ')}`, 'success');
+
+  // Toast info: tampilkan ringkasan apa yang diisi
+  const parts = [];
+  if (qfShiftVal)   parts.push(qfShiftVal);
+  if (qfMulaiVal && qfSelesaiVal) parts.push(`${qfMulaiVal}–${qfSelesaiVal}`);
+  const detail = parts.length ? ` · ${parts.join(', ')}` : '';
+  showToast(`Quick Fill: ${selected.map(k=>DAY_LABELS[k]).join(', ')}${detail}`, 'success');
 });
 
 document.querySelectorAll('.qf-btn').forEach(btn =>
@@ -1163,7 +1224,6 @@ function validateAndSubmit(form) {
       const activeIdx  = window._activeSlot?.[key] ?? 0;
       const isActive   = i === activeIdx;
 
-      // User wajib untuk Aktif (Catatan & Tutup auto dari server)
       if (isAktif && !ag.user_id) {
         validationErrors.push({ key, si: i, fieldId: isActive ? 'uSel_'+key+'_'+i : null, msg: 'Nama belum dipilih — '+label });
       }
@@ -1179,7 +1239,6 @@ function validateAndSubmit(form) {
       }
     });
 
-    // Duplikat: hanya cek Aktif
     const seenAktifUsers = new Map();
     data.forEach((ag, i) => {
       if (ag.fromDB || !ag.user_id || ag.status !== 'Aktif') return;
@@ -1196,7 +1255,6 @@ function validateAndSubmit(form) {
         seenAktifUsers.set(String(ag.user_id), i);
       }
 
-      // Cek DB — hanya Aktif
       const dateKey = getDateForDay(key);
       const dbRecs  = EXISTING_BY_DATE[dateKey] || [];
       const inDB    = dbRecs.some(db => String(db.user_id) === String(ag.user_id) && (db.status||'Aktif') === 'Aktif');
