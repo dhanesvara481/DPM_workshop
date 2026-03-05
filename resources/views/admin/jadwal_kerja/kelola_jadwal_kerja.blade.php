@@ -376,9 +376,12 @@
   const getEvents        = (dateStr) => (EVENTS?.[dateStr] || []);
   const isClosedDay      = (dateStr) => getEvents(dateStr).some(e => String(e?.status || '').toLowerCase() === 'tutup');
   const getVisibleEvents = (dateStr) => {
-    const all = getEvents(dateStr);
-    if (!isClosedDay(dateStr)) return all;
-    return all.filter(e => String(e?.status || '').toLowerCase() === 'tutup');
+  const all = getEvents(dateStr);
+  if (!isClosedDay(dateStr)) return all;
+
+    // Tampilkan HANYA 1 record tutup (yang pertama), ignore sisanya
+    const tutupRecords = all.filter(e => String(e?.status || '').toLowerCase() === 'tutup');
+    return tutupRecords.slice(0, 1);
   };
   const usedCount        = (dateStr) => isClosedDay(dateStr) ? 0 : getVisibleEvents(dateStr).filter(e => (e.status||'aktif').toLowerCase() === 'aktif').length;
   const remainingQuota   = (dateStr) => isClosedDay(dateStr) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(dateStr));
@@ -397,15 +400,15 @@
       <div class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="flex items-center justify-between gap-3">
           <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
-          <span class="text-[11px] ${closed ? 'text-rose-600' : 'text-slate-500'}">
-            ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
+          <span class="text-[11px] ${closed ? 'text-rose-600 font-semibold' : 'text-slate-500'}">
+            ${closed ? '🔒 Hari ini TUTUP' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
           </span>
         </div>
         <div class="mt-3">
           <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
             <div class="font-semibold text-slate-900">
-              ${closed ? '- / -' : `${used} / ${MAX_EVENTS_PER_DAY}`}
+              ${closed ? 'Tidak bisa tambah jadwal' : `${used} / ${MAX_EVENTS_PER_DAY}`}
             </div>
           </div>
         </div>

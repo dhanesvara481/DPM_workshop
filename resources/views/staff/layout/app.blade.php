@@ -4,6 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@yield('title', 'DPM Workshop - Staff')</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  {{-- Sembunyiin body sampai CSS load --}}
+  <style>
+    body { opacity: 0; }
+  </style>
+
+  <script>
+    window.addEventListener('load', function() {
+      document.body.style.opacity = '1';
+      document.body.style.transition = 'opacity 0.2s ease';
+    });
+  </script>
 
   @vite('resources/js/app.js')
   @stack('head')
@@ -92,7 +105,9 @@
           };
 
           const closeSidebar = () => {
-            sidebar?.classList.add('-translate-x-full');
+            if (window.innerWidth < 768) {
+              sidebar?.classList.add('-translate-x-full');
+            }
             overlay?.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
           };
@@ -113,22 +128,23 @@
               sidebar.classList.remove('-translate-x-full');
               document.body.classList.remove('overflow-hidden');
             } else {
-              sidebar.classList.add('-translate-x-full');
+              if (overlay.classList.contains('hidden')) {
+                sidebar.classList.add('-translate-x-full');
+              }
             }
           };
 
           window.addEventListener('resize', syncOnResize);
-          syncOnResize();
         })();
       </script>
 
     </main>
   </div>
 
-  {{-- ✅ PENTING: MODALS harus di BODY, dan harus sebelum scripts --}}
+  {{-- MODALS harus di BODY, sebelum scripts --}}
   @stack('modals')
 
-  {{-- ✅ scripts terakhir --}}
+  {{-- scripts terakhir --}}
   @stack('scripts')
 </body>
 </html>

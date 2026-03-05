@@ -19,10 +19,14 @@
   {{-- HEADER --}}
   <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
     <div class="flex items-center gap-3">
-     <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden">
+      <div class="h-9 w-9 rounded-xl bg-white/10 border border-white/15 overflow-hidden shrink-0">
         <img src="{{ asset('asset/DPM Workshop Logo.jpeg') }}"
             class="w-full h-full object-cover"
-            alt="Logo">
+            alt="Logo"
+            width="36"
+            height="36"
+            loading="eager"
+            decoding="async">
       </div>
       <div class="leading-tight">
         <p class="font-semibold tracking-tight">DPM Workshop</p>
@@ -41,12 +45,12 @@
 
   <div class="px-5 py-5">
 
-    {{-- PROFILE — $username & $role diisi oleh View Composer di AppServiceProvider --}}
+    {{-- PROFILE --}}
     <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
       <div class="h-10 w-10 rounded-full 
             bg-gradient-to-br from-blue-500 to-indigo-600
             border border-white/20 
-            grid place-items-center shadow-md">
+            grid place-items-center shadow-md shrink-0">
         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 10-16 0"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a4 4 0 100-8 4 4 0 000 8z"/>
@@ -165,3 +169,33 @@
     </nav>
   </div>
 </aside>
+
+{{-- ===== CLOAK SCRIPT (sama persis seperti admin) ===== --}}
+<script>
+  (function () {
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    // 1. Inject style cloak ke <head> — override semua Tailwind class
+    var style = document.createElement('style');
+    style.id = 'sidebar-cloak';
+    style.textContent = '#sidebar { transition: none !important; opacity: 0; }';
+    document.head.appendChild(style);
+
+    // 2. Langsung posisikan — tidak ada animasi karena cloak aktif
+    if (window.innerWidth >= 768) {
+      sidebar.classList.remove('-translate-x-full');
+    } else {
+      sidebar.classList.add('-translate-x-full');
+    }
+
+    // 3. Hapus cloak setelah 2 frame — browser sudah commit posisi final
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var el = document.getElementById('sidebar-cloak');
+        if (el) el.remove();
+        sidebar.style.opacity = '1';
+      });
+    });
+  })();
+</script>
