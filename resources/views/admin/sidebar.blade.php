@@ -222,24 +222,6 @@
         </a>
       </div>
 
-      {{-- AKUN --}}
-      <div class="mt-3">
-        <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">AKUN</p>
-
-        <a href="{{ route('tampilan_profil') }}" data-nav
-           class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                  text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
-                  {{ request()->is('profil*') ? 'is-active' : '' }}">
-          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
-            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </span>
-          Profil Saya
-        </a>
-      </div>
-
       {{-- LOGOUT --}}
       <div class="mt-4 pt-4 border-t border-white/10">
         <form method="POST" action="{{ route('logout') }}">
