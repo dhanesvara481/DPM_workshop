@@ -98,8 +98,8 @@
                         <p class="mt-1 text-sm text-slate-500">Kosongkan jika tidak ingin mengubah password</p>
                     </div>
 
-                    <button type="button" id="togglePassword"
-                            class="text-left text-sm font-medium text-blue-600 transition hover:text-blue-700 sm:text-right">
+                  <button type="button" id="togglePassword"
+                            class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300">
                         Tampilkan
                     </button>
                 </div>
@@ -136,8 +136,8 @@
 
             {{-- ACTION --}}
             <div class="flex justify-end">
-                <button type="submit"
-                        class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+              <button type="submit"
+                        class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300">
                     Simpan Perubahan
                 </button>
             </div>

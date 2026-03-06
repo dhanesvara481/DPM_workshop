@@ -35,24 +35,7 @@
     </div>
 </header>
 
-<section class="relative p-4 sm:p-6">
-    {{-- BACKGROUND --}}
-    <div class="pointer-events-none absolute inset-0 -z-10">
-        <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
-        <div class="absolute inset-0 opacity-[0.12]"
-             style="background-image: linear-gradient(to right, rgba(2,6,23,0.06) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(2,6,23,0.06) 1px, transparent 1px);
-                    background-size: 56px 56px;"></div>
-        <div class="absolute inset-0 opacity-[0.18] mix-blend-screen animate-grid-scan"
-             style="background-image:
-                    repeating-linear-gradient(90deg, transparent 0px, transparent 55px, rgba(255,255,255,0.95) 56px, transparent 57px, transparent 112px),
-                    repeating-linear-gradient(180deg, transparent 0px, transparent 55px, rgba(255,255,255,0.70) 56px, transparent 57px, transparent 112px);
-                    background-size: 112px 112px, 112px 112px;"></div>
-        <div class="absolute -top-48 left-1/2 -translate-x-1/2 h-[720px] w-[720px] rounded-full blur-3xl opacity-10
-                    bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
-        <div class="absolute -bottom-72 right-1/4 h-[720px] w-[720px] rounded-full blur-3xl opacity-08
-                    bg-gradient-to-tr from-blue-950/18 via-indigo-700/10 to-transparent"></div>
-    </div>
+<section class="relative z-10 p-4 sm:p-6">
 
     <div class="max-w-[1280px] mx-auto w-full">
 

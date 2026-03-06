@@ -38,7 +38,7 @@
     {{-- AVATAR CARD --}}
     <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-6">
       <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-        <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 border border-amber-200
+        <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 border border-amber-200
                     grid place-items-center shadow-lg shrink-0">
           <span class="text-3xl font-bold text-white select-none">
             {{ strtoupper(substr($user->username, 0, 1)) }}
