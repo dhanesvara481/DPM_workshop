@@ -21,7 +21,7 @@ class ProfilController extends Controller
     public function getEditProfil()
     {
         $user = Auth::user();
-        return view('admin.profil.edit_profil', compact('user'));
+        return view('admin.profil.ubah_profil', compact('user'));
     }
 
     // ── Simpan Perubahan Profil (Admin) ──────────────────────────────────────

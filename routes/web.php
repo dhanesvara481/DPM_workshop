@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StokRealtimeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\ProfilController;
 
 /*
 |--------------------------------------------------------------------------
