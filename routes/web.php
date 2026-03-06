@@ -15,6 +15,7 @@ use App\Http\Controllers\StokRealtimeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\StokOpnameController;
 
 /*
 |--------------------------------------------------------------------------
@@ -256,6 +257,48 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::put('/profil/update',
             [ProfilController::class, 'updateProfil']
         )->name('update_profil');
+
+        //============== Stok Opname =================//
+        Route::get('/stok_opname',
+            [StokOpnameController::class, 'index']
+        )->name('stok_opname.index');
+
+        Route::get('/stok_opname/buat',
+            [StokOpnameController::class, 'create']
+        )->name('stok_opname.create');
+
+        Route::post('/stok_opname/simpan',
+            [StokOpnameController::class, 'store']
+        )->name('stok_opname.store');
+
+        Route::get('/stok_opname/{id}',
+            [StokOpnameController::class, 'show']
+        )->name('stok_opname.show');
+
+        Route::get('/stok_opname/{id}/edit',
+            [StokOpnameController::class, 'edit']
+        )->name('stok_opname.edit');
+
+        Route::post('/stok_opname/{id}/update',
+            [StokOpnameController::class, 'update']
+        )->name('stok_opname.update');
+
+        Route::post('/stok_opname/{id}/submit',
+            [StokOpnameController::class, 'submit']
+        )->name('stok_opname.submit');
+
+        Route::post('/stok_opname/{id}/approve',
+            [StokOpnameController::class, 'approve']
+        )->name('stok_opname.approve');
+
+        Route::post('/stok_opname/{id}/tolak',
+            [StokOpnameController::class, 'tolak']
+        )->name('stok_opname.tolak');
+
+        Route::delete('/stok_opname/{id}/hapus',
+            [StokOpnameController::class, 'destroy']
+        )->name('stok_opname.destroy');
+
 
     });
 

@@ -220,6 +220,20 @@
           </span>
           Manajemen Staf
         </a>
+
+        <a href="/stok_opname" data-nav
+           class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                  text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
+                  {{ request()->is('stok_opname*') ? 'is-active' : '' }}">
+          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+            </svg>
+          </span>
+          Stok Opname
+        </a>
       </div>
 
       {{-- LOGOUT --}}
