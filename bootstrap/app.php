@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Daftarkan alias middleware di sini
         $middleware->alias([
             'check.status' => CheckStatus::class,
+            'cek.opname'   => \App\Http\Middleware\CekOpnameAktif::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

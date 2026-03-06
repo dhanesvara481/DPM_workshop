@@ -42,11 +42,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             : redirect()->route('tampilan_dashboard_staff');
     })->name('dashboard');
 
-    // =========================================================
-    // PERBAIKAN: invoice.store & invoice.check-stok dipindah ke
-    // sini (auth saja, tanpa filter role) agar bisa diakses oleh
-    // ADMIN dan STAFF sekaligus tanpa konflik nama route.
-    // =========================================================
     Route::post('/invoice/simpan',
         [InvoiceController::class, 'simpanInvoice']
     )->name('invoice.simpan');
@@ -101,18 +96,20 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [BarangKeluarController::class, 'getBarangKeluar']
         )->name('barang_keluar');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::post('/barang_keluar/simpan',
             [BarangKeluarController::class, 'simpanBarangKeluar']
-        )->name('simpan_barang_keluar');
+        )->middleware('cek.opname')->name('simpan_barang_keluar');
 
         //============== Barang Masuk =================//
         Route::get('/barang_masuk',
             [BarangMasukController::class, 'getBarangMasuk']
         )->name('barang_masuk');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::post('/barang_masuk/simpan',
             [BarangMasukController::class, 'simpanBarangMasuk']
-        )->name('simpan_barang_masuk');
+        )->middleware('cek.opname')->name('simpan_barang_masuk');
 
         //============== Stok =================//
         Route::get('/stok_realtime',
@@ -146,12 +143,13 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         )->name('tampilan_invoice');
 
         Route::get('/konfirmasi_invoice',
-                [InvoiceController::class, 'getTampilanKonfirmasi']
-            )->name('tampilan_konfirmasi_invoice');
+            [InvoiceController::class, 'getTampilanKonfirmasi']
+        )->name('tampilan_konfirmasi_invoice');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::patch('/konfirmasi_invoice/{invoice}/paid',
             [InvoiceController::class, 'tandaKonfirmasi']
-        )->name('konfirmasi_invoice_tanda_konfirmasi');
+        )->middleware('cek.opname')->name('konfirmasi_invoice_tanda_konfirmasi');
 
         Route::delete('/konfirmasi-invoice/{id}/hapus',
             [InvoiceController::class, 'hapusKonfirmasi']
@@ -186,7 +184,7 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::put('/ubah_jadwal_kerja/{id}',
             [JadwalKerjaController::class, 'perbaruiJadwalKerja']
         )->name('perbarui_jadwal_kerja');
-    
+
         Route::get('/hapus_jadwal_kerja',
             [JadwalKerjaController::class, 'getHapusJadwalKerja']
         )->name('hapus_jadwal_kerja');
@@ -299,7 +297,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [StokOpnameController::class, 'destroy']
         )->name('stok_opname.destroy');
 
-
     });
 
     /*
@@ -349,7 +346,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [NotifikasiController::class, 'getDetailNotifikasiStaff']
         )->name('detail_notifikasi_staff');
 
-        // Ptofil Staff (read-only)
         Route::get('/staff/profil',
             [ProfilController::class, 'getTampilanProfilStaff']
         )->name('tampilan_profil_staff');
