@@ -1,6 +1,6 @@
 @extends('admin.layout.app')
 
-@section('title', 'Profil – DPM Workshop')
+@section('title', 'DPM Workshop – Admin')
 
 @section('content')
 
@@ -15,20 +15,30 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
       </button>
+
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Profil Saya</h1>
         <p class="text-xs text-slate-500">Informasi akun dan pengaturan</p>
       </div>
     </div>
 
-    <a href="{{ route('edit_profil') }}"
-       class="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-900 bg-slate-900 hover:bg-slate-800 transition text-sm font-semibold text-white">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-      </svg>
-      Edit Profil
-    </a>
+    {{-- RIGHT ACTIONS --}}
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="{{ route('tampilan_notifikasi') }}"
+         class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+         data-tip="Notifikasi"
+         aria-label="Notifikasi">
+        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
+        </svg>
+      </a>
+
+      <button type="button"
+        class="hidden sm:inline-flex h-10 items-center justify-center px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold text-slate-700 leading-none">
+            {{ now()->translatedFormat('d M Y') }}
+      </button>
+    </div>
   </div>
 </header>
 
@@ -148,10 +158,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
         Edit Profil
-      </a>
-      <a href="{{ route('tampilan_dashboard') }}"
-         class="inline-flex items-center justify-center h-11 px-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold text-slate-900">
-        Dashboard
       </a>
     </div>
 

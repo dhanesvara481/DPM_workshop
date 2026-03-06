@@ -31,7 +31,6 @@ class InvoiceController extends Controller
         $from = $request->input('from');
         $to   = $request->input('to');
 
-        // ── Sort ──────────────────────────────────────────────────────────────
         $allowedSorts = ['invoice_id', 'subtotal', 'status', 'tanggal_invoice'];
         $sort = in_array($request->input('sort'), $allowedSorts)
             ? $request->input('sort')
@@ -94,8 +93,7 @@ class InvoiceController extends Controller
         return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
     }
 
-
-    // ── Shared (admin & staff) ────────────────────────────────────────────────
+    // ── Shared ───────────────────────────────────────────────────────────────
 
     public function checkStok(Request $request)
     {
@@ -142,11 +140,13 @@ class InvoiceController extends Controller
             $deskripsi     = trim($request->deskripsi ?? '');
             $userId        = auth()->id();
 
+            // ── Snapshot user pembuat invoice ─────────────────────────────────
+            $currentUser = auth()->user();
+
             $subtotalBarang = (float) ($request->subtotal_barang ?? 0);
             $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
             $subtotal       = $subtotalBarang + $biayaJasa;
 
-            // ── FIX: selalu ambil nilai diskon & pajak, meski 0 ──
             $diskon = max(0, (float) ($request->diskon ?? 0));
             $pajak  = max(0, (int)   ($request->pajak  ?? 0));
 
@@ -195,7 +195,6 @@ class InvoiceController extends Controller
                 }
             }
 
-            // ── Row ringkasan — selalu simpan diskon & pajak (meski 0) ──
             DetailInvoice::create([
                 'invoice_id'     => $invoice->invoice_id,
                 'barang_id'      => null,
@@ -214,6 +213,9 @@ class InvoiceController extends Controller
                 'invoice_id'                => $invoice->invoice_id,
                 'user_id'                   => $userId,
                 'tanggal_riwayat_transaksi' => now(),
+                // ── Snapshot user pembuat invoice ─────────────────────────────
+                'username_snapshot'         => $currentUser->username,
+                'email_snapshot'            => $currentUser->email,
             ]);
 
             DB::commit();
@@ -255,10 +257,6 @@ class InvoiceController extends Controller
         ]);
     }
 
-    /**
-     * Simpan item barang ke detail_invoice dengan snapshot nama & harga.
-     * Stok belum dikurangi — baru dikurangi saat Paid.
-     */
     private function simpanItemBarang(
         int     $invoiceId,
         array   $items,
@@ -300,8 +298,7 @@ class InvoiceController extends Controller
 
     /**
      * Dipanggil saat invoice dikonfirmasi Paid.
-     * Gunakan snapshot jumlah dari kolom `jumlah` (tidak bergantung relasi barang).
-     * Jika barang sudah dihapus (barang_id null), skip pengurangan stok.
+     * Snapshot user diambil dari user yang mengkonfirmasi (admin yang melakukan aksi ini).
      */
     private function prosesStokDariInvoice(Invoice $invoice): void
     {
@@ -311,6 +308,12 @@ class InvoiceController extends Controller
             : $invoice->tanggal_invoice;
 
         $waktuKeluar = $invoice->tanggal_bayar;
+
+        // ── Snapshot: gunakan user yang terkait di invoice (pembuat invoice) ──
+        // Ambil dari riwayat_transaksi agar pakai snapshot yang sudah tersimpan
+        $riwayat = $invoice->riwayatTransaksi;
+        $usernameSnap = $riwayat?->username_snapshot ?? $invoice->user?->username ?? '-';
+        $emailSnap    = $riwayat?->email_snapshot    ?? $invoice->user?->email    ?? '-';
 
         $items = $invoice->items()
             ->whereNotNull('barang_id')
@@ -370,6 +373,9 @@ class InvoiceController extends Controller
                 'kode_barang_snapshot' => $barang->kode_barang,
                 'nama_barang_snapshot' => $barang->nama_barang,
                 'satuan_snapshot'      => $barang->satuan,
+                // ── Snapshot user pembuat invoice ─────────────────────────────
+                'username_snapshot'    => $usernameSnap,
+                'email_snapshot'       => $emailSnap,
             ]);
 
             RiwayatStok::create([
@@ -382,6 +388,9 @@ class InvoiceController extends Controller
                 'stok_akhir'           => $stokAkhir,
                 'kode_barang_snapshot' => $barang->kode_barang,
                 'nama_barang_snapshot' => $barang->nama_barang,
+                // ── Snapshot user ─────────────────────────────────────────────
+                'username_snapshot'    => $usernameSnap,
+                'email_snapshot'       => $emailSnap,
             ]);
         }
     }

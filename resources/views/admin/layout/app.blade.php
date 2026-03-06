@@ -81,7 +81,9 @@
     </div>
 
     {{-- CONTENT --}}
-    @yield('content')
+    <div class="relative z-10">
+      @yield('content')
+    </div>)
 
     {{-- GLOBAL SCRIPT: sidebar toggle (open/close interaksi user) --}}
     <script>

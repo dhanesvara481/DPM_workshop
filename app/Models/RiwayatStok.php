@@ -22,9 +22,12 @@ class RiwayatStok extends Model
         'tanggal_riwayat_stok',
         'stok_awal',
         'stok_akhir',
-         // ── snapshot (ditambah) ──
+        // ── snapshot barang ──
         'kode_barang_snapshot',
         'nama_barang_snapshot',
+        // ── snapshot user (admin/staff yang bertanggung jawab) ──
+        'username_snapshot',
+        'email_snapshot',
     ];
 
     protected $casts = [
@@ -53,6 +56,18 @@ class RiwayatStok extends Model
         return $this->belongsTo(BarangKeluar::class, 'barang_keluar_id', 'barang_keluar_id');
     }
 
+    // ── Accessor: nama pengguna (snapshot-first) ─────────────────────────────
+    // Jika admin sudah ganti username, riwayat lama tetap tampilkan nama lama
+    public function getNamaPenggunaAttribute(): string
+    {
+        return $this->username_snapshot ?? $this->user?->username ?? '-';
+    }
+
+    public function getEmailPenggunaAttribute(): string
+    {
+        return $this->email_snapshot ?? $this->user?->email ?? '-';
+    }
+
     // ── Accessor: tipe masuk / keluar ────────────────────────────────────────
 
     public function getTipeAttribute(): string
@@ -73,10 +88,7 @@ class RiwayatStok extends Model
         return 0;
     }
 
-    // ── Accessor: keterangan — dibuat langsung, TIDAK disimpan ke DB ─────────
-    // Jika dari invoice  → "Invoice INV-{id}"
-    // Jika barang keluar biasa → keterangan dari tabel barang_keluar (jika ada)
-    // Jika barang masuk  → "Barang Masuk"
+    // ── Accessor: keterangan ─────────────────────────────────────────────────
 
     public function getKeteranganAttribute(): string
     {

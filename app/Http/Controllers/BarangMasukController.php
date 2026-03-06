@@ -24,11 +24,12 @@ class BarangMasukController extends Controller
         $barangMasuk = BarangMasuk::leftJoin('barang', 'barang_masuk.barang_id', '=', 'barang.barang_id')
             ->select(
                 'barang_masuk.*',
-                // SESUDAH
                 DB::raw("COALESCE(barang_masuk.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
                 DB::raw("COALESCE(barang_masuk.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
                 DB::raw("COALESCE(barang_masuk.satuan_snapshot, barang.satuan, '-') as satuan"),
                 DB::raw("COALESCE(barang.stok, '-') as stok"),
+                // ── Tampilkan nama pengguna: snapshot dulu, fallback ke relasi live
+                DB::raw("COALESCE(barang_masuk.username_snapshot, '[User Dihapus]') as nama_pengguna"),
             )
             ->when($request->search, function ($q) use ($request) {
                 $s = $request->search;
@@ -61,7 +62,7 @@ class BarangMasukController extends Controller
                 'qty_masuk.integer'  => 'Jumlah harus berupa angka.',
                 'qty_masuk.min'      => 'Jumlah minimal 1.',
                 'tanggal.required'   => 'Tanggal wajib diisi.',
-                'tanggal.datetime'       => 'Format tanggal tidak valid.',
+                'tanggal.datetime'   => 'Format tanggal tidak valid.',
             ]);
 
             DB::beginTransaction();
@@ -73,52 +74,51 @@ class BarangMasukController extends Controller
                 throw new \Exception('User tidak terautentikasi. Silakan login terlebih dahulu.');
             }
 
-            $tanggalSaja  = $validated['tanggal'];                          // Y-m-d
-            $tanggalInput = $tanggalSaja . ' ' . now()->format('H:i:s');   // Y-m-d H:i:s
+            // ── Ambil data user saat ini untuk snapshot ───────────────────────
+            $currentUser = Auth::user();
+
+            $tanggalSaja  = $validated['tanggal'];
+            $tanggalInput = $tanggalSaja . ' ' . now()->format('H:i:s');
             $qty          = (int) $validated['qty_masuk'];
             
-            // Record pertama hari ini
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)          // pakai tanggal saja
+                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
             
-            // Record terakhir hari ini
             $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)          // pakai tanggal saja
+                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
             
-            // Record terakhir SEBELUM hari ini -> ini yang jadi stok_awal
             $riwayatSebelumnya = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', '<', $tanggalSaja)     // pakai tanggal saja
+                ->whereDate('tanggal_riwayat_stok', '<', $tanggalSaja)
                 ->orderBy('tanggal_riwayat_stok', 'desc')
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
+
             if ($riwayatHariIniPertama) {
-                // Sudah ada transaksi hari ini
                 $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
                 $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir + $qty;
-
             } elseif ($riwayatSebelumnya) {
-                // Hari baru, ada riwayat kemarin
                 $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
                 $stokAkhir = $stokAwal + $qty;
-
             } else {
-                // Pertama kali input, belum ada riwayat sama sekali
                 $stokAwal  = $qty;
                 $stokAkhir = $qty;
             }
 
             $barangMasuk = BarangMasuk::create([
-                'barang_id'     => $validated['barang_id'],
-                'user_id'       => $userId,
-                'jumlah_masuk'  => $qty,
-                'tanggal_masuk' => $tanggalInput,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
-                'satuan_snapshot'      => $barang->satuan,       // ← tambah
+                'barang_id'            => $validated['barang_id'],
+                'user_id'              => $userId,
+                'jumlah_masuk'         => $qty,
+                'tanggal_masuk'        => $tanggalInput,
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
+                'satuan_snapshot'      => $barang->satuan,
+                // ── Snapshot user saat input ──────────────────────────────────
+                'username_snapshot'    => $currentUser->username,
+                'email_snapshot'       => $currentUser->email,
             ]);
 
             $barang->update(['stok' => (string) $stokAkhir]);
@@ -131,8 +131,11 @@ class BarangMasukController extends Controller
                 'tanggal_riwayat_stok' => $tanggalInput,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
-                'kode_barang_snapshot' => $barang->kode_barang,  // ← tambah
-                'nama_barang_snapshot' => $barang->nama_barang,  // ← tambah
+                'kode_barang_snapshot' => $barang->kode_barang,
+                'nama_barang_snapshot' => $barang->nama_barang,
+                // ── Snapshot user ─────────────────────────────────────────────
+                'username_snapshot'    => $currentUser->username,
+                'email_snapshot'       => $currentUser->email,
             ]);
 
             DB::commit();

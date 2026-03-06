@@ -32,7 +32,10 @@ class RiwayatTransaksiController extends Controller
                 invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
-                user.username                                                AS nama_pembuat,
+                /* ── Snapshot-first: nama lama dipertahankan walau user ganti username ── */
+                COALESCE(riwayat_transaksi.username_snapshot, user.username, '[User Dihapus]')
+                                                                            AS nama_pembuat,
+                COALESCE(riwayat_transaksi.email_snapshot, user.email, '') AS email_pembuat,
                 CONCAT('INV-', invoice.invoice_id)                          AS kode_transaksi,
                 (
                     SELECT di.nama_pelanggan
@@ -68,25 +71,18 @@ class RiwayatTransaksiController extends Controller
                       AND ring2.total     = 0
                     LIMIT 1
                 )                                                            AS pajak,
-                /* ── GRAND TOTAL = subtotal - diskon + pajak% ── */
                 ROUND(
                     GREATEST(0, invoice.subtotal - COALESCE((
-                        SELECT ring3.diskon
-                        FROM detail_invoice ring3
+                        SELECT ring3.diskon FROM detail_invoice ring3
                         WHERE ring3.invoice_id = invoice.invoice_id
-                          AND ring3.barang_id IS NULL
-                          AND ring3.jumlah    = '0'
-                          AND ring3.total     = 0
+                          AND ring3.barang_id IS NULL AND ring3.jumlah = '0' AND ring3.total = 0
                         LIMIT 1
                     ), 0))
                     *
                     (1 + COALESCE((
-                        SELECT ring4.pajak
-                        FROM detail_invoice ring4
+                        SELECT ring4.pajak FROM detail_invoice ring4
                         WHERE ring4.invoice_id = invoice.invoice_id
-                          AND ring4.barang_id IS NULL
-                          AND ring4.jumlah    = '0'
-                          AND ring4.total     = 0
+                          AND ring4.barang_id IS NULL AND ring4.jumlah = '0' AND ring4.total = 0
                         LIMIT 1
                     ), 0) / 100)
                 )                                                            AS total
@@ -101,7 +97,9 @@ class RiwayatTransaksiController extends Controller
                            ->from('detail_invoice')
                            ->whereColumn('detail_invoice.invoice_id', 'invoice.invoice_id')
                            ->where('detail_invoice.nama_pelanggan', 'like', "%{$q}%");
-                    });
+                    })
+                    // ── Bisa search berdasarkan nama pembuat (snapshot) ──
+                    ->orWhere('riwayat_transaksi.username_snapshot', 'like', "%{$q}%");
             });
         }
 
@@ -122,7 +120,6 @@ class RiwayatTransaksiController extends Controller
 
         $invoice = $riwayat->invoice;
 
-        // Row ringkasan: jumlah='0' DAN total=0 (terlepas barang_id null atau tidak)
         $rowRingkasan = $invoice->items->first(
             fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
         );
@@ -134,7 +131,6 @@ class RiwayatTransaksiController extends Controller
         $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
         $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
 
-        // Item real: semua kecuali row ringkasan (jumlah=0 & total=0)
         $itemsReal = $invoice->items->filter(
             fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
         )->values();
@@ -142,7 +138,8 @@ class RiwayatTransaksiController extends Controller
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        $namaPembuat     = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+        // ── Snapshot-first: pakai nama lama walau admin sudah ganti username ──
+        $namaPembuat     = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
 
@@ -200,7 +197,8 @@ class RiwayatTransaksiController extends Controller
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        $namaPembuat = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+        // ── Snapshot-first ──
+        $namaPembuat = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
 
         $subtotal     = (float) $invoice->subtotal;
         $afterDisc    = max(0, $subtotal - $diskon);
@@ -255,62 +253,44 @@ class RiwayatTransaksiController extends Controller
                 invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
-                user.username                                                AS nama_pembuat,
+                /* ── Snapshot-first ── */
+                COALESCE(riwayat_transaksi.username_snapshot, user.username, '[User Dihapus]')
+                                                                            AS nama_pembuat,
+                COALESCE(riwayat_transaksi.email_snapshot, user.email, '') AS email_pembuat,
                 CONCAT('INV-', invoice.invoice_id)                          AS kode_transaksi,
                 (
-                    SELECT di.nama_pelanggan
-                    FROM detail_invoice di
+                    SELECT di.nama_pelanggan FROM detail_invoice di
                     WHERE di.invoice_id = invoice.invoice_id
                       AND NOT (di.jumlah = '0' AND di.total = 0)
-                    ORDER BY di.detail_invoice_id ASC
-                    LIMIT 1
+                    ORDER BY di.detail_invoice_id ASC LIMIT 1
                 )                                                            AS nama_pengguna,
                 (
-                    SELECT di2.tipe_transaksi
-                    FROM detail_invoice di2
+                    SELECT di2.tipe_transaksi FROM detail_invoice di2
                     WHERE di2.invoice_id = invoice.invoice_id
                       AND NOT (di2.jumlah = '0' AND di2.total = 0)
-                    ORDER BY di2.detail_invoice_id ASC
-                    LIMIT 1
+                    ORDER BY di2.detail_invoice_id ASC LIMIT 1
                 )                                                            AS kategori_invoice,
                 (
-                    SELECT ring.diskon
-                    FROM detail_invoice ring
+                    SELECT ring.diskon FROM detail_invoice ring
                     WHERE ring.invoice_id = invoice.invoice_id
-                      AND ring.barang_id IS NULL
-                      AND ring.jumlah    = '0'
-                      AND ring.total     = 0
-                    LIMIT 1
+                      AND ring.barang_id IS NULL AND ring.jumlah = '0' AND ring.total = 0 LIMIT 1
                 )                                                            AS diskon,
                 (
-                    SELECT ring2.pajak
-                    FROM detail_invoice ring2
+                    SELECT ring2.pajak FROM detail_invoice ring2
                     WHERE ring2.invoice_id = invoice.invoice_id
-                      AND ring2.barang_id IS NULL
-                      AND ring2.jumlah    = '0'
-                      AND ring2.total     = 0
-                    LIMIT 1
+                      AND ring2.barang_id IS NULL AND ring2.jumlah = '0' AND ring2.total = 0 LIMIT 1
                 )                                                            AS pajak,
-                /* ── GRAND TOTAL = subtotal - diskon + pajak% ── */
                 ROUND(
                     GREATEST(0, invoice.subtotal - COALESCE((
-                        SELECT ring3.diskon
-                        FROM detail_invoice ring3
+                        SELECT ring3.diskon FROM detail_invoice ring3
                         WHERE ring3.invoice_id = invoice.invoice_id
-                          AND ring3.barang_id IS NULL
-                          AND ring3.jumlah    = '0'
-                          AND ring3.total     = 0
-                        LIMIT 1
+                          AND ring3.barang_id IS NULL AND ring3.jumlah = '0' AND ring3.total = 0 LIMIT 1
                     ), 0))
                     *
                     (1 + COALESCE((
-                        SELECT ring4.pajak
-                        FROM detail_invoice ring4
+                        SELECT ring4.pajak FROM detail_invoice ring4
                         WHERE ring4.invoice_id = invoice.invoice_id
-                          AND ring4.barang_id IS NULL
-                          AND ring4.jumlah    = '0'
-                          AND ring4.total     = 0
-                        LIMIT 1
+                          AND ring4.barang_id IS NULL AND ring4.jumlah = '0' AND ring4.total = 0 LIMIT 1
                     ), 0) / 100)
                 )                                                            AS total
             ")
@@ -365,7 +345,8 @@ class RiwayatTransaksiController extends Controller
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        $namaPembuat     = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+        // ── Snapshot-first ──
+        $namaPembuat     = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
 
@@ -424,7 +405,8 @@ class RiwayatTransaksiController extends Controller
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        $namaPembuat = $riwayat->user?->username ?? $riwayat->user?->name ?? 'User';
+        // ── Snapshot-first ──
+        $namaPembuat = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
 
         $subtotal     = (float) $invoice->subtotal;
         $afterDisc    = max(0, $subtotal - $diskon);

@@ -15,34 +15,36 @@ class RiwayatPerubahanStokController extends Controller
         $dari   = $request->input('dari');
         $sampai = $request->input('sampai');
     
-        // ── Sort ──────────────────────────────────────────────────────────────
-        $sortable = [ 'tanggal_riwayat_stok', 'kode_barang', 'nama_barang', 'nama_pengguna', 'stok_awal', 'stok_akhir'];
+        $sortable = ['tanggal_riwayat_stok', 'kode_barang', 'nama_barang', 'nama_pengguna', 'stok_awal', 'stok_akhir'];
         $sort     = in_array($request->input('sort'), $sortable) ? $request->input('sort') : 'tanggal_riwayat_stok';
         $dir      = $request->input('dir') === 'desc' ? 'desc' : 'asc';
     
-        // prefix tabel agar tidak ambigu
         $sortColumn = match(true) {
             in_array($sort, ['kode_barang', 'nama_barang']) => 'barang.' . $sort,
-            $sort === 'nama_pengguna'                       => 'user.username',
-            default                                         => 'riwayat_stok.' . $sort,
+            // ── Sort nama_pengguna pakai snapshot column ──
+            $sort === 'nama_pengguna' => 'riwayat_stok.username_snapshot',
+            default                   => 'riwayat_stok.' . $sort,
         };
     
         $query = RiwayatStok::with(['barang', 'user', 'barangMasuk', 'barangKeluar'])
-            // ✅ LEFT JOIN — row tetap muncul walau barang sudah dihapus
             ->leftJoin('barang', 'barang.barang_id', '=', 'riwayat_stok.barang_id')
             ->leftJoin('user',   'user.user_id',     '=', 'riwayat_stok.user_id')
             ->select(
                 'riwayat_stok.*',
                 DB::raw("COALESCE(riwayat_stok.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
                 DB::raw("COALESCE(riwayat_stok.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
-                'user.username as nama_pengguna',
+                // ── Snapshot-first: tampilkan nama lama walau user sudah ganti username ──
+                DB::raw("COALESCE(riwayat_stok.username_snapshot, user.username, '[User Dihapus]') as nama_pengguna"),
+                DB::raw("COALESCE(riwayat_stok.email_snapshot, user.email, '') as email_pengguna"),
             );
     
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $like = "%{$q}%";
                 $sub->where('barang.kode_barang', 'like', $like)
-                    ->orWhere('barang.nama_barang', 'like', $like);
+                    ->orWhere('barang.nama_barang', 'like', $like)
+                    // ── Bisa juga search nama pengguna ──
+                    ->orWhere('riwayat_stok.username_snapshot', 'like', $like);
             });
         }
     
@@ -63,31 +65,27 @@ class RiwayatPerubahanStokController extends Controller
     
         $rows = $query
             ->orderBy($sortColumn, $dir)
-            ->orderByDesc('riwayat_stok.riwayat_stok_id') // tiebreaker
+            ->orderByDesc('riwayat_stok.riwayat_stok_id')
             ->paginate(20)
             ->withQueryString();
 
-        // ✅ Tambahin ini:
         $rows->getCollection()->transform(function ($r) {
             $awal  = (int) $r->stok_awal;
             $akhir = (int) $r->stok_akhir;
             $delta = $akhir - $awal;
 
-            // Tipe utama dari kolom relasi (paling valid)
             if (!is_null($r->barang_masuk_id) && is_null($r->barang_keluar_id)) {
                 $r->tipe = 'masuk';
             } elseif (is_null($r->barang_masuk_id) && !is_null($r->barang_keluar_id)) {
                 $r->tipe = 'keluar';
             } else {
-                // fallback kalau ada data "aneh" (dua-duanya terisi / dua-duanya null)
                 $r->tipe = $delta > 0 ? 'masuk' : ($delta < 0 ? 'keluar' : null);
             }
 
-            $r->qty = abs($delta); // qty perubahan stok (selisih)
+            $r->qty = abs($delta);
             return $r;
         });
 
-    
         return view('admin.riwayat_perubahan_stok', compact('rows', 'q', 'tipe', 'dari', 'sampai', 'sort', 'dir'));
     }
 }

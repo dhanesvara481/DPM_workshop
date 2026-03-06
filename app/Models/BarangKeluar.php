@@ -19,12 +19,15 @@ class BarangKeluar extends Model
         'tanggal_keluar',
         'keterangan',
         'ref_invoice',
-        // ── snapshot ──
+        // ── snapshot barang ──
         'kode_barang_snapshot',
         'nama_barang_snapshot',
         'satuan_snapshot',
         // ── bukti foto ──
         'foto_bukti',
+        // ── snapshot user (admin/staff yang input) ──
+        'username_snapshot',
+        'email_snapshot',
     ];
 
     protected $casts = [
@@ -32,13 +35,22 @@ class BarangKeluar extends Model
     ];
 
     // ── Accessor: URL lengkap foto bukti ─────────────────────────────────────
-    // Kembalikan null kalau foto belum diisi, sehingga view bisa pakai @if
-
     public function getFotoBuktiUrlAttribute(): ?string
     {
         return $this->foto_bukti
             ? asset('storage/' . $this->foto_bukti)
             : null;
+    }
+
+    // ── Accessor: nama pengguna yang bertanggung jawab ────────────────────────
+    public function getNamaPenggunaAttribute(): string
+    {
+        return $this->username_snapshot ?? $this->user?->username ?? '-';
+    }
+
+    public function getEmailPenggunaAttribute(): string
+    {
+        return $this->email_snapshot ?? $this->user?->email ?? '-';
     }
 
     public function barang()

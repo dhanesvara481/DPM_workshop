@@ -2,145 +2,160 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barang;
-use App\Models\BarangKeluar;
-use App\Models\RiwayatStok;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
+use App\Models\Barang;
+use App\Models\BarangMasuk;
+use App\Models\RiwayatStok;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
-class BarangKeluarController extends Controller
+class BarangMasukController extends Controller
 {
-    public function getBarangKeluar(Request $request)
+    public function getBarangMasuk(Request $request)
     {
-        $barangs = Barang::orderBy('kode_barang')->get();
+        $barangs = Barang::orderBy('kode_barang', 'asc')->get();
 
-        $sortable = ['tanggal_keluar', 'kode_barang', 'nama_barang', 'jumlah_keluar', 'keterangan'];
-        $sort     = in_array($request->sort, $sortable) ? $request->sort : 'tanggal_keluar';
+        $sortable = ['tanggal_masuk', 'kode_barang', 'nama_barang', 'jumlah_masuk'];
+        $sort     = in_array($request->sort, $sortable) ? $request->sort : 'tanggal_masuk';
         $dir      = $request->dir === 'asc' ? 'asc' : 'desc';
 
-        $barangKeluar = BarangKeluar::leftJoin('barang', 'barang.barang_id', '=', 'barang_keluar.barang_id')
+        $barangMasuk = BarangMasuk::leftJoin('barang', 'barang_masuk.barang_id', '=', 'barang.barang_id')
             ->select(
-                'barang_keluar.*',
-                DB::raw("COALESCE(barang_keluar.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
-                DB::raw("COALESCE(barang_keluar.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
-                'barang_keluar.jumlah_keluar as qty_keluar',
+                'barang_masuk.*',
+                DB::raw("COALESCE(barang_masuk.kode_barang_snapshot, barang.kode_barang, '[Dihapus]') as kode_barang"),
+                DB::raw("COALESCE(barang_masuk.nama_barang_snapshot, barang.nama_barang, '[Barang Dihapus]') as nama_barang"),
+                DB::raw("COALESCE(barang_masuk.satuan_snapshot, barang.satuan, '-') as satuan"),
+                DB::raw("COALESCE(barang.stok, '-') as stok"),
+                // ── Tampilkan nama pengguna: snapshot dulu, fallback ke relasi live
+                DB::raw("COALESCE(barang_masuk.username_snapshot, '[User Dihapus]') as nama_pengguna"),
             )
             ->when($request->search, function ($q) use ($request) {
                 $s = $request->search;
                 $q->where('barang.kode_barang', 'like', "%$s%")
-                  ->orWhere('barang.nama_barang', 'like', "%$s%")
-                  ->orWhere('barang_keluar.keterangan', 'like', "%$s%");
+                  ->orWhere('barang.nama_barang', 'like', "%$s%");
             })
-            ->orderBy($sort === 'kode_barang' || $sort === 'nama_barang' ? 'barang.'.$sort : 'barang_keluar.'.$sort, $dir)
+            ->orderBy($sort === 'kode_barang' || $sort === 'nama_barang' ? 'barang.'.$sort : 'barang_masuk.'.$sort, $dir)
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.barang_keluar', compact('barangs', 'barangKeluar', 'sort', 'dir'));
+        return view('admin.barang_masuk', [
+            'barangs'     => $barangs,
+            'barangMasuk' => $barangMasuk,
+            'sort'        => $sort,
+            'dir'         => $dir,
+        ]);
     }
 
-    public function simpanBarangKeluar(Request $request)
+    public function simpanBarangMasuk(Request $request)
     {
-        $validated = $request->validate([
-            'barang_id'  => ['required', 'exists:barang,barang_id'],
-            'qty_keluar' => ['required', 'integer', 'min:1'],
-            'tanggal'    => ['required', 'date'],
-            'keterangan' => ['required', 'in:Barang Rusak,Barang Dikembalikan,Penyesuaian Stok'],
-            // ── foto bukti: opsional, max 2 MB, hanya gambar ──
-            'foto_bukti' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-        ], [
-            'barang_id.required'  => 'Pilih kode barang terlebih dahulu.',
-            'barang_id.exists'    => 'Barang tidak ditemukan.',
-            'qty_keluar.required' => 'Jumlah keluar wajib diisi.',
-            'qty_keluar.min'      => 'Jumlah keluar minimal 1.',
-            'tanggal.required'    => 'Tanggal wajib diisi.',
-            'keterangan.required' => 'Pilih keterangan.',
-            'keterangan.in'       => 'Keterangan tidak valid.',
-            'foto_bukti.image'    => 'File harus berupa gambar.',
-            'foto_bukti.mimes'    => 'Format gambar harus jpg, jpeg, png, atau webp.',
-            'foto_bukti.max'      => 'Ukuran gambar maksimal 2 MB.',
-        ]);
+        try {
+            $validated = $request->validate([
+                'barang_id' => 'required|exists:barang,barang_id',
+                'qty_masuk' => 'required|integer|min:1',
+                'tanggal'   => 'required|date',
+            ], [
+                'barang_id.required' => 'Pilih barang terlebih dahulu.',
+                'barang_id.exists'   => 'Barang tidak ditemukan.',
+                'qty_masuk.required' => 'Jumlah stok masuk wajib diisi.',
+                'qty_masuk.integer'  => 'Jumlah harus berupa angka.',
+                'qty_masuk.min'      => 'Jumlah minimal 1.',
+                'tanggal.required'   => 'Tanggal wajib diisi.',
+                'tanggal.datetime'   => 'Format tanggal tidak valid.',
+            ]);
 
-        $barang = Barang::where('barang_id', $validated['barang_id'])
-                        ->lockForUpdate()
-                        ->firstOrFail();
+            DB::beginTransaction();
 
-        if ((int) $barang->stok < (int) $validated['qty_keluar']) {
-            return back()
-                ->withInput()
-                ->withErrors(['qty_keluar' => 'Jumlah keluar ('.$validated['qty_keluar'].') melebihi stok tersedia ('.$barang->stok.').']);
-        }
+            $barang = Barang::where('barang_id', $validated['barang_id'])->firstOrFail();
 
-        // ── Upload foto (di luar transaksi DB agar tidak memblokir koneksi) ──
-        $fotoBuktiPath = null;
-        if ($request->hasFile('foto_bukti')) {
-            // Disimpan ke: storage/app/public/barang_keluar/YYYY/MM/<hash>.ext
-            $fotoBuktiPath = $request->file('foto_bukti')
-                ->store('barang_keluar/' . now()->format('Y/m'), 'public');
-        }
+            $userId = Auth::id();
+            if (!$userId) {
+                throw new \Exception('User tidak terautentikasi. Silakan login terlebih dahulu.');
+            }
 
-        DB::transaction(function () use ($validated, $barang, $fotoBuktiPath) {
-            $tanggalInput = $validated['tanggal'];
-            $waktuKeluar  = now();
-            $qty          = (int) $validated['qty_keluar'];
+            // ── Ambil data user saat ini untuk snapshot ───────────────────────
+            $currentUser = Auth::user();
 
+            $tanggalSaja  = $validated['tanggal'];
+            $tanggalInput = $tanggalSaja . ' ' . now()->format('H:i:s');
+            $qty          = (int) $validated['qty_masuk'];
+            
             $riwayatHariIniPertama = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', $tanggalInput)
+                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)
                 ->orderBy('riwayat_stok_id', 'asc')
                 ->first();
-
+            
             $riwayatHariIniTerakhir = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', $tanggalInput)
+                ->whereDate('tanggal_riwayat_stok', $tanggalSaja)
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
-
+            
             $riwayatSebelumnya = RiwayatStok::where('barang_id', $validated['barang_id'])
-                ->whereDate('tanggal_riwayat_stok', '<', $tanggalInput)
+                ->whereDate('tanggal_riwayat_stok', '<', $tanggalSaja)
                 ->orderBy('tanggal_riwayat_stok', 'desc')
                 ->orderBy('riwayat_stok_id', 'desc')
                 ->first();
 
             if ($riwayatHariIniPertama) {
                 $stokAwal  = (int) $riwayatHariIniPertama->stok_awal;
-                $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir - $qty;
+                $stokAkhir = (int) $riwayatHariIniTerakhir->stok_akhir + $qty;
             } elseif ($riwayatSebelumnya) {
                 $stokAwal  = (int) $riwayatSebelumnya->stok_akhir;
-                $stokAkhir = $stokAwal - $qty;
+                $stokAkhir = $stokAwal + $qty;
             } else {
-                $stokAwal  = (int) $barang->stok;
-                $stokAkhir = $stokAwal - $qty;
+                $stokAwal  = $qty;
+                $stokAkhir = $qty;
             }
 
-            $barang->decrement('stok', $qty);
-
-            $barangKeluar = BarangKeluar::create([
-                'user_id'              => Auth::id(),
+            $barangMasuk = BarangMasuk::create([
                 'barang_id'            => $validated['barang_id'],
-                'jumlah_keluar'        => $qty,
-                'tanggal_keluar'       => $waktuKeluar,
-                'keterangan'           => $validated['keterangan'],
-                'ref_invoice'          => null,
+                'user_id'              => $userId,
+                'jumlah_masuk'         => $qty,
+                'tanggal_masuk'        => $tanggalInput,
                 'kode_barang_snapshot' => $barang->kode_barang,
                 'nama_barang_snapshot' => $barang->nama_barang,
                 'satuan_snapshot'      => $barang->satuan,
-                'foto_bukti'           => $fotoBuktiPath,  // ← null kalau tidak upload
+                // ── Snapshot user saat input ──────────────────────────────────
+                'username_snapshot'    => $currentUser->username,
+                'email_snapshot'       => $currentUser->email,
             ]);
+
+            $barang->update(['stok' => (string) $stokAkhir]);
 
             RiwayatStok::create([
                 'barang_id'            => $validated['barang_id'],
-                'user_id'              => Auth::id(),
-                'barang_masuk_id'      => null,
-                'barang_keluar_id'     => $barangKeluar->barang_keluar_id,
-                'tanggal_riwayat_stok' => $waktuKeluar,
+                'user_id'              => $userId,
+                'barang_masuk_id'      => $barangMasuk->barang_masuk_id,
+                'barang_keluar_id'     => null,
+                'tanggal_riwayat_stok' => $tanggalInput,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
                 'kode_barang_snapshot' => $barang->kode_barang,
                 'nama_barang_snapshot' => $barang->nama_barang,
+                // ── Snapshot user ─────────────────────────────────────────────
+                'username_snapshot'    => $currentUser->username,
+                'email_snapshot'       => $currentUser->email,
             ]);
-        });
 
-        return redirect()
-            ->route('barang_keluar')
-            ->with('success', 'Stok keluar berhasil dicatat.');
+            DB::commit();
+
+            return redirect()
+                ->route('barang_masuk')
+                ->with('success', "Berhasil menambah stok {$barang->nama_barang} sebanyak {$qty} {$barang->satuan}. Stok sekarang: {$stokAkhir}.");
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Barang tidak ditemukan.')->withInput();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error storing barang masuk: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        }
     }
 }

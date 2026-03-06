@@ -15,6 +15,9 @@ class RiwayatTransaksi extends Model
         'invoice_id',
         'user_id',
         'tanggal_riwayat_transaksi',
+        // ── snapshot user (admin/staff yang membuat invoice) ──
+        'username_snapshot',
+        'email_snapshot',
     ];
 
     protected $casts = [
@@ -24,6 +27,18 @@ class RiwayatTransaksi extends Model
     public function getCreatedAtAttribute()
     {
         return $this->tanggal_riwayat_transaksi;
+    }
+
+    // ── Accessor: nama pembuat (snapshot-first) ───────────────────────────────
+    // Walau admin sudah ganti username, invoice lama tetap menampilkan nama lama
+    public function getNamaPembuatAttribute(): string
+    {
+        return $this->username_snapshot ?? $this->user?->username ?? '-';
+    }
+
+    public function getEmailPembuatAttribute(): string
+    {
+        return $this->email_snapshot ?? $this->user?->email ?? '-';
     }
 
     public function invoice()
