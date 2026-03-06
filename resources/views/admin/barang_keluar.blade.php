@@ -52,6 +52,13 @@
       </div>
     @endif
 
+    @if(session('error'))
+      <div class="rounded-2xl border border-red-200 bg-red-50 text-red-800 px-5 py-4">
+        <p class="text-sm font-semibold">Transaksi Diblokir</p>
+        <p class="text-sm">{{ session('error') }}</p>
+      </div>
+    @endif
+
     @if($errors->any())
       <div class="rounded-2xl border border-red-200 bg-red-50 text-red-800 px-5 py-4">
         <p class="text-sm font-semibold">Gagal</p>
@@ -633,6 +640,9 @@
 
   @if(session('success'))
     showToast('Berhasil', @json(session('success')), 'success');
+  @endif
+  @if(session('error'))
+    showToast('Transaksi Diblokir', @json(session('error')), 'error');
   @endif
   @if($errors->any())
     showToast('Gagal', @json($errors->first()), 'error');
