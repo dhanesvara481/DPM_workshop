@@ -243,6 +243,19 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [NotifikasiController::class, 'getDetailNotifikasi']
         )->name('detail_notifikasi');
 
+        //============== Profil =================//
+        Route::get('/profil',
+            [ProfilController::class, 'getTampilanProfil']
+        )->name('tampilan_profil');
+
+        Route::get('/profil/edit',
+            [ProfilController::class, 'getEditProfil']
+        )->name('edit_profil');
+
+        Route::put('/profil/update',
+            [ProfilController::class, 'updateProfil']
+        )->name('update_profil');
+
     });
 
     /*
@@ -291,6 +304,11 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::get('/staff/notifikasi/{id}',
             [NotifikasiController::class, 'getDetailNotifikasiStaff']
         )->name('detail_notifikasi_staff');
+
+        // Ptofil Staff (read-only)
+        Route::get('/staff/profil',
+            [ProfilController::class, 'getTampilanProfilStaff']
+        )->name('tampilan_profil_staff');
 
     });
 

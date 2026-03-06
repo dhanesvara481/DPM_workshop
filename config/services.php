@@ -35,10 +35,7 @@ return [
         ],
     ],
 
-    // 'fonnte' => [
-    //     'token' => env('FONNTE_TOKEN'),
-    // ],
-
+    // WAHA
     'waha' => [
       'base_url' => env('WAHA_BASE_URL'),
       'api_key'  => env('WAHA_API_KEY'),
@@ -46,7 +43,7 @@ return [
     ],
 
     'notif_channel' => [
-        'email'     => env('NOTIF_CHANNEL_EMAIL',    true),
+        // 'email'     => env('NOTIF_CHANNEL_EMAIL',    true),
         'whatsapp'  => env('NOTIF_CHANNEL_WHATSAPP', true),
     ],
 ];

@@ -36,24 +36,29 @@
   </div>
 
   <div class="px-5 py-5">
-    {{-- Profile --}}
-    <div class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 
+
+    {{-- Profile Card — klik ke halaman profil --}}
+    <a href="{{ route('tampilan_profil') }}"
+       class="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3
+              hover:bg-white/10 transition group">
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500
             border border-white/20 grid place-items-center shadow-lg shrink-0">
         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <!-- Kepala -->
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M15 14a4 4 0 10-6 0m6 0a6 6 0 016 6H3a6 6 0 016-6m6 0H9"/>
-          <!-- Mahkota -->
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M5 6l3 3 4-4 4 4 3-3 1 6H4l1-6z"/>
         </svg>
       </div>
-      <div class="min-w-0">
-        <p class="text-sm font-medium truncate">{{ $username ?? 'User' }}</p>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium truncate group-hover:text-white transition">{{ $username ?? 'User' }}</p>
         <p class="text-[11px] text-white/60">{{ $role ?? 'Admin' }}</p>
       </div>
-    </div>
+      {{-- Chevron kecil sebagai hint klik --}}
+      <svg class="h-4 w-4 text-white/30 group-hover:text-white/60 transition shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
 
     {{-- MENU --}}
     <nav class="mt-5 space-y-1">
@@ -217,6 +222,24 @@
         </a>
       </div>
 
+      {{-- AKUN --}}
+      <div class="mt-3">
+        <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">AKUN</p>
+
+        <a href="{{ route('tampilan_profil') }}" data-nav
+           class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
+                  text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
+                  {{ request()->is('profil*') ? 'is-active' : '' }}">
+          <span class="h-8 w-8 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+            <svg class="h-[18px] w-[18px] text-white/70 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </span>
+          Profil Saya
+        </a>
+      </div>
+
       {{-- LOGOUT --}}
       <div class="mt-4 pt-4 border-t border-white/10">
         <form method="POST" action="{{ route('logout') }}">
@@ -234,6 +257,7 @@
           </button>
         </form>
       </div>
+
     </nav>
   </div>
 </aside>
@@ -243,25 +267,22 @@
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
-    // 1. Inject style cloak ke <head> — ini override semua Tailwind class
     var style = document.createElement('style');
     style.id = 'sidebar-cloak';
     style.textContent = '#sidebar { transition: none !important; opacity: 0; }';
     document.head.appendChild(style);
 
-    // 2. Langsung posisikan — tidak ada animasi karena cloak aktif
     if (window.innerWidth >= 768) {
       sidebar.classList.remove('-translate-x-full');
     } else {
       sidebar.classList.add('-translate-x-full');
     }
 
-    // 3. Hapus cloak setelah 2 frame — browser sudah commit posisi final
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         var el = document.getElementById('sidebar-cloak');
         if (el) el.remove();
-        sidebar.style.opacity = '1'; // ← tambahin ini
+        sidebar.style.opacity = '1';
       });
     });
   })();
