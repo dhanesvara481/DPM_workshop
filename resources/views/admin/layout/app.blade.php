@@ -62,7 +62,7 @@
 
   {{-- MAIN --}}
   <main id="main"
-        class="flex-1 min-w-0 relative overflow-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
+      class="flex-1 min-w-0 relative overflow-y-auto md:ml-[280px] transition-[margin] duration-300 ease-out">
 
     {{-- Background global --}}
     <div class="pointer-events-none absolute inset-0">

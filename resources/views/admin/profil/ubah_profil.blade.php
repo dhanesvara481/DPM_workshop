@@ -33,7 +33,6 @@
 <section class="p-4 sm:p-6">
   <div class="max-w-2xl mx-auto space-y-5">
 
-    {{-- ERROR GLOBAL --}}
     @if($errors->any())
       <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
         <p class="text-sm font-semibold text-rose-800 mb-1">Ada kesalahan:</p>
@@ -45,7 +44,6 @@
       </div>
     @endif
 
-    {{-- FORM --}}
     <form method="POST" action="{{ route('update_profil') }}" id="formEditProfil">
       @csrf
       @method('PUT')
@@ -62,59 +60,36 @@
         </div>
 
         <div class="p-6 space-y-4">
-          {{-- Username --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
-            <input type="text" name="username" value="{{ old('username', $user->username) }}"
-                   maxlength="20"
-                   class="w-full h-11 rounded-xl border @error('username') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror
-                          px-4 text-sm text-slate-900 placeholder:text-slate-400
-                          focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+            <input type="text" name="username" value="{{ old('username', $user->username) }}" maxlength="20"
+                   class="w-full h-11 rounded-xl border @error('username') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                    placeholder="Masukkan username">
-            @error('username')
-              <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-            @enderror
+            @error('username')<p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>@enderror
           </div>
 
-          {{-- Email --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Email</label>
-            <input type="email" name="email" value="{{ old('email', $user->email) }}"
-                   maxlength="100"
-                   class="w-full h-11 rounded-xl border @error('email') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror
-                          px-4 text-sm text-slate-900 placeholder:text-slate-400
-                          focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+            <input type="email" name="email" value="{{ old('email', $user->email) }}" maxlength="100"
+                   class="w-full h-11 rounded-xl border @error('email') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                    placeholder="Masukkan email">
-            @error('email')
-              <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-            @enderror
+            @error('email')<p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>@enderror
           </div>
 
-          {{-- Kontak --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor Kontak (WhatsApp)</label>
-            <input type="text" name="kontak" value="{{ old('kontak', $user->kontak) }}"
-                   inputmode="numeric" maxlength="12"
-                   class="w-full h-11 rounded-xl border @error('kontak') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror
-                          px-4 text-sm text-slate-900 placeholder:text-slate-400
-                          focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+            <input type="text" name="kontak" value="{{ old('kontak', $user->kontak) }}" inputmode="numeric" maxlength="12"
+                   class="w-full h-11 rounded-xl border @error('kontak') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                    placeholder="Contoh: 081234567890">
-            @error('kontak')
-              <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-            @enderror
+            @error('kontak')<p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>@enderror
           </div>
 
-          {{-- Catatan --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Catatan <span class="font-normal text-slate-400">(opsional)</span></label>
             <textarea name="catatan" rows="3" maxlength="255"
-                      class="w-full rounded-xl border @error('catatan') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror
-                             px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 resize-none
-                             focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+                      class="w-full rounded-xl border @error('catatan') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                       placeholder="Tambahkan catatan...">{{ old('catatan', $user->catatan) }}</textarea>
-            @error('catatan')
-              <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-            @enderror
+            @error('catatan')<p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>@enderror
           </div>
         </div>
       </div>
@@ -140,37 +115,27 @@
         </div>
 
         <div class="p-6 space-y-4">
-          {{-- Password Baru --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Password Baru</label>
             <div class="relative">
-              <input type="password" name="password" id="inputPassword"
-                     autocomplete="new-password"
-                     class="w-full h-11 rounded-xl border @error('password') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror
-                            px-4 pr-10 text-sm text-slate-900 placeholder:text-slate-400
-                            focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+              <input type="password" name="password" id="inputPassword" autocomplete="new-password"
+                     class="w-full h-11 rounded-xl border @error('password') border-rose-400 bg-rose-50 @else border-slate-200 bg-white @enderror px-4 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                      placeholder="Minimal 6 karakter">
               <button type="button" id="eyeBtn"
-                      class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition"
-                      aria-label="Tampilkan/Sembunyikan">
-                <svg id="eyeIcon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               </button>
             </div>
-            @error('password')
-              <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-            @enderror
+            @error('password')<p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>@enderror
           </div>
 
-          {{-- Konfirmasi Password --}}
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Konfirmasi Password Baru</label>
-            <input type="password" name="password_confirmation" id="inputPasswordConfirm"
-                   autocomplete="new-password"
-                   class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400
-                          focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
+            <input type="password" name="password_confirmation" id="inputPasswordConfirm" autocomplete="new-password"
+                   class="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-400 transition"
                    placeholder="Ulangi password baru">
             <p id="pwMatchHint" class="mt-1.5 text-xs hidden"></p>
           </div>
@@ -192,20 +157,37 @@
           Batal
         </a>
       </div>
+
     </form>
 
-    <p class="text-xs text-slate-400 text-center pb-2">© DPM Workshop 2025</p>
+    <p class="text-xs text-slate-400 text-center py-6">© DPM Workshop 2025</p>
+
+    <button type="submit"
+                class="w-full inline-flex items-center justify-center gap-2 h-11 rounded-2xl border border-slate-900 bg-slate-900
+                        hover:bg-slate-800 active:scale-[.98] transition text-sm font-semibold text-white mt-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+        Simpan Perubahan
+    </button>
   </div>
 </section>
 
 @push('scripts')
 <script>
-  // Toggle show/hide password
-  const eyeBtn  = document.getElementById('eyeBtn');
-  const inputPw = document.getElementById('inputPassword');
-  const inputPwC = document.getElementById('inputPasswordConfirm');
-  const toggleBtn = document.getElementById('togglePassword');
+  // Paksa scroll pada wrapper layout yang mungkin overflow-hidden
+  document.addEventListener('DOMContentLoaded', () => {
+    ['main', '#main', '#content', '.main-content', '[data-content]'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) el.style.overflowY = 'auto';
+    });
+  });
 
+  // Toggle show/hide password
+  const eyeBtn    = document.getElementById('eyeBtn');
+  const inputPw   = document.getElementById('inputPassword');
+  const inputPwC  = document.getElementById('inputPasswordConfirm');
+  const toggleBtn = document.getElementById('togglePassword');
   let showing = false;
 
   function toggleShow() {
@@ -223,8 +205,7 @@
   const pwMatchHint = document.getElementById('pwMatchHint');
   function checkMatch() {
     const a = inputPw.value, b = inputPwC.value;
-    if (!a && !b) { pwMatchHint.classList.add('hidden'); return; }
-    if (b.length === 0) { pwMatchHint.classList.add('hidden'); return; }
+    if (!b.length) { pwMatchHint.classList.add('hidden'); return; }
     if (a === b) {
       pwMatchHint.className = 'mt-1.5 text-xs text-emerald-600';
       pwMatchHint.textContent = '✓ Password cocok';
