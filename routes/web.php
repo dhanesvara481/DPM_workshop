@@ -260,14 +260,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [InvoiceController::class, 'getTampilanInvoiceStaff']
         )->name('tampilan_invoice_staff');
 
-        Route::get('/staff/konfirmasi-invoice',
-            [InvoiceController::class, 'getTampilanKonfirmasiStaff']
-        )->name('tampilan_konfirmasi_invoice_staff');
-
-        Route::patch('/staff/konfirmasi-invoice/{invoice}/paid',
-            [InvoiceController::class, 'tandaKonfirmasiStaff']
-        )->name('konfirmasi_invoice_tanda_konfirmasi_staff');
-
         Route::get('/stok_realtime_staff',
             [StokRealtimeController::class, 'getStokRealtimeStaff']
         )->name('stok_realtime_staff');

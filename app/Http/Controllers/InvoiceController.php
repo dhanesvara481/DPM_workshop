@@ -94,63 +94,6 @@ class InvoiceController extends Controller
         return view('staff.invoice.tampilan_invoice_staff', compact('barangs'));
     }
 
-    public function getTampilanKonfirmasiStaff(Request $request)
-    {
-        $q    = $request->input('q', '');
-        $from = $request->input('from');
-        $to   = $request->input('to');
-
-        // ── Sort ──────────────────────────────────────────────────────────────
-        $allowedSorts = ['invoice_id', 'subtotal', 'status', 'tanggal_invoice'];
-        $sort = in_array($request->input('sort'), $allowedSorts)
-            ? $request->input('sort')
-            : 'tanggal_invoice';
-        $dir  = $request->input('dir') === 'asc' ? 'asc' : 'desc';
-
-        $query = Invoice::with(['items' => fn($q) => $q->limit(1)])
-            ->orderBy($sort, $dir);
-
-        if ($from) $query->whereDate('tanggal_invoice', '>=', $from);
-        if ($to)   $query->whereDate('tanggal_invoice', '<=', $to);
-
-        if ($q) {
-            $query->where(function ($qb) use ($q) {
-                $numericId = ltrim(str_ireplace('INV-', '', $q), '0');
-                if (is_numeric($numericId)) {
-                    $qb->orWhere('invoice_id', $numericId);
-                }
-                $qb->orWhereHas('items', fn($qi) =>
-                    $qi->where('nama_pelanggan', 'like', "%{$q}%")
-                );
-            });
-        }
-
-        $invoices     = $query->paginate(15)->withQueryString();
-        $pendingCount = Invoice::where('status', 'Pending')->count();
-
-        return view('staff.invoice.konfirmasi_invoice_staff', compact('invoices', 'q', 'pendingCount', 'sort', 'dir'));
-    }
-
-    public function tandaKonfirmasiStaff(Request $request, $invoice)
-    {
-        $inv = Invoice::findOrFail($invoice);
-
-        if ($inv->status === 'Paid') {
-            return back()->with('error', 'Invoice sudah berstatus Paid.');
-        }
-
-        DB::beginTransaction();
-        try {
-            $inv->update(['status' => 'Paid', 'tanggal_bayar' => now()]);
-            $this->prosesStokDariInvoice($inv);
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', $e->getMessage());
-        }
-
-        return back()->with('success', 'Invoice INV-' . $inv->invoice_id . ' berhasil dikonfirmasi sebagai Paid.');
-    }
 
     // ── Shared (admin & staff) ────────────────────────────────────────────────
 
