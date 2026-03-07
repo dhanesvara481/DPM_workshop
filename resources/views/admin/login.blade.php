@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login — DPW Workshop</title>
+    <title>Login — DPM Workshop</title>
 
     @vite('resources/js/app.js')
 </head>
