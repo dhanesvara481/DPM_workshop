@@ -50,7 +50,7 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <div class="min-h-screen flex">
 
-  {{-- SIDEBAR --}}
+  {{-- SIDEBAR (sudah include cloak script di dalamnya) --}}
   @include('admin.sidebar', [
     'userName' => $userName ?? 'User',
     'role'     => $role ?? 'Admin'
@@ -83,9 +83,9 @@
     {{-- CONTENT --}}
     <div class="relative z-10">
       @yield('content')
-    </div>
+    </div>)
 
-    {{-- GLOBAL SCRIPT: sidebar toggle --}}
+    {{-- GLOBAL SCRIPT: sidebar toggle (open/close interaksi user) --}}
     <script>
       (function () {
         var sidebar  = document.getElementById('sidebar');
@@ -135,13 +135,5 @@
     @stack('scripts')
   </main>
 </div>
-
-{{-- ============================================================
-     MODALS & POPUPS — di luar <main> dan <div.flex> agar
-     fixed inset-0 benar-benar cover full screen + sidebar.
-     Halaman boleh pakai @push('modals') untuk inject popup di sini.
-     ============================================================ --}}
-@stack('modals')
-
 </body>
 </html>

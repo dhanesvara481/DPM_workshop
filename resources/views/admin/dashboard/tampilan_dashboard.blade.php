@@ -324,6 +324,139 @@
   </div>
 </section>
 
+{{-- ========== POPUP FULL JADWAL ========== --}}
+<div id="jadwalPopup" class="fixed inset-0 z-[80] hidden">
+  <div id="jadwalPopupOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+
+  <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
+    <div class="w-full max-w-[1100px] rounded-2xl bg-white border border-slate-200
+                shadow-[0_30px_90px_rgba(2,6,23,0.30)] max-h-[85vh] flex flex-col overflow-hidden">
+
+      <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-900">Jadwal Kerja (View Only)</div>
+          <div class="text-xs text-slate-500 mt-0.5">Klik tanggal untuk detail.</div>
+        </div>
+        <button id="btnCloseJadwalPopup" type="button"
+                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+                aria-label="Tutup">
+          <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-6 overflow-y-auto">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+          <div class="min-w-0">
+            <div id="dashMonthTitle" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">—</div>
+            <div class="text-xs text-slate-500 mt-1">Read-only. Berikut jadwal yang ada di DPM Workshop.</div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div class="flex items-center gap-2">
+              <button id="dashBtnToday" type="button"
+                      class="h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+                Today
+              </button>
+              <div class="flex overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <button id="dashBtnPrev" type="button"
+                        class="h-10 w-10 grid place-items-center hover:bg-slate-50 transition" aria-label="Prev">
+                  <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <button id="dashBtnNext" type="button"
+                        class="h-10 w-10 grid place-items-center hover:bg-slate-50 transition border-l border-slate-200" aria-label="Next">
+                  <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="hidden sm:block w-px h-10 bg-slate-200 mx-1"></div>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
+              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Aktif</span>
+              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Tutup</span>
+              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Catatan</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <div class="min-w-[980px]">
+            <div class="grid grid-cols-7 gap-2 px-1 pb-2 text-[12px] font-semibold text-slate-600">
+              <div class="px-2">Minggu</div><div class="px-2">Senin</div><div class="px-2">Selasa</div>
+              <div class="px-2">Rabu</div><div class="px-2">Kamis</div><div class="px-2">Jumat</div><div class="px-2">Sabtu</div>
+            </div>
+            <div id="dashCalendarGrid" class="grid grid-cols-7 gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">© DPM Workshop 2025</div>
+    </div>
+  </div>
+</div>
+
+{{-- MODAL DETAIL --}}
+<div id="dashDetailModal" class="fixed inset-0 z-[90] hidden overflow-y-auto">
+  <div id="dashDetailOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+
+  <div class="relative min-h-full w-full flex items-center justify-center p-3 sm:p-6">
+    <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)]
+                overflow-hidden flex flex-col h-[92vh] sm:h-[86vh]">
+
+      <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3 bg-white shrink-0">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
+          <div id="dashModalDate" class="text-xs text-slate-500 mt-0.5">—</div>
+        </div>
+        <button id="dashBtnCloseModal" type="button"
+                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center">
+          <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 flex-1 min-h-0 overflow-hidden flex flex-col gap-4">
+        <div id="dashModalMeta" class="shrink-0"></div>
+
+        <div class="rounded-xl border border-slate-200 bg-slate-50 flex flex-col min-h-0 flex-1">
+          <div class="px-4 py-3 border-b border-slate-200 bg-white rounded-t-xl shrink-0">
+            <div class="text-sm font-semibold text-slate-900">Daftar Jadwal</div>
+            <div class="text-xs text-slate-500">Scroll kalau jadwalnya panjang.</div>
+          </div>
+          <div id="dashModalListScroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4">
+            <div id="dashModalEvents" class="space-y-2"></div>
+            <div id="dashModalEmpty" class="hidden rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+              Belum ada jadwal di tanggal ini.
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row gap-2 sm:justify-end shrink-0">
+          <a href="{{ route('kelola_jadwal_kerja') }}"
+             class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
+                    bg-slate-900 text-white hover:bg-slate-800 transition">
+            Buka Kelola Jadwal
+          </a>
+          <button id="dashModalTutup" type="button"
+                  class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
+                         border border-slate-200 bg-white hover:bg-slate-50 transition">
+            Tutup
+          </button>
+        </div>
+
+        <div id="dashModalHint" class="text-[11px] text-slate-500 shrink-0"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{-- ===== DATA UNTUK JS ===== --}}
 <script>
   window.DASH_EVENTS      = @json($events);
@@ -334,6 +467,9 @@
 
 {{-- STYLE --}}
 <style>
+  /* =========================
+     Scope: Dashboard only
+     ========================= */
   #adminDashboard .tip{ position: relative; }
   #adminDashboard .tip[data-tip]::after{
     content: attr(data-tip); position:absolute; right:0; top: calc(100% + 10px);
@@ -341,6 +477,7 @@
     padding: 6px 10px; border-radius: 10px; white-space: nowrap;
     opacity:0; transform: translateY(-4px); pointer-events:none; transition: .15s ease;
   }
+  /* FIX: selector hover */
   #adminDashboard .tip:hover::after{ opacity:1; transform: translateY(0); }
 
   #adminDashboard .chart-btn{
@@ -350,43 +487,62 @@
   #adminDashboard .chart-btn:hover{ background:#f1f5f9; }
   #adminDashboard .chart-btn.is-active{ border-color: rgba(2,6,23,.35); background: rgba(2,6,23,.04); font-weight: 800; }
 
-  /* Calendar styles — scope ke popup & modal (keduanya kini di body level) */
-  .dash-cal .day-card{
+  /* =========================
+     Calendar styles used in popup/modal
+     (popup/modal is OUTSIDE #adminDashboard)
+     ========================= */
+  #jadwalPopup .day-card,
+  #dashDetailModal .day-card{
     border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.92);
     border-radius: 18px; min-height: 132px; overflow: hidden; transition: .15s ease;
   }
-  .dash-cal .day-card:hover{
+  #jadwalPopup .day-card:hover,
+  #dashDetailModal .day-card:hover{
     border-color: rgba(2,6,23,0.18); box-shadow: 0 14px 34px rgba(2,6,23,0.10); transform: translateY(-1px);
   }
-  .dash-cal .day-muted{ opacity: .45; background: rgba(248,250,252,0.85); }
+  #jadwalPopup .day-muted,
+  #dashDetailModal .day-muted{ opacity: .45; background: rgba(248,250,252,0.85); }
 
-  .dash-cal .day-top{ display:flex; align-items:center; justify-content:space-between; padding: 10px 12px 6px 12px; }
-  .dash-cal .day-top .right-slot{ min-width: 86px; display:flex; justify-content:flex-end; gap:8px; }
+  #jadwalPopup .day-top,
+  #dashDetailModal .day-top{ display:flex; align-items:center; justify-content:space-between; padding: 10px 12px 6px 12px; }
+  #jadwalPopup .day-top .right-slot,
+  #dashDetailModal .day-top .right-slot{ min-width: 86px; display:flex; justify-content:flex-end; gap:8px; }
 
-  .dash-cal .day-num{ width: 32px; height: 32px; display:grid; place-items:center; border-radius: 999px; font-weight: 800; font-size: 13px; color: rgba(15,23,42,0.92); }
-  .dash-cal .day-num.today{ background: rgba(2,6,23,0.92); color:#fff; }
+  #jadwalPopup .day-num,
+  #dashDetailModal .day-num{ width: 32px; height: 32px; display:grid; place-items:center; border-radius: 999px; font-weight: 800; font-size: 13px; color: rgba(15,23,42,0.92); }
+  #jadwalPopup .day-num.today,
+  #dashDetailModal .day-num.today{ background: rgba(2,6,23,0.92); color:#fff; }
 
-  .dash-cal .pill{
+  #jadwalPopup .pill,
+  #dashDetailModal .pill{
     display:inline-flex; align-items:center; font-size: 11px; padding: 6px 10px; border-radius: 12px;
     border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.75);
     white-space: nowrap; overflow:hidden; text-overflow: ellipsis; max-width: 100%;
   }
-  .dash-cal .pill.aktif   { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: rgba(6,95,70,0.95); }
-  .dash-cal .pill.catatan { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.25); color: rgba(120,53,15,0.95); }
-  .dash-cal .pill.tutup   { background: rgba(244,63,94,0.12);  border-color: rgba(244,63,94,0.25);  color: rgba(136,19,55,0.95); }
+  #jadwalPopup .pill.aktif,
+  #dashDetailModal .pill.aktif   { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: rgba(6,95,70,0.95); }
+  #jadwalPopup .pill.catatan,
+  #dashDetailModal .pill.catatan { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.25); color: rgba(120,53,15,0.95); }
+  #jadwalPopup .pill.tutup,
+  #dashDetailModal .pill.tutup   { background: rgba(244,63,94,0.12);  border-color: rgba(244,63,94,0.25);  color: rgba(136,19,55,0.95); }
 
-  .dash-cal .day-body{ padding: 8px 12px 12px 12px; display:flex; flex-direction:column; gap:6px; }
-  .dash-cal .has-data{ outline: 2px solid rgba(2,6,23,0.10); }
-  .dash-cal .badge-full{
+  #jadwalPopup .day-body,
+  #dashDetailModal .day-body{ padding: 8px 12px 12px 12px; display:flex; flex-direction:column; gap:6px; }
+  #jadwalPopup .has-data,
+  #dashDetailModal .has-data{ outline: 2px solid rgba(2,6,23,0.10); }
+  #jadwalPopup .badge-full,
+  #dashDetailModal .badge-full{
     display:inline-flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 800;
     padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(244,63,94,0.25);
     background: rgba(244,63,94,0.10); color: rgba(190,18,60,0.95); white-space: nowrap;
   }
 
-  /* Animate */
+  /* =========================
+     Animate - dashboard only
+     ========================= */
   #adminDashboard [data-animate]{
     opacity: 0; transform: translateY(14px) scale(.985); filter: blur(3px);
-    visibility: hidden;
+    visibility: hidden;  /* ← tambah ini */
     transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
     will-change: opacity, transform, filter;
   }
@@ -395,16 +551,21 @@
     #adminDashboard [data-animate]{ opacity: 1 !important; transform: none !important; filter: none !important; transition:none !important; }
   }
 
+  /* scrollbar */
   #dashModalListScroll { scrollbar-gutter: stable; }
 </style>
 
-{{-- SCRIPT DASHBOARD --}}
+{{-- SCRIPT --}}
 <script>
+/**
+ * Guard: script ini cuma jalan kalau halaman punya #adminDashboard
+ * (mencegah “nge-bug” kalau layout nge-include script di halaman lain)
+ */
 (function(){
   const root = document.getElementById('adminDashboard');
   if (!root) return;
 
-  // Animasi
+  // ── Animasi ────────────────────────────────────────────────────────────────
   (function(){
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
@@ -417,7 +578,7 @@
     });
   })();
 
-  // Charts
+  // ── Charts ────────────────────────────────────────────────────────────────
   let chartMasuk, chartKeluar;
   let currentRangeMasuk  = '6m';
   let currentRangeKeluar = '6m';
@@ -492,7 +653,7 @@
   document.querySelector('.chart-range-masuk[data-range="6m"]')?.classList.add('is-active');
   document.querySelector('.chart-range-keluar[data-range="6m"]')?.classList.add('is-active');
 
-  // Jadwal Popup
+  // ── Jadwal Popup ───────────────────────────────────────────────────────────
   const jadwalPopup         = document.getElementById('jadwalPopup');
   const jadwalPopupOverlay  = document.getElementById('jadwalPopupOverlay');
   const btnOpenJadwalPopup  = document.getElementById('btnOpenJadwalPopup');
@@ -589,7 +750,7 @@
                   <div class="text-sm font-semibold text-slate-900 truncate">${e.title || 'Jadwal'}</div>
                   ${e.time ? `<div class="text-xs text-slate-500 mt-0.5">${e.time}</div>` : ''}
                 </div>
-                <span class="dash-cal pill ${status}">${String(status).toUpperCase()}</span>
+                <span class="pill ${status}">${String(status).toUpperCase()}</span>
               </div>
               ${e.desc ? `<div class="text-xs text-slate-600 mt-1">${e.desc}</div>` : ''}
             </div>`;
@@ -626,7 +787,7 @@
 
     for (let i = 0; i < startDay; i++) {
       const e = document.createElement('div');
-      e.className = 'dash-cal day-card day-muted';
+      e.className = 'day-card day-muted';
       e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
       grid.appendChild(e);
     }
@@ -638,7 +799,7 @@
 
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = `dash-cal day-card text-left ${hasData ? 'has-data' : ''}`;
+      card.className = `day-card text-left ${hasData ? 'has-data' : ''}`;
       card.dataset.date = key;
 
       const top   = document.createElement('div'); top.className = 'day-top';
@@ -671,7 +832,7 @@
 
     const remaining = (7 - ((startDay + daysInMonth) % 7)) % 7;
     for (let i = 0; i < remaining; i++) {
-      const e = document.createElement('div'); e.className = 'dash-cal day-card day-muted'; e.setAttribute('aria-hidden', 'true');
+      const e = document.createElement('div'); e.className = 'day-card day-muted'; e.setAttribute('aria-hidden', 'true');
       e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
       grid.appendChild(e);
     }
@@ -692,6 +853,7 @@
     else if (jadwalPopup && !jadwalPopup.classList.contains('hidden')) closeJadwalPopup();
   });
 
+  // Cleanup: kalau user pindah halaman saat modal/popup kebuka, body gak ke-lock
   window.addEventListener('beforeunload', () => {
     document.body.classList.remove('overflow-hidden');
   });
@@ -699,146 +861,3 @@
 </script>
 
 @endsection
-
-
-{{-- ============================================================
-     PENTING: Popup & Modal di-push ke @stack('modals') di layout
-     agar di-render di luar <main>, sehingga fixed inset-0
-     benar-benar cover full screen termasuk sidebar.
-     ============================================================ --}}
-@push('modals')
-
-{{-- ========== POPUP FULL JADWAL ========== --}}
-<div id="jadwalPopup" class="fixed inset-0 z-[9999] hidden">
-  <div id="jadwalPopupOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-
-  <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
-    <div class="w-full max-w-[1100px] rounded-2xl bg-white border border-slate-200
-                shadow-[0_30px_90px_rgba(2,6,23,0.30)] max-h-[85vh] flex flex-col overflow-hidden">
-
-      <div class="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <div class="text-sm font-semibold text-slate-900">Jadwal Kerja (View Only)</div>
-          <div class="text-xs text-slate-500 mt-0.5">Klik tanggal untuk detail.</div>
-        </div>
-        <button id="btnCloseJadwalPopup" type="button"
-                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-                aria-label="Tutup">
-          <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="p-4 sm:p-6 overflow-y-auto">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-          <div class="min-w-0">
-            <div id="dashMonthTitle" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">—</div>
-            <div class="text-xs text-slate-500 mt-1">Read-only. Berikut jadwal yang ada di DPM Workshop.</div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div class="flex items-center gap-2">
-              <button id="dashBtnToday" type="button"
-                      class="h-10 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-                Today
-              </button>
-              <div class="flex overflow-hidden rounded-xl border border-slate-200 bg-white">
-                <button id="dashBtnPrev" type="button"
-                        class="h-10 w-10 grid place-items-center hover:bg-slate-50 transition" aria-label="Prev">
-                  <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                  </svg>
-                </button>
-                <button id="dashBtnNext" type="button"
-                        class="h-10 w-10 grid place-items-center hover:bg-slate-50 transition border-l border-slate-200" aria-label="Next">
-                  <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="hidden sm:block w-px h-10 bg-slate-200 mx-1"></div>
-
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
-              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Aktif</span>
-              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Tutup</span>
-              <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Catatan</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <div class="min-w-[980px]">
-            <div class="grid grid-cols-7 gap-2 px-1 pb-2 text-[12px] font-semibold text-slate-600">
-              <div class="px-2">Minggu</div><div class="px-2">Senin</div><div class="px-2">Selasa</div>
-              <div class="px-2">Rabu</div><div class="px-2">Kamis</div><div class="px-2">Jumat</div><div class="px-2">Sabtu</div>
-            </div>
-            <div id="dashCalendarGrid" class="grid grid-cols-7 gap-2"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">© DPM Workshop 2025</div>
-    </div>
-  </div>
-</div>
-
-{{-- MODAL DETAIL --}}
-<div id="dashDetailModal" class="fixed inset-0 z-[10000] hidden overflow-y-auto">
-  <div id="dashDetailOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-
-  <div class="relative min-h-full w-full flex items-center justify-center p-3 sm:p-6">
-    <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)]
-                overflow-hidden flex flex-col h-[92vh] sm:h-[86vh]">
-
-      <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3 bg-white shrink-0">
-        <div class="min-w-0">
-          <div class="text-sm font-semibold text-slate-900">Detail Jadwal</div>
-          <div id="dashModalDate" class="text-xs text-slate-500 mt-0.5">—</div>
-        </div>
-        <button id="dashBtnCloseModal" type="button"
-                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center">
-          <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="p-5 flex-1 min-h-0 overflow-hidden flex flex-col gap-4">
-        <div id="dashModalMeta" class="shrink-0"></div>
-
-        <div class="rounded-xl border border-slate-200 bg-slate-50 flex flex-col min-h-0 flex-1">
-          <div class="px-4 py-3 border-b border-slate-200 bg-white rounded-t-xl shrink-0">
-            <div class="text-sm font-semibold text-slate-900">Daftar Jadwal</div>
-            <div class="text-xs text-slate-500">Scroll kalau jadwalnya panjang.</div>
-          </div>
-          <div id="dashModalListScroll" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4">
-            <div id="dashModalEvents" class="space-y-2"></div>
-            <div id="dashModalEmpty" class="hidden rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-              Belum ada jadwal di tanggal ini.
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row gap-2 sm:justify-end shrink-0">
-          <a href="{{ route('kelola_jadwal_kerja') }}"
-             class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
-                    bg-slate-900 text-white hover:bg-slate-800 transition">
-            Buka Kelola Jadwal
-          </a>
-          <button id="dashModalTutup" type="button"
-                  class="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold
-                         border border-slate-200 bg-white hover:bg-slate-50 transition">
-            Tutup
-          </button>
-        </div>
-
-        <div id="dashModalHint" class="text-[11px] text-slate-500 shrink-0"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-@endpush
