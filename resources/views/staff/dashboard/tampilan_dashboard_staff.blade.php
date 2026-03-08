@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const all = getEvents(ds);
     return isClosedDay(ds) ? all.filter(e => String(e?.status||'').toLowerCase() === 'tutup') : all;
   };
-  const usedCount      = ds => isClosedDay(ds) ? 0 : getVisibleEvents(ds).length;
+  const usedCount      = ds => isClosedDay(ds) ? 0 : getVisibleEvents(ds).filter(e => (e.status||'aktif').toLowerCase() === 'aktif').length;
   const remainingQuota = ds => isClosedDay(ds) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(ds));
 
   let current = new Date(); current.setDate(1);
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="flex items-center justify-between gap-3">
           <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
           <span class="text-[11px] ${closed ? 'text-rose-600' : 'text-slate-500'}">
-            ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
+            ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal aktif/hari`}
           </span>
         </div>
         <div class="mt-3">
