@@ -195,7 +195,7 @@
               <tr class="hover:bg-slate-50/70">
                 <td class="px-5 py-4 font-semibold text-slate-900">{{ $nomorInvoice }}</td>
                 <td class="px-5 py-4 text-slate-700">{{ $namaPelanggan }}</td>
-                <td class="px-5 py-4 text-slate-700">Rp {{ number_format((float) $inv->subtotal, 0, ',', '.') }}</td>
+                <td class="px-5 py-4 text-slate-700">Rp {{ number_format((float) ($inv->grand_total ?? $inv->subtotal), 0, ',', '.') }}</td>
                 <td class="px-5 py-4">
                   @if($isPending)
                     <span class="inline-flex items-center gap-2 text-xs font-semibold rounded-full px-3 py-1 border border-amber-200 bg-amber-50 text-amber-800">
