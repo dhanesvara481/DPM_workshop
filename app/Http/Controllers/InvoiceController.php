@@ -76,10 +76,6 @@ class InvoiceController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-
-            // ── Kalau invoice sudah terlanjur diupdate ke Paid, kembalikan ke Pending ──
-            // (DB::rollBack sudah handle ini karena dalam satu transaksi)
-
             return back()->with('error', $e->getMessage());
         }
 
@@ -151,8 +147,7 @@ class InvoiceController extends Controller
             $kontak        = $request->kontak ?? null;
             $deskripsi     = trim($request->deskripsi ?? '');
             $userId        = auth()->id();
-
-            $currentUser = auth()->user();
+            $currentUser   = auth()->user();
 
             $subtotalBarang = (float) ($request->subtotal_barang ?? 0);
             $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
@@ -291,17 +286,19 @@ class InvoiceController extends Controller
             $hargaSatuan = $qty > 0 ? $totalItem / $qty : (float) $barang->harga_jual;
 
             DetailInvoice::create([
-                'invoice_id'     => $invoiceId,
-                'barang_id'      => $barang->barang_id,
-                'nama_pelanggan' => $namaPelanggan,
-                'kontak'         => $kontak,
-                'deskripsi'      => $barang->nama_barang,
-                'harga_satuan'   => $hargaSatuan,
-                'jumlah'         => (string) $qty,
-                'total'          => $totalItem,
-                'tipe_transaksi' => $tipe,
-                'diskon'         => null,
-                'pajak'          => null,
+                'invoice_id'            => $invoiceId,
+                'barang_id'             => $barang->barang_id,
+                'nama_pelanggan'        => $namaPelanggan,
+                'kontak'                => $kontak,
+                'deskripsi'             => $barang->nama_barang,       // snapshot nama
+                'kode_barang_snapshot'  => $barang->kode_barang,       // snapshot kode
+                'satuan_snapshot'       => $barang->satuan,             // snapshot satuan
+                'harga_satuan'          => $hargaSatuan,
+                'jumlah'                => (string) $qty,
+                'total'                 => $totalItem,
+                'tipe_transaksi'        => $tipe,
+                'diskon'                => null,
+                'pajak'                 => null,
             ]);
         }
     }
@@ -309,15 +306,19 @@ class InvoiceController extends Controller
     /**
      * Dipanggil saat invoice dikonfirmasi Paid.
      *
-     * PENTING — Validasi 2 lapis sebelum eksekusi:
-     *  1. Cek semua barang di item invoice masih EXIST di master (tidak dihapus)
-     *  2. Cek stok mencukupi
+     * ROOT CAUSE yang ditemukan:
+     * Barang dihapus → ON DELETE SET NULL → barang_id di detail_invoice jadi NULL.
+     * Query lama pakai whereNotNull('barang_id') → items kosong → validasi skip → Paid.
      *
-     * Kalau salah satu gagal → throw Exception → DB::rollBack() di caller
-     * Invoice kembali ke Pending, stok tidak berubah, alert tampil di UI.
+     * FIX:
+     * - Ambil semua item Barang termasuk yang barang_id sudah NULL
+     * - TAHAP 1: cek barang_id NULL → throw Exception (barang dihapus)
+     * - TAHAP 2: cek stok cukup
+     * - TAHAP 3: eksekusi mutasi stok
      *
-     * Snapshot (nama/kode barang di detail_invoice) tetap berjalan normal —
-     * fungsi snapshot tidak hilang, hanya eksekusi stok yang diblokir.
+     * Semua snapshot (nama, kode, satuan) diambil dari detail_invoice,
+     * bukan dari master — sehingga perubahan data barang setelah invoice
+     * dibuat tidak mempengaruhi histori.
      */
     private function prosesStokDariInvoice(Invoice $invoice): void
     {
@@ -328,41 +329,37 @@ class InvoiceController extends Controller
 
         $waktuKeluar = $invoice->tanggal_bayar;
 
-        // ── Snapshot: gunakan user yang terkait di invoice (pembuat invoice) ──
         $riwayat      = $invoice->riwayatTransaksi;
         $usernameSnap = $riwayat?->username_snapshot ?? $invoice->user?->username ?? '-';
         $emailSnap    = $riwayat?->email_snapshot    ?? $invoice->user?->email    ?? '-';
 
+        // ── Ambil semua item Barang — TERMASUK yang barang_id sudah NULL ──────
         $items = $invoice->items()
-            ->whereNotNull('barang_id')
+            ->where('tipe_transaksi', 'Barang')
             ->where('jumlah', '>', '0')
             ->get();
 
         // ════════════════════════════════════════════════════════════════════
-        // TAHAP 1 — Validasi semua barang EXIST di master sebelum eksekusi
+        // TAHAP 1 — Cek barang_id NULL (barang dihapus → ON DELETE SET NULL)
         // ════════════════════════════════════════════════════════════════════
         $barangDihapus = [];
 
         foreach ($items as $item) {
-            $barang = Barang::find($item->barang_id);
-
-            if (!$barang) {
-                // Ambil nama dari snapshot detail_invoice untuk pesan yang jelas
-                $namaBarang = $item->deskripsi ?? "ID #{$item->barang_id}";
-                $barangDihapus[] = $namaBarang;
+            if (is_null($item->barang_id)) {
+                $barangDihapus[] = $item->deskripsi ?? 'Barang tidak diketahui';
             }
         }
 
         if (!empty($barangDihapus)) {
-            $daftar = implode(', ', array_map(fn($n) => "\"$n\"", $barangDihapus));
+            $daftar = implode(', ', array_map(fn($n) => "\"{$n}\"", $barangDihapus));
             throw new \Exception(
-                "Konfirmasi gagal. Barang berikut sudah dihapus dari master dan tidak bisa diproses: {$daftar}. "
+                "Konfirmasi gagal. Barang berikut sudah dihapus dari master: {$daftar}. "
                 . "Hapus invoice ini dan buat ulang dengan barang yang masih tersedia."
             );
         }
 
         // ════════════════════════════════════════════════════════════════════
-        // TAHAP 2 — Validasi stok mencukupi untuk semua item
+        // TAHAP 2 — Validasi stok mencukupi
         // ════════════════════════════════════════════════════════════════════
         $stokKurang = [];
 
@@ -370,8 +367,10 @@ class InvoiceController extends Controller
             $barang = Barang::find($item->barang_id);
             $qty    = (int) $item->jumlah;
 
-            if ((int) $barang->stok < $qty) {
-                $stokKurang[] = "{$barang->nama_barang} (diminta: {$qty}, tersedia: {$barang->stok})";
+            if (!$barang || (int) $barang->stok < $qty) {
+                $namaBarang   = $item->deskripsi ?? 'Barang tidak diketahui';
+                $stokTersedia = $barang ? (int) $barang->stok : 0;
+                $stokKurang[] = "{$namaBarang} (diminta: {$qty}, tersedia: {$stokTersedia})";
             }
         }
 
@@ -418,6 +417,11 @@ class InvoiceController extends Controller
 
             $barang->update(['stok' => (string) $stokAkhir]);
 
+            // ── Semua snapshot diambil dari detail_invoice, bukan master ──────
+            $namaSnapshot = $item->deskripsi              ?? $barang->nama_barang;
+            $kodeSnapshot = $item->kode_barang_snapshot   ?? $barang->kode_barang;
+            $satuanSnapshot = $item->satuan_snapshot      ?? $barang->satuan;
+
             $barangKeluar = BarangKeluar::create([
                 'user_id'              => $userId,
                 'barang_id'            => $barang->barang_id,
@@ -425,9 +429,9 @@ class InvoiceController extends Controller
                 'tanggal_keluar'       => $waktuKeluar,
                 'keterangan'           => 'Invoice',
                 'ref_invoice'          => $invoice->invoice_id,
-                'kode_barang_snapshot' => $barang->kode_barang,
-                'nama_barang_snapshot' => $barang->nama_barang,
-                'satuan_snapshot'      => $barang->satuan,
+                'kode_barang_snapshot' => $kodeSnapshot,
+                'nama_barang_snapshot' => $namaSnapshot,
+                'satuan_snapshot'      => $satuanSnapshot,
                 'username_snapshot'    => $usernameSnap,
                 'email_snapshot'       => $emailSnap,
             ]);
@@ -440,8 +444,8 @@ class InvoiceController extends Controller
                 'tanggal_riwayat_stok' => $waktuKeluar,
                 'stok_awal'            => $stokAwal,
                 'stok_akhir'           => $stokAkhir,
-                'kode_barang_snapshot' => $barang->kode_barang,
-                'nama_barang_snapshot' => $barang->nama_barang,
+                'kode_barang_snapshot' => $kodeSnapshot,
+                'nama_barang_snapshot' => $namaSnapshot,
                 'username_snapshot'    => $usernameSnap,
                 'email_snapshot'       => $emailSnap,
             ]);
