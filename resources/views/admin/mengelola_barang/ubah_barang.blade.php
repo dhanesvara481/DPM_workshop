@@ -77,7 +77,7 @@
           $hb  = (int) ($barang->harga_beli ?? 0);
           $hj  = (int) ($barang->harga_jual ?? 0);
           // Daftar satuan — sinkron dengan controller validation
-          $satuanList = ['pcs', 'unit', 'botol', 'liter', 'gram', 'set'];
+          $satuanList = ['pcs', 'unit', 'botol', 'liter', 'set'];
         @endphp
 
         {{-- Session & Validation Alerts --}}

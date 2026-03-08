@@ -53,7 +53,7 @@ class BarangController extends Controller
             $validated = $request->validate([
                 'kode_barang' => 'required|string|max:50|unique:barang,kode_barang',
                 'nama_barang' => 'required|string|max:100',
-                'satuan'      => 'required|in:pcs,unit,botol,liter,gram,set',
+                'satuan'      => 'required|in:pcs,unit,botol,liter,set',
                 'harga_beli'  => 'required|min:0',
                 'harga_jual'  => 'required|min:0',
             ], [
@@ -116,7 +116,7 @@ class BarangController extends Controller
             $validated = $request->validate([
                 'kode_barang' => 'required|string|max:50|unique:barang,kode_barang,' . $id . ',barang_id',
                 'nama_barang' => 'required|string|max:100',
-                'satuan'      => 'required|in:pcs,unit,botol,liter,gram,set',
+                'satuan'      => 'required|in:pcs,unit,botol,liter,set',
                 'harga_beli'  => 'required|min:0',
                 'harga_jual'  => 'required|min:0',
             ], [

@@ -175,7 +175,6 @@
                 <option value="" disabled {{ old('satuan') ? '' : 'selected' }}>Pilih satuan</option>
                 <option value="pcs"   {{ old('satuan') == 'pcs'   ? 'selected' : '' }}>pcs</option>
                 <option value="unit"  {{ old('satuan') == 'unit'  ? 'selected' : '' }}>unit</option>
-                <option value="gram"  {{ old('satuan') == 'gram'  ? 'selected' : '' }}>gram</option>
                 <option value="set"   {{ old('satuan') == 'set'   ? 'selected' : '' }}>set</option>
               </select>
             </div>
