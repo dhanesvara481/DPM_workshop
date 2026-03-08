@@ -4,6 +4,12 @@
 
 @section('content')
 
+@php
+    $opnameAktif = \Illuminate\Support\Facades\DB::table('stok_opname')
+        ->whereIn('status', ['draft', 'menunggu_approval'])
+        ->first();
+@endphp
+
 {{-- TOPBAR --}}
 <header class="relative h-16 bg-white/75 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
   <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
@@ -40,6 +46,25 @@
 <section class="relative p-4 sm:p-6">
   <div class="max-w-[1120px] mx-auto">
 
+    {{-- Banner Opname Aktif --}}
+    @if($opnameAktif)
+      @php
+        $tglOpname    = \Carbon\Carbon::parse($opnameAktif->tanggal_opname)->format('d M Y');
+        $statusOpname = $opnameAktif->status === 'draft' ? 'Draft' : 'Menunggu Persetujuan';
+      @endphp
+      <div class="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <svg class="h-5 w-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <p class="text-sm text-amber-800">
+          <strong>Ubah & Hapus barang dinonaktifkan</strong> — ada Sesi Stok Opname aktif
+          (Tanggal: {{ $tglOpname }}, Status: {{ $statusOpname }}).
+          <a href="{{ route('stok_opname.index') }}" class="underline font-semibold">Lihat opname</a>
+          dan selesaikan terlebih dahulu.
+        </p>
+      </div>
+    @endif
+
     {{-- Flash Messages --}}
     @if(session('success'))
       <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
@@ -65,6 +90,7 @@
 
     {{-- TOOLBAR --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      {{-- Tambah barang tidak dilock, hanya ubah & hapus --}}
       <a href="{{ route('tambah_barang') }}"
          class="btn-shine inline-flex w-fit items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
                 bg-blue-950 text-white hover:bg-blue-900 transition
@@ -92,7 +118,6 @@
                           text-sm placeholder:text-slate-400
                           focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
           </div>
-          {{-- Tombol Reset (hanya muncul kalau ada filter aktif) --}}
           @if(request('search'))
             <a href="{{ route('mengelola_barang') }}"
                class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold
@@ -140,13 +165,11 @@
                     {{ $label }}
                 
                     <span class="flex flex-col gap-[2px]">
-                      {{-- Arrow up --}}
                       <svg class="h-2.5 w-2.5 transition
                                   {{ $isActive && $dir === 'asc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
                            viewBox="0 0 10 6" fill="currentColor">
                         <path d="M5 0L10 6H0L5 0Z"/>
                       </svg>
-                      {{-- Arrow down --}}
                       <svg class="h-2.5 w-2.5 transition
                                   {{ $isActive && $dir === 'desc' ? 'text-blue-900' : 'text-slate-300 group-hover:text-slate-400' }}"
                            viewBox="0 0 10 6" fill="currentColor">
@@ -219,18 +242,33 @@
 
               <td class="px-5 py-4">
                 <div class="flex flex-col items-end gap-2">
-                  <a href="{{ route('ubah_barang', $b->barang_id ?? 0) }}"
-                     class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold text-center
-                            border border-slate-200 bg-white hover:bg-slate-50 transition whitespace-nowrap">
-                    Ubah
-                  </a>
+                  @if($opnameAktif)
+                    {{-- Locked: opname sedang aktif --}}
+                    <span class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold text-center
+                                 border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed select-none"
+                          title="Dinonaktifkan saat ada sesi opname aktif">
+                      Ubah
+                    </span>
+                    <span class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold text-center
+                                 border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed select-none"
+                          title="Dinonaktifkan saat ada sesi opname aktif">
+                      Hapus
+                    </span>
+                  @else
+                    {{-- Normal --}}
+                    <a href="{{ route('ubah_barang', $b->barang_id ?? 0) }}"
+                       class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold text-center
+                              border border-slate-200 bg-white hover:bg-slate-50 transition whitespace-nowrap">
+                      Ubah
+                    </a>
 
-                  <button type="button"
-                          onclick="confirmDelete({{ $b->barang_id ?? 0 }}, '{{ addslashes($b->kode_barang ?? '') }}', '{{ addslashes($b->nama_barang ?? '') }}')"
-                          class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold
-                                 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition whitespace-nowrap">
-                    Hapus
-                  </button>
+                    <button type="button"
+                            onclick="confirmDelete({{ $b->barang_id ?? 0 }}, '{{ addslashes($b->kode_barang ?? '') }}', '{{ addslashes($b->nama_barang ?? '') }}')"
+                            class="w-[92px] rounded-md px-3 py-2 text-xs font-semibold
+                                   border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition whitespace-nowrap">
+                      Hapus
+                    </button>
+                  @endif
                 </div>
               </td>
             </tr>
@@ -261,7 +299,6 @@
           </p>
         
           <nav class="flex items-center gap-1" aria-label="Pagination">
-            {{-- Prev --}}
             @if ($barangs->onFirstPage())
               <span class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -273,7 +310,6 @@
               </a>
             @endif
             
-            {{-- Page numbers --}}
             @foreach ($barangs->getUrlRange(max(1, $barangs->currentPage()-2), min($barangs->lastPage(), $barangs->currentPage()+2)) as $page => $url)
               @if ($page == $barangs->currentPage())
                 <span class="h-9 w-9 grid place-items-center rounded-lg bg-blue-950 text-white text-xs font-semibold">
@@ -287,7 +323,6 @@
               @endif
             @endforeach
               
-            {{-- Next --}}
             @if ($barangs->hasMorePages())
               <a href="{{ $barangs->nextPageUrl() }}"
                  class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
@@ -326,7 +361,7 @@
   @method('DELETE')
 </form>
 
-{{-- Confirm Modal (reusable) --}}
+{{-- Confirm Modal --}}
 <div id="confirmModal"
      class="fixed inset-0 z-[999] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
   <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_30px_80px_rgba(2,6,23,0.30)] overflow-hidden">
@@ -386,18 +421,6 @@
   }
   .btn-shine:hover::after { transform: translateX(120%); }
 
-  .clear-btn {
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(.9);
-    transition: .15s ease;
-  }
-  .clear-btn.show {
-    opacity: 1;
-    pointer-events: auto;
-    transform: scale(1);
-  }
-
   .tip { position: relative; }
   .tip[data-tip]::after {
     content: attr(data-tip);
@@ -424,23 +447,7 @@
   const noResults   = document.getElementById('noResults');
 
   if (searchInput) {
-    const wrap = searchInput.parentElement;
-
-    // clear button
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = "clear-btn absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700";
-    btn.setAttribute('aria-label', 'Hapus pencarian');
-    btn.innerHTML = `
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-      </svg>`;
-    wrap.appendChild(btn);
-
-    const syncClearBtn = () => btn.classList.toggle('show', searchInput.value.trim().length > 0);
-
     const applySearch = () => {
-      syncClearBtn();
       const q = searchInput.value.toLowerCase().trim();
       const rows = document.querySelectorAll('[data-searchable]');
       let visible = 0;
@@ -489,12 +496,11 @@
     modal?.classList.remove('flex');
   };
 
-  modal?.addEventListener('click',   (e) => { if (e.target === modal) closeModal(); });
+  modal?.addEventListener('click',    (e) => { if (e.target === modal) closeModal(); });
   cmCancel?.addEventListener('click', closeModal);
   cmX?.addEventListener('click',      closeModal);
   cmOk?.addEventListener('click',     () => { pendingAction?.(); closeModal(); });
 
-  // fungsi global dipanggil dari onclick di row
   function confirmDelete(barangId, kode, nama) {
     openModal({
       title: 'Hapus barang?',

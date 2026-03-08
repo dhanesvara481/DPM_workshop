@@ -79,17 +79,20 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [BarangController::class, 'buatKodeBarang']
         )->name('buat_kode_barang');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::get('/ubah_barang/{id}',
             [BarangController::class, 'getUbahBarang']
-        )->name('ubah_barang');
+        )->middleware('cek.opname')->name('ubah_barang');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::post('/perbarui_barang/{id}',
             [BarangController::class, 'perbaruiBarang']
-        )->name('perbarui_barang');
+        )->middleware('cek.opname')->name('perbarui_barang');
 
+        // ★ LOCK: diblokir saat ada sesi opname aktif
         Route::delete('/hapus_barang/{id}',
             [BarangController::class, 'hapusBarang']
-        )->name('hapus_barang');
+        )->middleware('cek.opname')->name('hapus_barang');
 
         //============== Barang Keluar =================//
         Route::get('/barang_keluar',
