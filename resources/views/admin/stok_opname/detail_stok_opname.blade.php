@@ -1,6 +1,6 @@
 @extends('admin.layout.app')
 
-@section('title', 'Detail Stok Opname')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 <div class="px-4 md:px-8 py-8 max-w-7xl mx-auto">

@@ -1,7 +1,6 @@
 @extends('admin.layout.app')
 
-@section('title', 'Stok Opname')
-
+@section('title', 'DPM Workshop - Admin')
 @section('content')
 <div class="px-4 md:px-8 py-8 max-w-7xl mx-auto">
 
@@ -144,14 +143,14 @@
                     </a>
                   @endif
                   @if(in_array($opname->status, ['draft', 'ditolak']))
-                    <form method="POST" action="{{ route('stok_opname.destroy', $opname->opname_id) }}"
-                          onsubmit="return confirm('Hapus sesi opname ini?')">
-                      @csrf @method('DELETE')
-                      <button type="submit"
-                              class="inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 transition">
-                        Hapus
-                      </button>
-                    </form>
+                    <button type="button"
+                            class="btn-hapus-opname inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-200 text-xs font-medium text-rose-600 hover:bg-rose-50 transition"
+                            data-id="{{ $opname->opname_id }}"
+                            data-tanggal="{{ $opname->tanggal_opname->format('d M Y') }}"
+                            data-keterangan="{{ $opname->keterangan ?? '-' }}"
+                            data-action="{{ route('stok_opname.destroy', $opname->opname_id) }}">
+                      Hapus
+                    </button>
                   @endif
                 </div>
               </td>
@@ -171,4 +170,121 @@
   </div>
 
 </div>
+
+{{-- Hidden form untuk hapus --}}
+<form id="formHapusOpname" method="POST" action="" class="hidden">
+  @csrf
+  @method('DELETE')
+</form>
+
+{{-- MODAL HAPUS OPNAME --}}
+<div id="hapusOpnameModal" class="fixed inset-0 z-[999] hidden">
+  <div id="hapusOpnameOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+  <div class="relative min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)] overflow-hidden">
+
+      {{-- Header --}}
+      <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-3">
+        <div>
+          <div class="text-sm font-semibold text-slate-900">Hapus Sesi Opname</div>
+          <div class="text-xs text-slate-500 mt-0.5">Tindakan ini tidak dapat dibatalkan.</div>
+        </div>
+        <button id="hapusOpnameClose" type="button"
+                class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center">
+          <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      {{-- Body --}}
+      <div class="p-5 space-y-4">
+        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <div class="flex items-start gap-3">
+            <div class="h-10 w-10 rounded-xl bg-rose-100 text-rose-600 grid place-items-center border border-rose-200 shrink-0">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 11v6M14 11v6"/>
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-rose-900">Konfirmasi Penghapusan</div>
+              <div class="text-xs text-rose-700 mt-0.5">
+                Tanggal: <span id="hapusOpnameTanggal" class="font-semibold">—</span>
+              </div>
+              <div class="text-xs text-rose-600 mt-0.5">
+                Keterangan: <span id="hapusOpnameKeterangan" class="font-semibold">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-500">
+          Seluruh data sesi opname beserta detail stok fisiknya akan
+          <span class="font-semibold text-rose-600">dihapus permanen</span>.
+          Pastikan Anda sudah yakin sebelum melanjutkan.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <button type="button" id="hapusOpnameCancel"
+                  class="h-11 px-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+            Batal
+          </button>
+          <button type="button" id="hapusOpnameConfirm"
+                  class="h-11 px-5 rounded-2xl bg-rose-600 text-white hover:bg-rose-700 transition text-sm font-semibold">
+            Ya, Hapus
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+<script>
+(function () {
+  const modal        = document.getElementById('hapusOpnameModal');
+  const overlay      = document.getElementById('hapusOpnameOverlay');
+  const closeBtn     = document.getElementById('hapusOpnameClose');
+  const cancelBtn    = document.getElementById('hapusOpnameCancel');
+  const confirmBtn   = document.getElementById('hapusOpnameConfirm');
+  const tanggalEl    = document.getElementById('hapusOpnameTanggal');
+  const keteranganEl = document.getElementById('hapusOpnameKeterangan');
+  const form         = document.getElementById('formHapusOpname');
+
+  function openModal(action, tanggal, keterangan) {
+    form.setAttribute('action', action);
+    tanggalEl.textContent    = tanggal    || '—';
+    keteranganEl.textContent = keterangan || '-';
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    form.setAttribute('action', '');
+    tanggalEl.textContent    = '—';
+    keteranganEl.textContent = '—';
+  }
+
+  document.querySelectorAll('.btn-hapus-opname').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openModal(btn.dataset.action, btn.dataset.tanggal, btn.dataset.keterangan);
+    });
+  });
+
+  overlay?.addEventListener('click', closeModal);
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  confirmBtn?.addEventListener('click', () => form.submit());
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+  });
+})();
+</script>
+@endpush
+
 @endsection
