@@ -219,7 +219,7 @@
 
       <div class="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
 
-        {{-- ── SHIFT & JAM (NEW) ── --}}
+        {{-- ── SHIFT & JAM ── --}}
         <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-3">
           <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Detail Jadwal <span class="font-normal normal-case text-slate-400">(opsional)</span></p>
 
@@ -495,6 +495,9 @@ DAY_KEYS.forEach(key =>
   document.getElementById('check_'+key)?.addEventListener('change', function(){ onDayCheck(key, this.checked); })
 );
 
+// ══════════════════════════════════════════════════════
+//  ✅ FIX: onDayCheck — reset visual card saat uncheck
+// ══════════════════════════════════════════════════════
 function onDayCheck(key, checked) {
   if (checked) {
     if (!document.getElementById('dayForm_'+key)) renderDayBlock(key);
@@ -502,6 +505,47 @@ function onDayCheck(key, checked) {
     document.getElementById('dayForm_'+key)?.remove();
     if (window._agendaData) window._agendaData[key] = [];
     if (window._activeSlot) delete window._activeSlot[key];
+
+    // Reset visual day card di step 2
+    const card  = document.querySelector(`label[data-day="${key}"] .day-check-card`);
+    const label = document.querySelector(`label[data-day="${key}"]`);
+    const cb    = document.getElementById('check_' + key);
+
+    if (card)  card.classList.remove('!border-rose-200', '!bg-rose-50', '!border-amber-200', '!bg-amber-50/50');
+    if (label) { label.classList.remove('day-disabled-tutup', 'day-disabled-full'); label.classList.add('cursor-pointer'); }
+    if (cb)    cb.disabled = false;
+
+    // Hapus badge TUTUP di header hari kalau masih ada
+    document.getElementById('formDateLabel_' + key)?.querySelector('span.bg-rose-100')?.remove();
+
+    // Reset counter
+    const countEl = document.getElementById('agendaCount_' + key);
+    const dateKey = getDateForDay(key);
+    const existing = EXISTING_BY_DATE[dateKey] || [];
+    if (countEl) {
+      if (existing.length > 0) {
+        const exHasTutup   = existing.some(ag => (ag.status||'').toLowerCase() === 'tutup');
+        const exAktifCount = existing.filter(ag => (ag.status||'Aktif') === 'Aktif').length;
+        const exIsFull     = exAktifCount >= MAX_PER_DAY_AKTIF;
+        countEl.textContent = exHasTutup ? 'TUTUP' : (exIsFull ? `${exAktifCount}/${MAX_PER_DAY_AKTIF} penuh` : `${exAktifCount}/${MAX_PER_DAY_AKTIF}`);
+        countEl.style.color = exHasTutup ? '#f43f5e' : (exIsFull ? '#f59e0b' : '#94a3b8');
+
+        // Re-apply disabled state kalau memang dari DB sudah tutup/full
+        if (exHasTutup) {
+          if (cb)    cb.disabled = true;
+          if (label) { label.classList.add('day-disabled-tutup'); label.classList.remove('cursor-pointer'); }
+          if (card)  card.classList.add('!border-rose-200', '!bg-rose-50');
+        } else if (exIsFull) {
+          if (cb)    cb.disabled = true;
+          if (label) label.classList.add('day-disabled-full');
+          if (card)  card.classList.add('!border-amber-200', '!bg-amber-50/50');
+        }
+      } else {
+        countEl.textContent = '';
+        countEl.style.color = '';
+      }
+    }
+
     updateAgendaCount(key);
   }
   updateSubmitSection();
@@ -988,15 +1032,13 @@ function onStatusChange(key, si, val) {
     }
   }
 
-  // ✅ FIX 1: Sync badge TUTUP di header hari (formDateLabel)
+  // Sync badge TUTUP di header hari
   const lbl = document.getElementById('formDateLabel_' + key);
   if (lbl) {
     const existingBadge = lbl.querySelector('span.bg-rose-100');
     if (!isTutup && existingBadge) {
-      // Ganti status dari Tutup → lainnya: hapus badge
       existingBadge.remove();
     } else if (isTutup && !existingBadge) {
-      // Ganti status ke Tutup: tambah badge
       const newBadge = document.createElement('span');
       newBadge.className = 'ml-2 text-[10px] font-bold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full';
       newBadge.textContent = 'TUTUP';
@@ -1008,15 +1050,12 @@ function onStatusChange(key, si, val) {
     renderBubbleRow(key);
     renderActiveForm(key, si);
     updateAgendaCount(key);
-    // ✅ FIX 2: Update tampilan day card di step 2 saat jadi Tutup
     updateDayCardStatus(key);
     updateSubmitSection();
     return;
   }
 
-  // ✅ FIX 2: Update tampilan day card di step 2 saat KELUAR dari Tutup
   updateDayCardStatus(key);
-
   renderActiveForm(key, si);
 
   const row = document.getElementById(`statusRow_${key}_${si}`);
@@ -1032,12 +1071,11 @@ function onStatusChange(key, si, val) {
   updateSubmitSection();
 }
 
-// ✅ FUNGSI BARU: Update tampilan kotak hari di step 2 berdasarkan data session terkini
+// Update tampilan kotak hari di step 2 berdasarkan data session terkini
 function updateDayCardStatus(key) {
   const data    = window._agendaData?.[key] || [];
   const dateKey = getDateForDay(key);
 
-  // Gabung data DB + agenda baru di session ini
   const dbData     = EXISTING_BY_DATE[dateKey] || [];
   const sessionNew = data.filter(ag => !ag.fromDB);
   const combined   = [...dbData, ...sessionNew];
@@ -1062,7 +1100,6 @@ function updateDayCardStatus(key) {
     if (label) { label.classList.remove('day-disabled-tutup'); label.classList.add('day-disabled-full'); }
     if (cb)    cb.disabled = true;
   } else {
-    // ✅ Normal: hapus semua visual warning
     if (countEl) {
       countEl.textContent = aktifCount > 0 ? `${aktifCount}/${MAX_PER_DAY_AKTIF}` : '';
       countEl.style.color = '#94a3b8';
@@ -1126,14 +1163,13 @@ function updateSubmitSection() {
 }
 
 // ══════════════════════════════════════════════════════
-//  QUICK FILL  ← HANYA BAGIAN INI YANG BERUBAH
+//  QUICK FILL
 // ══════════════════════════════════════════════════════
 let qfUserId = null, qfUserName = null;
 const qfPopup      = document.getElementById('qfPopup');
 const qfOverlay    = document.getElementById('qfOverlay');
 const qfDayGrid    = document.getElementById('qfDayGrid');
 const qfUsernameEl = document.getElementById('qfUsername');
-// Elemen baru
 const qfShift      = document.getElementById('qfShift');
 const qfJamMulai   = document.getElementById('qfJamMulai');
 const qfJamSelesai = document.getElementById('qfJamSelesai');
@@ -1142,7 +1178,6 @@ function openQF(userId, username) {
   qfUserId = userId; qfUserName = username;
   qfUsernameEl.textContent = username;
 
-  // Reset field shift & jam setiap buka popup
   qfShift.value      = '';
   qfJamMulai.value   = '';
   qfJamSelesai.value = '';
@@ -1151,9 +1186,7 @@ function openQF(userId, username) {
   DAY_KEYS.forEach(key => {
     const dateForDay = getDateForDay(key);
 
-    // Selalu pakai EXISTING_BY_DATE sebagai source of truth untuk data DB (sudah diupdate saat ganti minggu)
     const dbData      = EXISTING_BY_DATE[dateForDay] || [];
-    // Tambahkan slot baru (non-DB) yang ditambah di sesi ini, kalau ada
     const sessionNew  = (window._agendaData?.[key] || []).filter(ag => !ag.fromDB);
     const combined    = [...dbData, ...sessionNew];
 
@@ -1198,7 +1231,6 @@ document.getElementById('qfApply').addEventListener('click', () => {
   const selected = Array.from(qfDayGrid.querySelectorAll('.qf-day-btn.selected')).map(b => b.dataset.day);
   if (!selected.length) { closeQF(); return; }
 
-  // Ambil nilai shift & jam dari popup (boleh kosong)
   const qfShiftVal    = qfShift.value.trim();
   const qfMulaiVal    = qfJamMulai.value.trim();
   const qfSelesaiVal  = qfJamSelesai.value.trim();
@@ -1210,7 +1242,6 @@ document.getElementById('qfApply').addEventListener('click', () => {
     const data = window._agendaData?.[key] || [];
     const emptyIdx = data.findIndex(ag => !ag.user_id);
 
-    // Kalau field QF dikosongkan → fallback ke template existing (behaviour lama)
     const template = data.find(ag => ag.user_id && ag.status === 'Aktif');
     const prefill = {
       user_id:     qfUserId,
@@ -1238,7 +1269,6 @@ document.getElementById('qfApply').addEventListener('click', () => {
   updateSubmitSection();
   closeQF();
 
-  // Toast info: tampilkan ringkasan apa yang diisi
   const parts = [];
   if (qfShiftVal)   parts.push(qfShiftVal);
   if (qfMulaiVal && qfSelesaiVal) parts.push(`${qfMulaiVal}–${qfSelesaiVal}`);

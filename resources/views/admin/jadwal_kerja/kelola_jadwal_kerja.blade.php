@@ -401,7 +401,7 @@
         <div class="flex items-center justify-between gap-3">
           <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
           <span class="text-[11px] ${closed ? 'text-rose-600 font-semibold' : 'text-slate-500'}">
-            ${closed ? '🔒 Hari ini TUTUP' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
+            ${closed ? '🔒 Hari ini TUTUP' : `Maks ${MAX_EVENTS_PER_DAY} jadwal aktif/hari`}
           </span>
         </div>
         <div class="mt-3">
