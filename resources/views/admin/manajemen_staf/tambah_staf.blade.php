@@ -181,7 +181,7 @@
             <label for="catatan" class="block text-sm font-semibold text-slate-800">Catatan <span class="text-slate-400 font-normal">(opsional)</span></label>
             <textarea id="catatan" name="catatan" rows="3"
                       maxlength="255"
-                      placeholder="Contoh: Mekanik / Keuangan / Marketing"
+                      placeholder=""
                       class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-200 transition resize-none">{{ old('catatan') }}</textarea>
             <p class="mt-1.5 text-xs text-slate-500">Maks 255 karakter.</p>
           </div>
