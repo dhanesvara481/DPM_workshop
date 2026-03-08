@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@yield('title', 'DPM Workshop')</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  {{-- Sembunyiin body sampai CSS load --}}
+
   <style>
     body { opacity: 0; }
   </style>
@@ -20,9 +20,7 @@
   @vite('resources/js/app.js')
   @stack('head')
 
-
   <style>
-    /* ===== NAV ACTIVE (GLOBAL) ===== */
     .nav-item { position: relative; overflow: hidden; }
     .nav-item::before {
       content: "";
@@ -42,7 +40,6 @@
     }
     .nav-item.is-active::before { opacity: .95; transform: translateX(0); }
 
-    /* iOS scroll sidebar */
     #sidebar { -webkit-overflow-scrolling: touch; }
   </style>
 </head>
@@ -50,21 +47,17 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 <div class="min-h-screen flex">
 
-  {{-- SIDEBAR (sudah include cloak script di dalamnya) --}}
   @include('admin.sidebar', [
     'userName' => $userName ?? 'User',
     'role'     => $role ?? 'Admin'
   ])
 
-  {{-- OVERLAY mobile --}}
   <div id="overlay"
        class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm hidden md:hidden"></div>
 
-  {{-- MAIN --}}
   <main id="main"
-      class="flex-1 min-w-0 relative overflow-y-auto md:ml-[280px] transition-[margin] duration-300 ease-out">
+        class="flex-1 min-w-0 relative overflow-x-hidden md:ml-[280px] transition-[margin] duration-300 ease-out">
 
-    {{-- Background global --}}
     <div class="pointer-events-none absolute inset-0">
       <div class="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100"></div>
 
@@ -80,12 +73,10 @@
                   bg-gradient-to-tr from-blue-950/25 via-blue-700/10 to-transparent"></div>
     </div>
 
-    {{-- CONTENT --}}
     <div class="relative z-10">
       @yield('content')
-    </div>)
+    </div>
 
-    {{-- GLOBAL SCRIPT: sidebar toggle (open/close interaksi user) --}}
     <script>
       (function () {
         var sidebar  = document.getElementById('sidebar');
@@ -132,8 +123,10 @@
       })();
     </script>
 
-    @stack('scripts')
   </main>
 </div>
+
+@stack('modals')
+@stack('scripts')
 </body>
 </html>

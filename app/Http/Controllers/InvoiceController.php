@@ -125,10 +125,21 @@ class InvoiceController extends Controller
 
     public function simpanInvoice(Request $request)
     {
+        // CHANGED: tambah validasi jasa_nama (wajib saat kategori jasa)
+        //          dan pajak dibatasi max 100
         $request->validate([
             'tanggal_invoice' => 'required|date',
             'kategori'        => 'required|in:barang,jasa',
             'grand_total'     => 'required|numeric|min:0',
+            'nama_pelanggan'  => 'required|string|max:100',
+            'kontak'          => ['required', 'string', 'regex:/^08[0-9]{8,13}$/'],
+            'jasa_nama'       => 'required_if:kategori,jasa|nullable|string|max:255',
+            'pajak'           => 'nullable|numeric|min:0|max:100',
+        ], [
+            // Pesan error custom agar lebih ramah
+            'jasa_nama.required_if' => 'Nama jasa / service wajib diisi.',
+            'pajak.max'             => 'Pajak tidak boleh lebih dari 100%.',
+            'kontak.regex'          => 'Kontak harus diawali 08 dan terdiri dari 10–15 digit angka.',
         ]);
 
         DB::beginTransaction();
@@ -148,7 +159,8 @@ class InvoiceController extends Controller
             $subtotal       = $subtotalBarang + $biayaJasa;
 
             $diskon = max(0, (float) ($request->diskon ?? 0));
-            $pajak  = max(0, (int)   ($request->pajak  ?? 0));
+            // CHANGED: clamp pajak 0–100 sebagai safeguard server-side
+            $pajak  = min(100, max(0, (int) ($request->pajak ?? 0)));
 
             $invoice = Invoice::create([
                 'user_id'         => $userId,

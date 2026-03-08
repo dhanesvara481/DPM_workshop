@@ -201,15 +201,19 @@
               <p class="text-xs text-slate-500">Input biaya service, lalu (opsional) barang yang ditagihkan.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {{-- CHANGED: tambah id="jasaNama" dan required --}}
               <div class="space-y-1 lg:col-span-2">
-                <label class="text-xs font-semibold text-slate-700">Nama Jasa / Service</label>
-                <input name="jasa_nama" value="{{ old('jasa_nama') }}"
+                <label class="text-xs font-semibold text-slate-700">
+                  Nama Jasa / Service <span class="text-red-500">*</span>
+                </label>
+                <input id="jasaNama" name="jasa_nama" value="{{ old('jasa_nama') }}"
+                       required
                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                        placeholder="Contoh: Service fan rusak" />
               </div>
 
               <div class="space-y-1">
-                <label class="text-xs font-semibold text-slate-700">Biaya Jasa</label>
+                <label class="text-xs font-semibold text-slate-700">Biaya Jasa <span class="text-red-500">*</span></label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">Rp</span>
                   <input type="text" inputmode="numeric" id="jasaBiayaDisplay"
@@ -287,9 +291,10 @@
                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                            placeholder="0" />
                   </div>
+                  {{-- CHANGED: tambah max="100" dan hint teks --}}
                   <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700">Pajak (%)</label>
-                    <input type="number" min="0" step="1" id="pajak"
+                    <label class="text-[11px] font-semibold text-slate-700">Pajak (%) <span class="font-normal text-slate-400">0–100</span></label>
+                    <input type="number" min="0" max="100" step="1" id="pajak"
                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                            placeholder="0" />
                   </div>
@@ -474,6 +479,7 @@ const tbodyBarang   = document.getElementById('tbodyBarang');
 const tbodyJasaBarang = document.getElementById('tbodyJasaBarang');
 const jasaBiaya       = document.getElementById('jasaBiaya');
 const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay');
+const jasaNama        = document.getElementById('jasaNama'); // CHANGED
 const diskon  = document.getElementById('diskon');
 const pajak   = document.getElementById('pajak');
 const sumBarang   = document.getElementById('sumBarang');
@@ -495,6 +501,14 @@ form?.querySelectorAll('input,select,textarea').forEach(el => {
   el.addEventListener('change', markDirty);
 });
 
+// CHANGED: clamp pajak ke 0–100 saat user mengetik
+pajak?.addEventListener('input', () => {
+  let v = Number(pajak.value);
+  if(v > 100) { pajak.value = '100'; v = 100; }
+  if(v < 0)   { pajak.value = '0';   v = 0; }
+  markDirty(); recalc();
+});
+
 function barangOptionsHTML(){
   return barangList.map(b=>`
     <option value="${b.barang_id}"
@@ -511,6 +525,8 @@ function setKategori(kat){
   tabs.forEach(t => t.classList.toggle('is-active', t.dataset.invtab === kat));
   sectionBarang.classList.toggle('hidden', kat !== 'barang');
   sectionJasa.classList.toggle('hidden', kat !== 'jasa');
+  // CHANGED: saat pindah kategori, lepas required dari jasaNama jika bukan jasa
+  if(jasaNama) jasaNama.required = (kat === 'jasa');
   recalc();
 }
 tabs.forEach(t => t.addEventListener('click', () => { setKategori(t.dataset.invtab); markDirty(); }));
@@ -670,7 +686,8 @@ function syncJasaBiayaFromDisplay(){
 }
 jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
 jasaBiayaDisplay?.addEventListener('blur',  syncJasaBiayaFromDisplay);
-;[diskon, pajak].forEach(el => el?.addEventListener('input', () => { markDirty(); recalc(); }));
+// CHANGED: listener pajak sudah ditangani di atas, jadi hanya diskon yang perlu di sini
+diskon?.addEventListener('input', () => { markDirty(); recalc(); });
 syncJasaBiayaFromDisplay();
 
 // ── Kalkulasi total ──────────────────────────────────────────────────────────
@@ -689,7 +706,8 @@ function recalc(){
   const jasaVal           = kat === 'jasa'   ? Math.max(0, jasa) : 0;
   const subtotalVal       = subtotalBarangVal + jasaVal;
   const diskonVal         = Math.max(0, Number(diskon?.value || 0));
-  const pajakPct          = Math.max(0, Number(pajak?.value  || 0));
+  // CHANGED: clamp pajak 0–100 saat kalkulasi agar nilai yang lolos max attr tetap aman
+  const pajakPct          = Math.min(100, Math.max(0, Number(pajak?.value || 0)));
   const afterDisc         = Math.max(0, subtotalVal - diskonVal);
   const pajakVal          = Math.round(afterDisc * (pajakPct / 100));
   const grand             = afterDisc + pajakVal;
@@ -703,7 +721,6 @@ function recalc(){
   h_sub_jasa.value   = String(jasaVal);
   h_subtotal.value   = String(subtotalVal);
   h_grand.value      = String(grand);
-  // Sync hidden diskon & pajak → dikirim ke server, disimpan di row ringkasan detail_invoice
   h_diskon.value     = String(diskonVal);
   h_pajak.value      = String(pajakPct);
 }
@@ -831,6 +848,15 @@ form?.addEventListener('submit', async e => {
     showToast('Gagal', 'Kontak harus angka, diawali 08, panjang 10–15 digit.', 'error');
     kontak.classList.add('border-red-300', 'shake');
     setTimeout(() => kontak.classList.remove('shake'), 300);
+    return;
+  }
+
+  // CHANGED: validasi nama jasa wajib diisi saat kategori jasa
+  if(kategori === 'jasa' && !jasaNama?.value.trim()){
+    showToast('Gagal', 'Nama jasa / service wajib diisi.', 'error');
+    jasaNama?.classList.add('border-red-300', 'shake');
+    setTimeout(() => jasaNama?.classList.remove('shake'), 300);
+    jasaNama?.focus();
     return;
   }
 

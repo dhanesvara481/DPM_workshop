@@ -203,7 +203,7 @@
             <div class="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center border border-emerald-200">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4"/>
-                <path stroke-linecap="round" stroke-linejoin="round"d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
               </svg>
             </div>
 
@@ -324,8 +324,510 @@
   </div>
 </section>
 
-{{-- ========== POPUP FULL JADWAL ========== --}}
-<div id="jadwalPopup" class="fixed inset-0 z-[80] hidden">
+{{-- ===== DATA UNTUK JS ===== --}}
+<script>
+  window.DASH_EVENTS      = @json($events);
+  window.DASH_MAX_PER_DAY = @json($MAX_EVENTS_PER_DAY);
+  window.CHART_MASUK      = @json($chartMasuk);
+  window.CHART_KELUAR     = @json($chartKeluar);
+</script>
+
+{{-- STYLE --}}
+<style>
+  /* =========================
+     Scope: Dashboard only
+     ========================= */
+  #adminDashboard .tip{ position: relative; }
+  #adminDashboard .tip[data-tip]::after{
+    content: attr(data-tip); position:absolute; right:0; top: calc(100% + 10px);
+    background: rgba(15,23,42,.92); color: rgba(255,255,255,.92); font-size: 11px;
+    padding: 6px 10px; border-radius: 10px; white-space: nowrap;
+    opacity:0; transform: translateY(-4px); pointer-events:none; transition: .15s ease;
+  }
+  #adminDashboard .tip:hover::after{ opacity:1; transform: translateY(0); }
+
+  #adminDashboard .chart-btn{
+    font-size:11px; padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(15,23,42,.15); background:#fff; transition:.15s;
+  }
+  #adminDashboard .chart-btn:hover{ background:#f1f5f9; }
+  #adminDashboard .chart-btn.is-active{ border-color: rgba(2,6,23,.35); background: rgba(2,6,23,.04); font-weight: 800; }
+
+  /* =========================
+     Calendar styles used in popup/modal
+     ========================= */
+  #jadwalPopup .day-card,
+  #dashDetailModal .day-card{
+    border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.92);
+    border-radius: 18px; min-height: 132px; overflow: hidden; transition: .15s ease;
+  }
+  #jadwalPopup .day-card:hover,
+  #dashDetailModal .day-card:hover{
+    border-color: rgba(2,6,23,0.18); box-shadow: 0 14px 34px rgba(2,6,23,0.10); transform: translateY(-1px);
+  }
+  #jadwalPopup .day-muted,
+  #dashDetailModal .day-muted{ opacity: .45; background: rgba(248,250,252,0.85); }
+
+  #jadwalPopup .day-top,
+  #dashDetailModal .day-top{ display:flex; align-items:center; justify-content:space-between; padding: 10px 12px 6px 12px; }
+  #jadwalPopup .day-top .right-slot,
+  #dashDetailModal .day-top .right-slot{ min-width: 86px; display:flex; justify-content:flex-end; gap:8px; }
+
+  #jadwalPopup .day-num,
+  #dashDetailModal .day-num{ width: 32px; height: 32px; display:grid; place-items:center; border-radius: 999px; font-weight: 800; font-size: 13px; color: rgba(15,23,42,0.92); }
+  #jadwalPopup .day-num.today,
+  #dashDetailModal .day-num.today{ background: rgba(2,6,23,0.92); color:#fff; }
+
+  #jadwalPopup .pill,
+  #dashDetailModal .pill{
+    display:inline-flex; align-items:center; font-size: 11px; padding: 6px 10px; border-radius: 12px;
+    border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.75);
+    white-space: nowrap; overflow:hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  #jadwalPopup .pill.aktif,
+  #dashDetailModal .pill.aktif   { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: rgba(6,95,70,0.95); }
+  #jadwalPopup .pill.catatan,
+  #dashDetailModal .pill.catatan { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.25); color: rgba(120,53,15,0.95); }
+  #jadwalPopup .pill.tutup,
+  #dashDetailModal .pill.tutup   { background: rgba(244,63,94,0.12);  border-color: rgba(244,63,94,0.25);  color: rgba(136,19,55,0.95); }
+
+  #jadwalPopup .day-body,
+  #dashDetailModal .day-body{ padding: 8px 12px 12px 12px; display:flex; flex-direction:column; gap:6px; }
+  #jadwalPopup .has-data,
+  #dashDetailModal .has-data{ outline: 2px solid rgba(2,6,23,0.10); }
+  #jadwalPopup .badge-full,
+  #dashDetailModal .badge-full{
+    display:inline-flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 800;
+    padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(244,63,94,0.25);
+    background: rgba(244,63,94,0.10); color: rgba(190,18,60,0.95); white-space: nowrap;
+  }
+
+  /* =========================
+     Animate - dashboard only
+     ========================= */
+  #adminDashboard [data-animate]{
+    opacity: 0; transform: translateY(14px) scale(.985); filter: blur(3px);
+    visibility: hidden;
+    transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
+    will-change: opacity, transform, filter;
+  }
+  #adminDashboard [data-animate].in{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); visibility: visible; }
+  @media (prefers-reduced-motion: reduce){
+    #adminDashboard [data-animate]{ opacity: 1 !important; transform: none !important; filter: none !important; transition:none !important; }
+  }
+
+  #dashModalListScroll { scrollbar-gutter: stable; }
+</style>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const root = document.getElementById('adminDashboard');
+  if (!root) return;
+
+  // ── Animasi ────────────────────────────────────────────────────────────────
+  (function(){
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    const items = Array.from(document.querySelectorAll('[data-animate]'));
+    items.forEach((el, i) => { el.style.transitionDelay = (80 + i * 60) + 'ms'; });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        items.forEach(el => el.classList.add('in'));
+      });
+    });
+  })();
+
+  // ── Charts ────────────────────────────────────────────────────────────────
+  let chartMasuk, chartKeluar;
+  let currentRangeMasuk  = '6m';
+  let currentRangeKeluar = '6m';
+
+  const CM = window.CHART_MASUK  || {};
+  const CK = window.CHART_KELUAR || {};
+
+  const masukRangeLabel  = document.getElementById('masukRangeLabel');
+  const keluarRangeLabel = document.getElementById('keluarRangeLabel');
+
+  function renderMasuk(type = 'line') {
+    chartMasuk?.destroy();
+    const d = CM[currentRangeMasuk] || { labels:[], masuk:[], label:'' };
+    if (masukRangeLabel) masukRangeLabel.textContent = d.label || '';
+    const el = document.getElementById('chartMasuk');
+    if (!el) return;
+    chartMasuk = new Chart(el, {
+      type,
+      data: {
+        labels: d.labels,
+        datasets: [{
+          label:'Barang Masuk',
+          data: d.masuk,
+          borderColor:'#10b981',
+          backgroundColor: type==='line' ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.75)',
+          borderWidth:2,
+          fill: type==='line',
+          tension:.4
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ grid:{ display:false } },
+          y:{ grid:{ color:'rgba(2,6,23,0.06)' } }
+        }
+      }
+    });
+  }
+
+  function renderKeluar(type = 'bar') {
+    chartKeluar?.destroy();
+    const d = CK[currentRangeKeluar] || { labels:[], keluar:[], label:'' };
+    if (keluarRangeLabel) keluarRangeLabel.textContent = d.label || '';
+    const el = document.getElementById('chartKeluar');
+    if (!el) return;
+    chartKeluar = new Chart(el, {
+      type,
+      data: {
+        labels: d.labels,
+        datasets: [{
+          label:'Barang Keluar',
+          data: d.keluar,
+          borderColor:'#f43f5e',
+          backgroundColor: type==='line' ? 'rgba(244,63,94,0.18)' : 'rgba(244,63,94,0.78)',
+          borderWidth:2,
+          fill: type==='line',
+          tension:.4
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ grid:{ display:false } },
+          y:{ grid:{ color:'rgba(2,6,23,0.06)' } }
+        }
+      }
+    });
+  }
+
+  window.setMasuk  = function(type){ renderMasuk(type); };
+  window.setKeluar = function(type){ renderKeluar(type); };
+
+  document.querySelectorAll('.chart-range-masuk').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentRangeMasuk = btn.dataset.range;
+      renderMasuk(chartMasuk?.config?.type || 'line');
+      document.querySelectorAll('.chart-range-masuk')
+        .forEach(b => b.classList.toggle('is-active', b.dataset.range === currentRangeMasuk));
+    });
+  });
+
+  document.querySelectorAll('.chart-range-keluar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentRangeKeluar = btn.dataset.range;
+      renderKeluar(chartKeluar?.config?.type || 'bar');
+      document.querySelectorAll('.chart-range-keluar')
+        .forEach(b => b.classList.toggle('is-active', b.dataset.range === currentRangeKeluar));
+    });
+  });
+
+  renderMasuk('line');
+  renderKeluar('bar');
+  document.querySelector('.chart-range-masuk[data-range="6m"]')?.classList.add('is-active');
+  document.querySelector('.chart-range-keluar[data-range="6m"]')?.classList.add('is-active');
+
+  // ── Jadwal Popup ───────────────────────────────────────────────────────────
+  const jadwalPopup         = document.getElementById('jadwalPopup');
+  const jadwalPopupOverlay  = document.getElementById('jadwalPopupOverlay');
+  const btnOpenJadwalPopup  = document.getElementById('btnOpenJadwalPopup');
+  const btnCloseJadwalPopup = document.getElementById('btnCloseJadwalPopup');
+  const monthTitle          = document.getElementById('dashMonthTitle');
+  const grid                = document.getElementById('dashCalendarGrid');
+  const btnPrev             = document.getElementById('dashBtnPrev');
+  const btnNext             = document.getElementById('dashBtnNext');
+  const btnToday            = document.getElementById('dashBtnToday');
+  const dashDetailModal     = document.getElementById('dashDetailModal');
+  const detailOverlay       = document.getElementById('dashDetailOverlay');
+  const btnCloseModal       = document.getElementById('dashBtnCloseModal');
+  const modalTutup          = document.getElementById('dashModalTutup');
+  const modalDate           = document.getElementById('dashModalDate');
+  const modalMeta           = document.getElementById('dashModalMeta');
+  const modalEvents         = document.getElementById('dashModalEvents');
+  const modalEmpty          = document.getElementById('dashModalEmpty');
+  const modalHint           = document.getElementById('dashModalHint');
+  const mainEl              = document.getElementById('main');
+
+  const EVENTS             = window.DASH_EVENTS || {};
+  const MAX_EVENTS_PER_DAY = Number(window.DASH_MAX_PER_DAY || 4);
+
+  const pad2    = n  => String(n).padStart(2, '0');
+  const ymd     = d  => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  const fmtMonth = d  => d.toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+  const fmtLong  = iso => {
+    try {
+      const parts = iso.split('-').map(Number);
+      return new Date(parts[0], parts[1]-1, parts[2]).toLocaleDateString('id-ID', {
+        weekday:'long',
+        day:'2-digit',
+        month:'long',
+        year:'numeric'
+      });
+    } catch(e) { return iso; }
+  };
+
+  const getEvents        = ds => (EVENTS[ds] || []);
+  const isClosedDay      = ds => getEvents(ds).some(e => String(e?.status || '').toLowerCase() === 'tutup');
+  const getVisibleEvents = ds => {
+    const all = getEvents(ds);
+    return isClosedDay(ds) ? all.filter(e => String(e?.status || '').toLowerCase() === 'tutup') : all;
+  };
+  const usedCount      = ds => isClosedDay(ds) ? 0 : getVisibleEvents(ds).length;
+  const remainingQuota = ds => isClosedDay(ds) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(ds));
+
+  let current = new Date();
+  current.setDate(1);
+
+  const lockBody = () => {
+    document.body.classList.add('overflow-hidden');
+    mainEl?.classList.add('overflow-hidden');
+  };
+
+  const unlockBody = () => {
+    document.body.classList.remove('overflow-hidden');
+    mainEl?.classList.remove('overflow-hidden');
+  };
+
+  const openJadwalPopup = () => {
+    if (!jadwalPopup) return;
+    jadwalPopup.classList.remove('hidden');
+    lockBody();
+    dashRender();
+  };
+
+  const closeJadwalPopup = () => {
+    if (!jadwalPopup) return;
+    jadwalPopup.classList.add('hidden');
+    dashHideModal();
+    unlockBody();
+  };
+
+  btnOpenJadwalPopup?.addEventListener('click', openJadwalPopup);
+  btnCloseJadwalPopup?.addEventListener('click', closeJadwalPopup);
+  jadwalPopupOverlay?.addEventListener('click', closeJadwalPopup);
+
+  function dashShowModal(dateStr) {
+    const closed = isClosedDay(dateStr);
+    const ev   = getVisibleEvents(dateStr);
+    const used = usedCount(dateStr);
+    const left = remainingQuota(dateStr);
+
+    if (modalDate) modalDate.textContent = fmtLong(dateStr);
+
+    if (modalMeta) {
+      modalMeta.innerHTML = `
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
+            <span class="text-[11px] ${closed ? 'text-rose-600' : 'text-slate-500'}">
+              ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
+              <div class="font-semibold text-slate-900">${closed ? '- / -' : `${used} / ${MAX_EVENTS_PER_DAY}`}</div>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-2">
+              ${closed ? 'Hari ini TUTUP. Tidak bisa menambah jadwal.' : `Sisa slot: <span class="font-semibold text-slate-900">${left}</span>`}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    if (modalEvents) modalEvents.innerHTML = '';
+
+    if (ev.length > 0) {
+      ev.forEach(e => {
+        const status = e.status || 'aktif';
+        if (modalEvents) {
+          modalEvents.innerHTML += `
+            <div class="rounded-xl border border-slate-200 bg-white p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-slate-900 truncate">${e.title || 'Jadwal'}</div>
+                  ${e.time ? `<div class="text-xs text-slate-500 mt-0.5">${e.time}</div>` : ''}
+                </div>
+                <span class="pill ${status}">${String(status).toUpperCase()}</span>
+              </div>
+              ${e.desc ? `<div class="text-xs text-slate-600 mt-1">${e.desc}</div>` : ''}
+            </div>`;
+        }
+      });
+      modalEmpty?.classList.add('hidden');
+      if (modalHint) modalHint.textContent = `Total jadwal: ${getEvents(dateStr).length}`;
+    } else {
+      modalEmpty?.classList.remove('hidden');
+      if (modalHint) modalHint.textContent = closed ? 'Hari ini TUTUP.' : 'Belum ada jadwal pada tanggal ini.';
+    }
+
+    dashDetailModal?.classList.remove('hidden');
+    lockBody();
+  }
+
+  function dashHideModal() {
+    dashDetailModal?.classList.add('hidden');
+
+    if (jadwalPopup && !jadwalPopup.classList.contains('hidden')) {
+      document.body.classList.add('overflow-hidden');
+      mainEl?.classList.add('overflow-hidden');
+    } else {
+      unlockBody();
+    }
+  }
+
+  detailOverlay?.addEventListener('click', dashHideModal);
+  btnCloseModal?.addEventListener('click', dashHideModal);
+  modalTutup?.addEventListener('click', dashHideModal);
+
+  function dashRender() {
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (monthTitle) monthTitle.textContent = fmtMonth(current);
+
+    const today = new Date();
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const first = new Date(year, month, 1);
+    const startDay = first.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < startDay; i++) {
+      const e = document.createElement('div');
+      e.className = 'day-card day-muted';
+      e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
+      grid.appendChild(e);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(year, month, day);
+      const key = ymd(dateObj);
+      const isToday = sameDay(dateObj, today);
+      const closed = isClosedDay(key);
+      const ev = getVisibleEvents(key);
+      const hasData = getEvents(key).length > 0;
+      const left = remainingQuota(key);
+      const full = (!closed && left <= 0 && hasData);
+
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `day-card text-left ${hasData ? 'has-data' : ''}`;
+      card.dataset.date = key;
+
+      const top = document.createElement('div');
+      top.className = 'day-top';
+
+      const num = document.createElement('div');
+      num.className = `day-num ${isToday ? 'today' : ''}`;
+      num.textContent = String(day);
+
+      const right = document.createElement('div');
+      right.className = 'right-slot';
+
+      if (full) {
+        const b = document.createElement('div');
+        b.className = 'badge-full';
+        b.textContent = 'FULL';
+        right.appendChild(b);
+      }
+
+      top.appendChild(num);
+      top.appendChild(right);
+
+      const body = document.createElement('div');
+      body.className = 'day-body';
+
+      ev.slice(0, 3).forEach(e => {
+        const p = document.createElement('div');
+        p.className = `pill ${e.status || 'aktif'}`;
+        p.title = e.title || '';
+        p.textContent = e.title || 'Jadwal';
+        body.appendChild(p);
+      });
+
+      if (!closed && ev.length > 3) {
+        const m = document.createElement('div');
+        m.className = 'text-[11px] text-slate-500';
+        m.textContent = `+${ev.length - 3} lainnya`;
+        body.appendChild(m);
+      }
+
+      const info = document.createElement('div');
+      if (!hasData) {
+        info.className = 'text-[11px] text-slate-500/80';
+        info.textContent = '—';
+      } else {
+        info.className = 'text-[11px] text-slate-600';
+        info.textContent = closed ? 'TUTUP' : `Sisa tambah: ${left}`;
+      }
+      body.appendChild(info);
+
+      card.appendChild(top);
+      card.appendChild(body);
+      card.addEventListener('click', () => dashShowModal(key));
+      grid.appendChild(card);
+    }
+
+    const remaining = (7 - ((startDay + daysInMonth) % 7)) % 7;
+    for (let i = 0; i < remaining; i++) {
+      const e = document.createElement('div');
+      e.className = 'day-card day-muted';
+      e.setAttribute('aria-hidden', 'true');
+      e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
+      grid.appendChild(e);
+    }
+  }
+
+  btnPrev?.addEventListener('click', () => {
+    current = new Date(current.getFullYear(), current.getMonth()-1, 1);
+    dashRender();
+  });
+
+  btnNext?.addEventListener('click', () => {
+    current = new Date(current.getFullYear(), current.getMonth()+1, 1);
+    dashRender();
+  });
+
+  btnToday?.addEventListener('click', () => {
+    const t = new Date();
+    current = new Date(t.getFullYear(), t.getMonth(), 1);
+    dashRender();
+    dashShowModal(ymd(t));
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+
+    if (dashDetailModal && !dashDetailModal.classList.contains('hidden')) {
+      dashHideModal();
+    } else if (jadwalPopup && !jadwalPopup.classList.contains('hidden')) {
+      closeJadwalPopup();
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    document.body.classList.remove('overflow-hidden');
+    mainEl?.classList.remove('overflow-hidden');
+  });
+});
+</script>
+@endpush
+
+@endsection
+
+@push('modals')
+<div id="jadwalPopup" class="fixed inset-0 z-[999] hidden">
   <div id="jadwalPopupOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
 
   <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
@@ -402,9 +904,8 @@
 </div>
 
 {{-- MODAL DETAIL --}}
-<div id="dashDetailModal" class="fixed inset-0 z-[90] hidden overflow-y-auto">
+<<div id="dashDetailModal" class="fixed inset-0 z-[1000] hidden overflow-y-auto">
   <div id="dashDetailOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-
   <div class="relative min-h-full w-full flex items-center justify-center p-3 sm:p-6">
     <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)]
                 overflow-hidden flex flex-col h-[92vh] sm:h-[86vh]">
@@ -456,408 +957,4 @@
     </div>
   </div>
 </div>
-
-{{-- ===== DATA UNTUK JS ===== --}}
-<script>
-  window.DASH_EVENTS      = @json($events);
-  window.DASH_MAX_PER_DAY = @json($MAX_EVENTS_PER_DAY);
-  window.CHART_MASUK      = @json($chartMasuk);
-  window.CHART_KELUAR     = @json($chartKeluar);
-</script>
-
-{{-- STYLE --}}
-<style>
-  /* =========================
-     Scope: Dashboard only
-     ========================= */
-  #adminDashboard .tip{ position: relative; }
-  #adminDashboard .tip[data-tip]::after{
-    content: attr(data-tip); position:absolute; right:0; top: calc(100% + 10px);
-    background: rgba(15,23,42,.92); color: rgba(255,255,255,.92); font-size: 11px;
-    padding: 6px 10px; border-radius: 10px; white-space: nowrap;
-    opacity:0; transform: translateY(-4px); pointer-events:none; transition: .15s ease;
-  }
-  /* FIX: selector hover */
-  #adminDashboard .tip:hover::after{ opacity:1; transform: translateY(0); }
-
-  #adminDashboard .chart-btn{
-    font-size:11px; padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(15,23,42,.15); background:#fff; transition:.15s;
-  }
-  #adminDashboard .chart-btn:hover{ background:#f1f5f9; }
-  #adminDashboard .chart-btn.is-active{ border-color: rgba(2,6,23,.35); background: rgba(2,6,23,.04); font-weight: 800; }
-
-  /* =========================
-     Calendar styles used in popup/modal
-     (popup/modal is OUTSIDE #adminDashboard)
-     ========================= */
-  #jadwalPopup .day-card,
-  #dashDetailModal .day-card{
-    border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.92);
-    border-radius: 18px; min-height: 132px; overflow: hidden; transition: .15s ease;
-  }
-  #jadwalPopup .day-card:hover,
-  #dashDetailModal .day-card:hover{
-    border-color: rgba(2,6,23,0.18); box-shadow: 0 14px 34px rgba(2,6,23,0.10); transform: translateY(-1px);
-  }
-  #jadwalPopup .day-muted,
-  #dashDetailModal .day-muted{ opacity: .45; background: rgba(248,250,252,0.85); }
-
-  #jadwalPopup .day-top,
-  #dashDetailModal .day-top{ display:flex; align-items:center; justify-content:space-between; padding: 10px 12px 6px 12px; }
-  #jadwalPopup .day-top .right-slot,
-  #dashDetailModal .day-top .right-slot{ min-width: 86px; display:flex; justify-content:flex-end; gap:8px; }
-
-  #jadwalPopup .day-num,
-  #dashDetailModal .day-num{ width: 32px; height: 32px; display:grid; place-items:center; border-radius: 999px; font-weight: 800; font-size: 13px; color: rgba(15,23,42,0.92); }
-  #jadwalPopup .day-num.today,
-  #dashDetailModal .day-num.today{ background: rgba(2,6,23,0.92); color:#fff; }
-
-  #jadwalPopup .pill,
-  #dashDetailModal .pill{
-    display:inline-flex; align-items:center; font-size: 11px; padding: 6px 10px; border-radius: 12px;
-    border: 1px solid rgba(15,23,42,0.10); background: rgba(255,255,255,0.75);
-    white-space: nowrap; overflow:hidden; text-overflow: ellipsis; max-width: 100%;
-  }
-  #jadwalPopup .pill.aktif,
-  #dashDetailModal .pill.aktif   { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); color: rgba(6,95,70,0.95); }
-  #jadwalPopup .pill.catatan,
-  #dashDetailModal .pill.catatan { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.25); color: rgba(120,53,15,0.95); }
-  #jadwalPopup .pill.tutup,
-  #dashDetailModal .pill.tutup   { background: rgba(244,63,94,0.12);  border-color: rgba(244,63,94,0.25);  color: rgba(136,19,55,0.95); }
-
-  #jadwalPopup .day-body,
-  #dashDetailModal .day-body{ padding: 8px 12px 12px 12px; display:flex; flex-direction:column; gap:6px; }
-  #jadwalPopup .has-data,
-  #dashDetailModal .has-data{ outline: 2px solid rgba(2,6,23,0.10); }
-  #jadwalPopup .badge-full,
-  #dashDetailModal .badge-full{
-    display:inline-flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 800;
-    padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(244,63,94,0.25);
-    background: rgba(244,63,94,0.10); color: rgba(190,18,60,0.95); white-space: nowrap;
-  }
-
-  /* =========================
-     Animate - dashboard only
-     ========================= */
-  #adminDashboard [data-animate]{
-    opacity: 0; transform: translateY(14px) scale(.985); filter: blur(3px);
-    visibility: hidden;  /* ← tambah ini */
-    transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
-    will-change: opacity, transform, filter;
-  }
-  #adminDashboard [data-animate].in{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); visibility: visible; }
-  @media (prefers-reduced-motion: reduce){
-    #adminDashboard [data-animate]{ opacity: 1 !important; transform: none !important; filter: none !important; transition:none !important; }
-  }
-
-  /* scrollbar */
-  #dashModalListScroll { scrollbar-gutter: stable; }
-</style>
-
-{{-- SCRIPT --}}
-<script>
-/**
- * Guard: script ini cuma jalan kalau halaman punya #adminDashboard
- * (mencegah “nge-bug” kalau layout nge-include script di halaman lain)
- */
-(function(){
-  const root = document.getElementById('adminDashboard');
-  if (!root) return;
-
-  // ── Animasi ────────────────────────────────────────────────────────────────
-  (function(){
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) return;
-    const items = Array.from(document.querySelectorAll('[data-animate]'));
-    items.forEach((el, i) => { el.style.transitionDelay = (80 + i * 60) + 'ms'; });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        items.forEach(el => el.classList.add('in'));
-      });
-    });
-  })();
-
-  // ── Charts ────────────────────────────────────────────────────────────────
-  let chartMasuk, chartKeluar;
-  let currentRangeMasuk  = '6m';
-  let currentRangeKeluar = '6m';
-
-  const CM = window.CHART_MASUK  || {};
-  const CK = window.CHART_KELUAR || {};
-
-  const masukRangeLabel  = document.getElementById('masukRangeLabel');
-  const keluarRangeLabel = document.getElementById('keluarRangeLabel');
-
-  function renderMasuk(type = 'line') {
-    chartMasuk?.destroy();
-    const d = CM[currentRangeMasuk] || { labels:[], masuk:[], label:'' };
-    if (masukRangeLabel) masukRangeLabel.textContent = d.label || '';
-    const el = document.getElementById('chartMasuk');
-    if (!el) return;
-    chartMasuk = new Chart(el, {
-      type,
-      data: {
-        labels: d.labels,
-        datasets: [{ label:'Barang Masuk', data: d.masuk,
-          borderColor:'#10b981',
-          backgroundColor: type==='line' ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.75)',
-          borderWidth:2, fill: type==='line', tension:.4 }]
-      },
-      options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(2,6,23,0.06)' } } } }
-    });
-  }
-
-  function renderKeluar(type = 'bar') {
-    chartKeluar?.destroy();
-    const d = CK[currentRangeKeluar] || { labels:[], keluar:[], label:'' };
-    if (keluarRangeLabel) keluarRangeLabel.textContent = d.label || '';
-    const el = document.getElementById('chartKeluar');
-    if (!el) return;
-    chartKeluar = new Chart(el, {
-      type,
-      data: {
-        labels: d.labels,
-        datasets: [{ label:'Barang Keluar', data: d.keluar,
-          borderColor:'#f43f5e',
-          backgroundColor: type==='line' ? 'rgba(244,63,94,0.18)' : 'rgba(244,63,94,0.78)',
-          borderWidth:2, fill: type==='line', tension:.4 }]
-      },
-      options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(2,6,23,0.06)' } } } }
-    });
-  }
-
-  window.setMasuk  = function(type){ renderMasuk(type); };
-  window.setKeluar = function(type){ renderKeluar(type); };
-
-  document.querySelectorAll('.chart-range-masuk').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentRangeMasuk = btn.dataset.range;
-      renderMasuk(chartMasuk?.config?.type || 'line');
-      document.querySelectorAll('.chart-range-masuk')
-        .forEach(b => b.classList.toggle('is-active', b.dataset.range === currentRangeMasuk));
-    });
-  });
-
-  document.querySelectorAll('.chart-range-keluar').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentRangeKeluar = btn.dataset.range;
-      renderKeluar(chartKeluar?.config?.type || 'bar');
-      document.querySelectorAll('.chart-range-keluar')
-        .forEach(b => b.classList.toggle('is-active', b.dataset.range === currentRangeKeluar));
-    });
-  });
-
-  renderMasuk('line');
-  renderKeluar('bar');
-  document.querySelector('.chart-range-masuk[data-range="6m"]')?.classList.add('is-active');
-  document.querySelector('.chart-range-keluar[data-range="6m"]')?.classList.add('is-active');
-
-  // ── Jadwal Popup ───────────────────────────────────────────────────────────
-  const jadwalPopup         = document.getElementById('jadwalPopup');
-  const jadwalPopupOverlay  = document.getElementById('jadwalPopupOverlay');
-  const btnOpenJadwalPopup  = document.getElementById('btnOpenJadwalPopup');
-  const btnCloseJadwalPopup = document.getElementById('btnCloseJadwalPopup');
-  const monthTitle          = document.getElementById('dashMonthTitle');
-  const grid                = document.getElementById('dashCalendarGrid');
-  const btnPrev             = document.getElementById('dashBtnPrev');
-  const btnNext             = document.getElementById('dashBtnNext');
-  const btnToday            = document.getElementById('dashBtnToday');
-  const dashDetailModal     = document.getElementById('dashDetailModal');
-  const detailOverlay       = document.getElementById('dashDetailOverlay');
-  const btnCloseModal       = document.getElementById('dashBtnCloseModal');
-  const modalTutup          = document.getElementById('dashModalTutup');
-  const modalDate           = document.getElementById('dashModalDate');
-  const modalMeta           = document.getElementById('dashModalMeta');
-  const modalEvents         = document.getElementById('dashModalEvents');
-  const modalEmpty          = document.getElementById('dashModalEmpty');
-  const modalHint           = document.getElementById('dashModalHint');
-
-  const EVENTS             = window.DASH_EVENTS || {};
-  const MAX_EVENTS_PER_DAY = Number(window.DASH_MAX_PER_DAY || 4);
-
-  const pad2    = n  => String(n).padStart(2, '0');
-  const ymd     = d  => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-  const fmtMonth = d  => d.toLocaleDateString('id-ID', { month:'long', year:'numeric' });
-  const fmtLong  = iso => {
-    try {
-      const [y,m,dd] = iso.split('-').map(Number);
-      return new Date(y, m-1, dd).toLocaleDateString('id-ID', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
-    } catch(e) { return iso; }
-  };
-
-  const getEvents        = ds => (EVENTS[ds] || []);
-  const isClosedDay      = ds => getEvents(ds).some(e => String(e?.status||'').toLowerCase() === 'tutup');
-  const getVisibleEvents = ds => {
-    const all = getEvents(ds);
-    return isClosedDay(ds) ? all.filter(e => String(e?.status||'').toLowerCase() === 'tutup') : all;
-  };
-  const usedCount        = ds => isClosedDay(ds) ? 0 : getVisibleEvents(ds).length;
-  const remainingQuota   = ds => isClosedDay(ds) ? 0 : Math.max(0, MAX_EVENTS_PER_DAY - usedCount(ds));
-
-  let current = new Date(); current.setDate(1);
-
-  const lockBody   = () => document.body.classList.add('overflow-hidden');
-  const unlockBody = () => document.body.classList.remove('overflow-hidden');
-
-  const openJadwalPopup  = () => { jadwalPopup?.classList.remove('hidden'); lockBody(); dashRender(); };
-  const closeJadwalPopup = () => { jadwalPopup?.classList.add('hidden'); unlockBody(); dashHideModal(); };
-
-  btnOpenJadwalPopup?.addEventListener('click',  openJadwalPopup);
-  btnCloseJadwalPopup?.addEventListener('click', closeJadwalPopup);
-  jadwalPopupOverlay?.addEventListener('click',  closeJadwalPopup);
-
-  function dashShowModal(dateStr) {
-    const closed = isClosedDay(dateStr);
-    const ev   = getVisibleEvents(dateStr);
-    const used = usedCount(dateStr);
-    const left = remainingQuota(dateStr);
-
-    if (modalDate) modalDate.textContent = fmtLong(dateStr);
-
-    if (modalMeta) {
-      modalMeta.innerHTML = `
-        <div class="rounded-xl border border-slate-200 bg-white p-4">
-          <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-slate-900">Batas & Sisa</div>
-            <span class="text-[11px] ${closed ? 'text-rose-600' : 'text-slate-500'}">
-              ${closed ? 'Tutup' : `Maks ${MAX_EVENTS_PER_DAY} jadwal/hari`}
-            </span>
-          </div>
-          <div class="mt-3">
-            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <div class="text-[11px] text-slate-500">Jadwal terpakai</div>
-              <div class="font-semibold text-slate-900">${closed ? '- / -' : `${used} / ${MAX_EVENTS_PER_DAY}`}</div>
-            </div>
-            <div class="text-[11px] text-slate-500 mt-2">
-              ${closed ? 'Hari ini TUTUP. Tidak bisa menambah jadwal.' : `Sisa slot: <span class="font-semibold text-slate-900">${left}</span>`}
-            </div>
-          </div>
-        </div>`;
-    }
-
-    if (modalEvents) modalEvents.innerHTML = '';
-
-    if (ev.length > 0) {
-      ev.forEach(e => {
-        const status = e.status || 'aktif';
-        if (modalEvents) {
-          modalEvents.innerHTML += `
-            <div class="rounded-xl border border-slate-200 bg-white p-4">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="text-sm font-semibold text-slate-900 truncate">${e.title || 'Jadwal'}</div>
-                  ${e.time ? `<div class="text-xs text-slate-500 mt-0.5">${e.time}</div>` : ''}
-                </div>
-                <span class="pill ${status}">${String(status).toUpperCase()}</span>
-              </div>
-              ${e.desc ? `<div class="text-xs text-slate-600 mt-1">${e.desc}</div>` : ''}
-            </div>`;
-        }
-      });
-      modalEmpty?.classList.add('hidden');
-      if (modalHint) modalHint.textContent = `Total jadwal: ${getEvents(dateStr).length}`;
-    } else {
-      modalEmpty?.classList.remove('hidden');
-      if (modalHint) modalHint.textContent = closed ? 'Hari ini TUTUP.' : 'Belum ada jadwal pada tanggal ini.';
-    }
-
-    dashDetailModal?.classList.remove('hidden');
-    lockBody();
-  }
-
-  function dashHideModal() {
-    dashDetailModal?.classList.add('hidden');
-    unlockBody();
-  }
-
-  detailOverlay?.addEventListener('click',  dashHideModal);
-  btnCloseModal?.addEventListener('click',  dashHideModal);
-  modalTutup?.addEventListener('click',     dashHideModal);
-
-  function dashRender() {
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (monthTitle) monthTitle.textContent = fmtMonth(current);
-
-    const today = new Date(), year = current.getFullYear(), month = current.getMonth();
-    const first = new Date(year, month, 1), startDay = first.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for (let i = 0; i < startDay; i++) {
-      const e = document.createElement('div');
-      e.className = 'day-card day-muted';
-      e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
-      grid.appendChild(e);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateObj = new Date(year, month, day), key = ymd(dateObj), isToday = sameDay(dateObj, today);
-      const closed = isClosedDay(key), ev = getVisibleEvents(key), hasData = getEvents(key).length > 0;
-      const left = remainingQuota(key), full = (!closed && left <= 0 && hasData);
-
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = `day-card text-left ${hasData ? 'has-data' : ''}`;
-      card.dataset.date = key;
-
-      const top   = document.createElement('div'); top.className = 'day-top';
-      const num   = document.createElement('div'); num.className = `day-num ${isToday ? 'today' : ''}`; num.textContent = String(day);
-      const right = document.createElement('div'); right.className = 'right-slot';
-
-      if (full) { const b = document.createElement('div'); b.className = 'badge-full'; b.textContent = 'FULL'; right.appendChild(b); }
-      top.appendChild(num); top.appendChild(right);
-
-      const body = document.createElement('div'); body.className = 'day-body';
-      ev.slice(0, 3).forEach(e => {
-        const p = document.createElement('div');
-        p.className = `pill ${e.status || 'aktif'}`; p.title = e.title || ''; p.textContent = e.title || 'Jadwal';
-        body.appendChild(p);
-      });
-      if (!closed && ev.length > 3) {
-        const m = document.createElement('div'); m.className = 'text-[11px] text-slate-500'; m.textContent = `+${ev.length - 3} lainnya`;
-        body.appendChild(m);
-      }
-
-      const info = document.createElement('div');
-      if (!hasData) { info.className = 'text-[11px] text-slate-500/80'; info.textContent = '—'; }
-      else          { info.className = 'text-[11px] text-slate-600';    info.textContent = closed ? 'TUTUP' : `Sisa tambah: ${left}`; }
-      body.appendChild(info);
-
-      card.appendChild(top); card.appendChild(body);
-      card.addEventListener('click', () => dashShowModal(key));
-      grid.appendChild(card);
-    }
-
-    const remaining = (7 - ((startDay + daysInMonth) % 7)) % 7;
-    for (let i = 0; i < remaining; i++) {
-      const e = document.createElement('div'); e.className = 'day-card day-muted'; e.setAttribute('aria-hidden', 'true');
-      e.innerHTML = `<div class="day-top"><div class="day-num"></div><div class="right-slot"></div></div>`;
-      grid.appendChild(e);
-    }
-  }
-
-  btnPrev?.addEventListener('click',  () => { current = new Date(current.getFullYear(), current.getMonth()-1, 1); dashRender(); });
-  btnNext?.addEventListener('click',  () => { current = new Date(current.getFullYear(), current.getMonth()+1, 1); dashRender(); });
-  btnToday?.addEventListener('click', () => {
-    const t = new Date();
-    current = new Date(t.getFullYear(), t.getMonth(), 1);
-    dashRender();
-    dashShowModal(ymd(t));
-  });
-
-  document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (dashDetailModal && !dashDetailModal.classList.contains('hidden')) dashHideModal();
-    else if (jadwalPopup && !jadwalPopup.classList.contains('hidden')) closeJadwalPopup();
-  });
-
-  // Cleanup: kalau user pindah halaman saat modal/popup kebuka, body gak ke-lock
-  window.addEventListener('beforeunload', () => {
-    document.body.classList.remove('overflow-hidden');
-  });
-})();
-</script>
-
-@endsection
+@endpush
