@@ -872,10 +872,27 @@ form?.addEventListener('submit', async e => {
     if(!valid){ showToast('Gagal', 'Pastikan semua item barang sudah dipilih dan qty diisi.', 'error'); return; }
   }
 
-  if(kategori === 'jasa' && Number(jasaBiaya?.value || 0) <= 0){
-    jasaBiayaDisplay?.classList.add('border-red-300', 'shake');
-    setTimeout(() => jasaBiayaDisplay?.classList.remove('shake'), 300);
-    showToast('Gagal', 'Biaya jasa wajib diisi untuk kategori Jasa.', 'error'); return;
+   // Validasi baris barang jasa: ada baris ditambah tapi belum diisi lengkap
+  if (kategori === 'jasa') {
+    const jasaRows = tbodyJasaBarang.querySelectorAll('tr');
+    let adaRowKosong = false;
+    jasaRows.forEach(tr => {
+      const sel = tr.querySelector('[data-barang-select]');
+      const qty = tr.querySelector('[data-qty]');
+      if (!sel?.value || !qty?.value || Number(qty.value) <= 0) {
+        adaRowKosong = true;
+        // Tandai baris bermasalah
+        sel?.classList.add('border-red-300');
+      }
+    });
+    if (adaRowKosong) {
+      showToast(
+        'Gagal',
+        'Ada baris barang yang belum diisi. Lengkapi atau hapus baris tersebut.',
+        'error'
+      );
+      return;
+    }
   }
 
   // Cek stok server
