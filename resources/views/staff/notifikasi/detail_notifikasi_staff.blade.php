@@ -19,7 +19,6 @@
 
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Detail Notifikasi</h1>
-        <p class="text-xs text-slate-500">Informasi lengkap notifikasi</p>
       </div>
     </div>
 
@@ -32,9 +31,9 @@
         Kembali
       </a>
       <button type="button"
-              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-        {{ now()->format('d M Y') }}
-      </button>
+            class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold whitespace-nowrap shrink-0">
+      {{ now()->format('d M Y') }}
+    </button>
     </div>
 
   </div>

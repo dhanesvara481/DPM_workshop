@@ -1,7 +1,7 @@
-{{-- resources/views/admin/notifikasi/show.blade.php --}}
+{{-- resources/views/admin/notifikasi/detail_notifikasi.blade.php --}}
 @extends('admin.layout.app')
 
-@section('title', 'Detail Notifikasi - DPM Workshop')
+@section('title', 'DPM Workshop - Admin')
 
 @section('content')
 
@@ -11,7 +11,7 @@
 
     <div class="flex items-center gap-3 min-w-0">
       <button id="btnSidebar" type="button"
-              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
+              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center shrink-0"
               aria-label="Buka menu">
         <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
@@ -20,17 +20,20 @@
 
       <div class="min-w-0">
         <h1 class="text-sm font-semibold tracking-tight text-slate-900">Detail Notifikasi</h1>
-        <p class="text-xs text-slate-500">Informasi lengkap notifikasi</p>
       </div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 shrink-0">
       <a href="/tampilan_notifikasi"
-         class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center">
+         class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
+        <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
         Kembali
       </a>
+
       <button type="button"
-              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold whitespace-nowrap shrink-0">
         {{ now()->format('d M Y') }}
       </button>
     </div>
@@ -53,22 +56,16 @@
   <div class="max-w-[980px] mx-auto w-full">
 
     @php
-      /**
-       * Controller ideal:
-       * $notif = Notifikasi::findOrFail($id);
-       */
-
-      // Support object / array
       $isObj = is_object($notif ?? null);
 
-      $id     = $isObj ? ($notif->notifikasi_id ?? null) : (($notif['notifikasi_id'] ?? null) ?? null);
-      $judul  = $isObj ? ($notif->judul_notif ?? '') : (($notif['judul_notif'] ?? '') ?? '');
-      $jenis  = $isObj ? ($notif->jenis_notifikasi ?? '') : (($notif['jenis_notifikasi'] ?? '') ?? '');
-      $pesan  = $isObj ? ($notif->isi_pesan ?? '') : (($notif['isi_pesan'] ?? '') ?? '');
-      $tglD   = $isObj ? ($notif->tanggal_dibuat ?? null) : (($notif['tanggal_dibuat'] ?? null) ?? null);
-      $tglK   = $isObj ? ($notif->tanggal_dikirim ?? null) : (($notif['tanggal_dikirim'] ?? null) ?? null);
+      $id    = $isObj ? ($notif->notifikasi_id ?? null) : ($notif['notifikasi_id'] ?? null);
+      $judul = $isObj ? ($notif->judul_notif ?? '') : ($notif['judul_notif'] ?? '');
+      $jenis = $isObj ? ($notif->jenis_notifikasi ?? '') : ($notif['jenis_notifikasi'] ?? '');
+      $pesan = $isObj ? ($notif->isi_pesan ?? '') : ($notif['isi_pesan'] ?? '');
+      $tglD  = $isObj ? ($notif->tanggal_dibuat ?? null) : ($notif['tanggal_dibuat'] ?? null);
+      $tglK  = $isObj ? ($notif->tanggal_dikirim ?? null) : ($notif['tanggal_dikirim'] ?? null);
 
-      $type = strtolower((string)$jenis);
+      $type = strtolower((string) $jenis);
 
       $iconWrap = match(true) {
         str_contains($type, 'stok')      => 'bg-amber-100 border-amber-200 text-amber-700',
@@ -76,6 +73,14 @@
         str_contains($type, 'invoice')   => 'bg-sky-100 border-sky-200 text-sky-700',
         str_contains($type, 'transaksi') => 'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-700',
         default                          => 'bg-slate-100 border-slate-200 text-slate-700',
+      };
+
+      $badgeColor = match(true) {
+        str_contains($type, 'stok')      => 'bg-amber-50 text-amber-700 border-amber-200',
+        str_contains($type, 'jadwal')    => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        str_contains($type, 'invoice')   => 'bg-sky-50 text-sky-700 border-sky-200',
+        str_contains($type, 'transaksi') => 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+        default                          => 'bg-slate-50 text-slate-600 border-slate-200',
       };
 
       $iconSvg = match(true) {
@@ -106,22 +111,24 @@
         ',
       };
 
-      $fmtTanggal = function($val){
+      $fmtTanggal = function ($val) {
         if (!$val) return '-';
-        try { return \Carbon\Carbon::parse($val)->translatedFormat('d F Y'); }
-        catch (\Throwable $e) { return (string) $val; }
+        try {
+          return \Carbon\Carbon::parse($val)->translatedFormat('d F Y');
+        } catch (\Throwable $e) {
+          return (string) $val;
+        }
       };
     @endphp
 
     @if (!($notif ?? null))
-      {{-- NOT FOUND --}}
-      <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
-                  shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
+      <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
         <div class="px-6 py-6">
           <div class="text-xl font-extrabold text-slate-900">Notifikasi tidak ditemukan</div>
           <p class="mt-2 text-sm text-slate-600">
             Data notifikasi belum tersedia / id tidak valid.
           </p>
+
           <div class="mt-5">
             <a href="/tampilan_notifikasi"
                class="inline-flex items-center justify-center h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
@@ -135,10 +142,9 @@
         </div>
       </div>
     @else
-      <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur
-                  shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
+      <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] overflow-hidden">
 
-        {{-- Header bar --}}
+        {{-- Header --}}
         <div class="px-6 py-5">
           <div class="text-2xl font-extrabold tracking-tight text-slate-900">Detail Notifikasi</div>
           <div class="mt-3 h-1.5 bg-slate-900"></div>
@@ -157,36 +163,34 @@
               </div>
 
               <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <div class="text-xl sm:text-2xl font-extrabold text-slate-900">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <div class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
                     {{ $judul ?: 'Judul Notif' }}
                   </div>
-                  <div class="text-xl sm:text-2xl font-extrabold text-slate-900">|</div>
-                  <div class="text-xl sm:text-2xl font-extrabold text-slate-900">
-                    {{ $jenis ?: 'Jenis Notif' }}
-                  </div>
+
+                  <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {{ $badgeColor }}">
+                    {{ $jenis ?: '-' }}
+                  </span>
                 </div>
 
-                <div class="mt-3 text-base leading-relaxed text-slate-800">
+                <div class="mt-3 text-base leading-relaxed text-slate-800 break-words">
                   {{ $pesan ?: '-' }}
                 </div>
 
                 <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div class="text-xs font-semibold text-slate-500">Tanggal Dibuat</div>
-                    <div class="mt-1 text-sm font-bold text-slate-900">{{ $fmtTanggal($tglD) }}</div>
+                    <div class="mt-1 text-sm font-bold text-slate-900">
+                      {{ $fmtTanggal($tglD) }}
+                    </div>
                   </div>
+
                   <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div class="text-xs font-semibold text-slate-500">Tanggal Dikirim</div>
-                    <div class="mt-1 text-sm font-bold text-slate-900">{{ $fmtTanggal($tglK) }}</div>
+                    <div class="mt-1 text-sm font-bold text-slate-900">
+                      {{ $fmtTanggal($tglK) }}
+                    </div>
                   </div>
-                </div>
-
-                <div class="mt-5 flex flex-wrap gap-2">
-                  <a href="/tampilan_notifikasi"
-                     class="inline-flex items-center justify-center h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-                    Kembali
-                  </a>
                 </div>
               </div>
 
@@ -194,7 +198,7 @@
           </div>
         </div>
 
-        <div class="text-xs text-slate-400 pt-6 pb-6 px-6">
+        <div class="text-xs text-slate-400 pt-6 pb-6 px-6 border-t border-slate-100">
           © DPM Workshop 2025
         </div>
       </div>
@@ -203,7 +207,6 @@
   </div>
 </section>
 
-{{-- Sidebar JS (kalau layout kamu belum punya) --}}
 <script>
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
@@ -215,6 +218,7 @@
     overlay?.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
   };
+
   const closeSidebar = () => {
     sidebar?.classList.add('-translate-x-full');
     overlay?.classList.add('hidden');
@@ -238,6 +242,7 @@
       sidebar?.classList.add('-translate-x-full');
     }
   };
+
   window.addEventListener('resize', syncOnResize);
   syncOnResize();
 </script>
