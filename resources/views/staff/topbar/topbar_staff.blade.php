@@ -26,7 +26,7 @@
     {{-- RIGHT --}}
     <div class="flex items-center gap-2">
 
-      <a href="/staff/notifikasi"
+      <a href="{{ route('notifikasi_staff') }}"
          class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
          aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

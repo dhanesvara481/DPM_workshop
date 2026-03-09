@@ -84,7 +84,7 @@
       </div>
     @endif
 
-    {{-- ===================== FORM ===================== --}}
+    {{-- FORM --}}
     <form id="formInvoice" method="POST" action="{{ route('invoice.simpan') }}"
           class="space-y-6" data-animate>
       @csrf
@@ -201,7 +201,6 @@
               <p class="text-xs text-slate-500">Input biaya service, lalu (opsional) barang yang ditagihkan.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {{-- CHANGED: tambah id="jasaNama" dan required --}}
               <div class="space-y-1 lg:col-span-2">
                 <label class="text-xs font-semibold text-slate-700">
                   Nama Jasa / Service <span class="text-red-500">*</span>
@@ -291,7 +290,6 @@
                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                            placeholder="0" />
                   </div>
-                  {{-- CHANGED: tambah max="100" dan hint teks --}}
                   <div class="space-y-1">
                     <label class="text-[11px] font-semibold text-slate-700">Pajak (%) <span class="font-normal text-slate-400">0–100</span></label>
                     <input type="number" min="0" max="100" step="1" id="pajak"
@@ -307,7 +305,6 @@
                   <span id="sumGrand" class="text-xl font-bold text-slate-900">0</span>
                 </div>
 
-                {{-- Hidden inputs yang dikirim ke server --}}
                 <input type="hidden" name="subtotal_barang" id="subtotal_barang" value="0">
                 <input type="hidden" name="subtotal_jasa"   id="subtotal_jasa"   value="0">
                 <input type="hidden" name="subtotal"        id="subtotal"        value="0">
@@ -353,10 +350,26 @@
   </div>
 </div>
 
-{{-- Confirm Modal --}}
-<div id="confirmModal" class="fixed inset-0 z-[999] hidden">
-  <div id="cmOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-  <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
+@push('scripts')
+<script>
+  window.BARANGS       = @json($barangs ?? []);
+  window.URL_CEK_STOK  = "{{ route('invoice.check-stok') }}";
+  window.CSRF_TOKEN    = "{{ csrf_token() }}";
+</script>
+@endpush
+
+@endsection
+
+{{-- =====================================================================
+     CONFIRM MODAL — di-push ke @stack('modals') di app.blade.php
+     supaya render langsung di <body>, bebas dari semua stacking context
+     ===================================================================== --}}
+@push('modals')
+<div id="confirmModal" class="fixed inset-0 z-[9999] hidden">
+  {{-- Overlay --}}
+  <div id="cmOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+  {{-- Dialog wrapper --}}
+  <div class="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-3 sm:p-6">
     <div class="w-full max-w-[520px] rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)] overflow-hidden">
       <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -382,16 +395,7 @@
     </div>
   </div>
 </div>
-
-@push('scripts')
-<script>
-  window.BARANGS       = @json($barangs ?? []);
-  window.URL_CEK_STOK  = "{{ route('invoice.check-stok') }}";
-  window.CSRF_TOKEN    = "{{ csrf_token() }}";
-</script>
 @endpush
-
-@endsection
 
 @push('head')
 <style>
@@ -470,28 +474,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cm.el&&!cm.el.class
 const fmtID=n=>(isFinite(n)?n:0).toLocaleString('id-ID');
 const barangList=(Array.isArray(window.BARANGS)?window.BARANGS:[]).filter(b=>Number(b?.stok??0)>0);
 
-const form          = document.getElementById('formInvoice');
-const kategoriEl    = document.getElementById('kategori');
-const tabs          = Array.from(document.querySelectorAll('.invtab'));
-const sectionBarang = document.getElementById('sectionBarang');
-const sectionJasa   = document.getElementById('sectionJasa');
-const tbodyBarang   = document.getElementById('tbodyBarang');
-const tbodyJasaBarang = document.getElementById('tbodyJasaBarang');
-const jasaBiaya       = document.getElementById('jasaBiaya');
+const form             = document.getElementById('formInvoice');
+const kategoriEl       = document.getElementById('kategori');
+const tabs             = Array.from(document.querySelectorAll('.invtab'));
+const sectionBarang    = document.getElementById('sectionBarang');
+const sectionJasa      = document.getElementById('sectionJasa');
+const tbodyBarang      = document.getElementById('tbodyBarang');
+const tbodyJasaBarang  = document.getElementById('tbodyJasaBarang');
+const jasaBiaya        = document.getElementById('jasaBiaya');
 const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay');
-const jasaNama        = document.getElementById('jasaNama'); // CHANGED
-const diskon  = document.getElementById('diskon');
-const pajak   = document.getElementById('pajak');
-const sumBarang   = document.getElementById('sumBarang');
-const sumJasa     = document.getElementById('sumJasa');
-const sumSubtotal = document.getElementById('sumSubtotal');
-const sumGrand    = document.getElementById('sumGrand');
-const h_sub_barang = document.getElementById('subtotal_barang');
-const h_sub_jasa   = document.getElementById('subtotal_jasa');
-const h_subtotal   = document.getElementById('subtotal');
-const h_grand      = document.getElementById('grand_total');
-const h_diskon     = document.getElementById('diskon_val');
-const h_pajak      = document.getElementById('pajak_val');
+const jasaNama         = document.getElementById('jasaNama');
+const diskon           = document.getElementById('diskon');
+const pajak            = document.getElementById('pajak');
+const sumBarang        = document.getElementById('sumBarang');
+const sumJasa          = document.getElementById('sumJasa');
+const sumSubtotal      = document.getElementById('sumSubtotal');
+const sumGrand         = document.getElementById('sumGrand');
+const h_sub_barang     = document.getElementById('subtotal_barang');
+const h_sub_jasa       = document.getElementById('subtotal_jasa');
+const h_subtotal       = document.getElementById('subtotal');
+const h_grand          = document.getElementById('grand_total');
+const h_diskon         = document.getElementById('diskon_val');
+const h_pajak          = document.getElementById('pajak_val');
 
 let isDirty = false;
 const markDirty = () => { isDirty = true; };
@@ -501,7 +505,6 @@ form?.querySelectorAll('input,select,textarea').forEach(el => {
   el.addEventListener('change', markDirty);
 });
 
-// CHANGED: clamp pajak ke 0–100 saat user mengetik
 pajak?.addEventListener('input', () => {
   let v = Number(pajak.value);
   if(v > 100) { pajak.value = '100'; v = 100; }
@@ -525,7 +528,6 @@ function setKategori(kat){
   tabs.forEach(t => t.classList.toggle('is-active', t.dataset.invtab === kat));
   sectionBarang.classList.toggle('hidden', kat !== 'barang');
   sectionJasa.classList.toggle('hidden', kat !== 'jasa');
-  // CHANGED: saat pindah kategori, lepas required dari jasaNama jika bukan jasa
   if(jasaNama) jasaNama.required = (kat === 'jasa');
   recalc();
 }
@@ -672,7 +674,6 @@ document.getElementById('btnAddJasaBarang')?.addEventListener('click', addJasaBa
 handleTableEvents(tbodyBarang);
 handleTableEvents(tbodyJasaBarang);
 
-// ── Biaya Jasa formatting ────────────────────────────────────────────────────
 const onlyDigits = s => (s || '').toString().replace(/[^\d]/g, '');
 const formatID   = n => (isFinite(n) ? n : 0).toLocaleString('id-ID');
 
@@ -680,17 +681,15 @@ function syncJasaBiayaFromDisplay(){
   if(!jasaBiayaDisplay || !jasaBiaya) return;
   const raw = onlyDigits(jasaBiayaDisplay.value);
   const num = raw ? parseInt(raw, 10) : 0;
-  jasaBiaya.value         = String(num);
-  jasaBiayaDisplay.value  = raw ? formatID(num) : '';
+  jasaBiaya.value        = String(num);
+  jasaBiayaDisplay.value = raw ? formatID(num) : '';
   markDirty(); recalc();
 }
 jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
 jasaBiayaDisplay?.addEventListener('blur',  syncJasaBiayaFromDisplay);
-// CHANGED: listener pajak sudah ditangani di atas, jadi hanya diskon yang perlu di sini
 diskon?.addEventListener('input', () => { markDirty(); recalc(); });
 syncJasaBiayaFromDisplay();
 
-// ── Kalkulasi total ──────────────────────────────────────────────────────────
 function sumTable(tbody){
   let sum = 0;
   tbody.querySelectorAll('[data-line-hidden]').forEach(h => sum += Number(h.value || 0));
@@ -698,15 +697,14 @@ function sumTable(tbody){
 }
 
 function recalc(){
-  const kat            = kategoriEl.value;
-  const barangSum      = sumTable(tbodyBarang);
-  const jasaBarangSum  = sumTable(tbodyJasaBarang);
-  const jasa           = Number(jasaBiaya?.value || 0);
+  const kat               = kategoriEl.value;
+  const barangSum         = sumTable(tbodyBarang);
+  const jasaBarangSum     = sumTable(tbodyJasaBarang);
+  const jasa              = Number(jasaBiaya?.value || 0);
   const subtotalBarangVal = kat === 'barang' ? barangSum : jasaBarangSum;
   const jasaVal           = kat === 'jasa'   ? Math.max(0, jasa) : 0;
   const subtotalVal       = subtotalBarangVal + jasaVal;
   const diskonVal         = Math.max(0, Number(diskon?.value || 0));
-  // CHANGED: clamp pajak 0–100 saat kalkulasi agar nilai yang lolos max attr tetap aman
   const pajakPct          = Math.min(100, Math.max(0, Number(pajak?.value || 0)));
   const afterDisc         = Math.max(0, subtotalVal - diskonVal);
   const pajakVal          = Math.round(afterDisc * (pajakPct / 100));
@@ -725,7 +723,6 @@ function recalc(){
   h_pajak.value      = String(pajakPct);
 }
 
-// ── Collect items for stok check ─────────────────────────────────────────────
 function collectItems(tbody){
   const rows = [];
   tbody.querySelectorAll('tr').forEach(tr => {
@@ -773,9 +770,9 @@ function tandaiBarisProblem(items, errorMessages){
     if(e) { e.textContent = ''; e.classList.add('hidden'); }
   });
   items.forEach(item => {
-    const sel     = item.tr.querySelector('[data-barang-select]');
-    const opt     = sel?.options[sel.selectedIndex];
-    const namaOpt = opt?.text?.split(' (')[0]?.trim() ?? '';
+    const sel      = item.tr.querySelector('[data-barang-select]');
+    const opt      = sel?.options[sel.selectedIndex];
+    const namaOpt  = opt?.text?.split(' (')[0]?.trim() ?? '';
     const hasError = errorMessages.some(msg => msg.includes(namaOpt));
     if(hasError){
       item.tr.querySelector('[data-qty]')?.classList.add('border-red-300');
@@ -851,7 +848,6 @@ form?.addEventListener('submit', async e => {
     return;
   }
 
-  // CHANGED: validasi nama jasa wajib diisi saat kategori jasa
   if(kategori === 'jasa' && !jasaNama?.value.trim()){
     showToast('Gagal', 'Nama jasa / service wajib diisi.', 'error');
     jasaNama?.classList.add('border-red-300', 'shake');
@@ -872,7 +868,6 @@ form?.addEventListener('submit', async e => {
     if(!valid){ showToast('Gagal', 'Pastikan semua item barang sudah dipilih dan qty diisi.', 'error'); return; }
   }
 
-   // Validasi baris barang jasa: ada baris ditambah tapi belum diisi lengkap
   if (kategori === 'jasa') {
     const jasaRows = tbodyJasaBarang.querySelectorAll('tr');
     let adaRowKosong = false;
@@ -881,26 +876,20 @@ form?.addEventListener('submit', async e => {
       const qty = tr.querySelector('[data-qty]');
       if (!sel?.value || !qty?.value || Number(qty.value) <= 0) {
         adaRowKosong = true;
-        // Tandai baris bermasalah
         sel?.classList.add('border-red-300');
       }
     });
     if (adaRowKosong) {
-      showToast(
-        'Gagal',
-        'Ada baris barang yang belum diisi. Lengkapi atau hapus baris tersebut.',
-        'error'
-      );
+      showToast('Gagal', 'Ada baris barang yang belum diisi. Lengkapi atau hapus baris tersebut.', 'error');
       return;
     }
   }
 
-  // Cek stok server
   const activetbody = kategori === 'barang' ? tbodyBarang : tbodyJasaBarang;
   const activeItems  = collectItems(activetbody);
   if(activeItems.length > 0){
-    const btnSave  = document.getElementById('btnSave');
-    const oriText  = btnSave?.textContent ?? 'Simpan';
+    const btnSave = document.getElementById('btnSave');
+    const oriText = btnSave?.textContent ?? 'Simpan';
     try {
       if(btnSave){ btnSave.disabled = true; btnSave.textContent = 'Mengecek stok...'; }
       const result = await cekStokServer(activeItems);

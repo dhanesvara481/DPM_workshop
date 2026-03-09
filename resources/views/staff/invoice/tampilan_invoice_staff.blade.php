@@ -2,43 +2,9 @@
 @extends('staff.layout.app')
 
 @section('page_title', 'DPM Workshop - Staff')
-@section('page_subtitle', 'Buat Invoice/Transaksi')
 
 @section('content')
 
-{{-- TOPBAR --}}
-<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur" data-animate>
-  <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-3 min-w-0">
-      <button id="btnSidebar" type="button"
-              class="md:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-              aria-label="Buka menu">
-        <svg class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
-      <div class="min-w-0">
-        <h1 class="text-sm font-semibold tracking-tight text-slate-900">Invoice</h1>
-        <p class="text-xs text-slate-500">Buat invoice Barang / Jasa</p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <a href="/tampilan_notifikasi"
-         class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
-         data-tip="Notifikasi" aria-label="Notifikasi">
-        <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a3 3 0 006 0"/>
-        </svg>
-      </a>
-      <button type="button"
-              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
-        {{ now()->format('d M Y') }}
-      </button>
-    </div>
-  </div>
-</header>
 
 <section class="relative p-4 sm:p-6">
   <div class="pointer-events-none absolute inset-0 -z-10">
@@ -195,7 +161,6 @@
               <p class="text-xs text-slate-500">Input biaya service, lalu (opsional) barang yang ditagihkan.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {{-- CHANGED: tambah id="jasaNama" dan required --}}
               <div class="space-y-1 lg:col-span-2">
                 <label class="text-xs font-semibold text-slate-700">
                   Nama Jasa / Service <span class="text-red-500">*</span>
@@ -285,7 +250,6 @@
                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
                            placeholder="0" />
                   </div>
-                  {{-- CHANGED: tambah max="100" dan hint teks --}}
                   <div class="space-y-1">
                     <label class="text-[11px] font-semibold text-slate-700">Pajak (%) <span class="font-normal text-slate-400">0–100</span></label>
                     <input type="number" min="0" max="100" step="1" id="pajak"
@@ -301,7 +265,6 @@
                   <span id="sumGrand" class="text-xl font-bold text-slate-900">0</span>
                 </div>
 
-                {{-- Hidden inputs yang dikirim ke server --}}
                 <input type="hidden" name="subtotal_barang" id="subtotal_barang" value="0">
                 <input type="hidden" name="subtotal_jasa"   id="subtotal_jasa"   value="0">
                 <input type="hidden" name="subtotal"        id="subtotal"        value="0">
@@ -347,10 +310,26 @@
   </div>
 </div>
 
-{{-- Confirm Modal --}}
-<div id="confirmModal" class="fixed inset-0 z-[999] hidden">
-  <div id="cmOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-  <div class="relative min-h-screen flex items-end sm:items-center justify-center p-3 sm:p-6">
+@push('scripts')
+<script>
+  window.BARANGS       = @json($barangs ?? []);
+  window.URL_CEK_STOK  = "{{ route('invoice.check-stok') }}";
+  window.CSRF_TOKEN    = "{{ csrf_token() }}";
+</script>
+@endpush
+
+@endsection
+
+{{-- =====================================================================
+     CONFIRM MODAL — di-push ke @stack('modals') di app.blade.php
+     supaya render langsung di <body>, bebas dari semua stacking context
+     ===================================================================== --}}
+@push('modals')
+<div id="confirmModal" class="fixed inset-0 z-[9999] hidden">
+  {{-- Overlay --}}
+  <div id="cmOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+  {{-- Dialog wrapper --}}
+  <div class="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-3 sm:p-6">
     <div class="w-full max-w-[520px] rounded-2xl bg-white border border-slate-200 shadow-[0_30px_90px_rgba(2,6,23,0.30)] overflow-hidden">
       <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -376,16 +355,7 @@
     </div>
   </div>
 </div>
-
-@push('scripts')
-<script>
-  window.BARANGS       = @json($barangs ?? []);
-  window.URL_CEK_STOK  = "{{ route('invoice.check-stok') }}";
-  window.CSRF_TOKEN    = "{{ csrf_token() }}";
-</script>
 @endpush
-
-@endsection
 
 @push('head')
 <style>
@@ -473,7 +443,7 @@ const tbodyBarang      = document.getElementById('tbodyBarang');
 const tbodyJasaBarang  = document.getElementById('tbodyJasaBarang');
 const jasaBiaya        = document.getElementById('jasaBiaya');
 const jasaBiayaDisplay = document.getElementById('jasaBiayaDisplay');
-const jasaNama         = document.getElementById('jasaNama'); // CHANGED
+const jasaNama         = document.getElementById('jasaNama');
 const diskon           = document.getElementById('diskon');
 const pajak            = document.getElementById('pajak');
 const sumBarang        = document.getElementById('sumBarang');
@@ -495,7 +465,6 @@ form?.querySelectorAll('input,select,textarea').forEach(el => {
   el.addEventListener('change', markDirty);
 });
 
-// CHANGED: clamp pajak ke 0–100 saat user mengetik
 pajak?.addEventListener('input', () => {
   let v = Number(pajak.value);
   if(v > 100) { pajak.value = '100'; v = 100; }
@@ -519,7 +488,6 @@ function setKategori(kat){
   tabs.forEach(t => t.classList.toggle('is-active', t.dataset.invtab === kat));
   sectionBarang.classList.toggle('hidden', kat !== 'barang');
   sectionJasa.classList.toggle('hidden', kat !== 'jasa');
-  // CHANGED: saat pindah kategori, lepas required dari jasaNama jika bukan jasa
   if(jasaNama) jasaNama.required = (kat === 'jasa');
   recalc();
 }
@@ -666,7 +634,6 @@ document.getElementById('btnAddJasaBarang')?.addEventListener('click', addJasaBa
 handleTableEvents(tbodyBarang);
 handleTableEvents(tbodyJasaBarang);
 
-// ── Biaya Jasa formatting ────────────────────────────────────────────────────
 const onlyDigits = s => (s || '').toString().replace(/[^\d]/g, '');
 const formatID   = n => (isFinite(n) ? n : 0).toLocaleString('id-ID');
 
@@ -680,11 +647,9 @@ function syncJasaBiayaFromDisplay(){
 }
 jasaBiayaDisplay?.addEventListener('input', syncJasaBiayaFromDisplay);
 jasaBiayaDisplay?.addEventListener('blur',  syncJasaBiayaFromDisplay);
-// CHANGED: listener pajak sudah ditangani di atas, jadi hanya diskon yang perlu di sini
 diskon?.addEventListener('input', () => { markDirty(); recalc(); });
 syncJasaBiayaFromDisplay();
 
-// ── Kalkulasi total ──────────────────────────────────────────────────────────
 function sumTable(tbody){
   let sum = 0;
   tbody.querySelectorAll('[data-line-hidden]').forEach(h => sum += Number(h.value || 0));
@@ -700,7 +665,6 @@ function recalc(){
   const jasaVal           = kat === 'jasa'   ? Math.max(0, jasa) : 0;
   const subtotalVal       = subtotalBarangVal + jasaVal;
   const diskonVal         = Math.max(0, Number(diskon?.value || 0));
-  // CHANGED: clamp pajak 0–100 saat kalkulasi agar nilai yang lolos max attr tetap aman
   const pajakPct          = Math.min(100, Math.max(0, Number(pajak?.value || 0)));
   const afterDisc         = Math.max(0, subtotalVal - diskonVal);
   const pajakVal          = Math.round(afterDisc * (pajakPct / 100));
@@ -719,7 +683,6 @@ function recalc(){
   h_pajak.value      = String(pajakPct);
 }
 
-// ── Collect items for stok check ─────────────────────────────────────────────
 function collectItems(tbody){
   const rows = [];
   tbody.querySelectorAll('tr').forEach(tr => {
@@ -845,7 +808,6 @@ form?.addEventListener('submit', async e => {
     return;
   }
 
-  // CHANGED: validasi nama jasa wajib diisi saat kategori jasa
   if(kategori === 'jasa' && !jasaNama?.value.trim()){
     showToast('Gagal', 'Nama jasa / service wajib diisi.', 'error');
     jasaNama?.classList.add('border-red-300', 'shake');
@@ -866,7 +828,6 @@ form?.addEventListener('submit', async e => {
     if(!valid){ showToast('Gagal', 'Pastikan semua item barang sudah dipilih dan qty diisi.', 'error'); return; }
   }
 
-  // Validasi baris barang jasa: ada baris ditambah tapi belum diisi lengkap
   if (kategori === 'jasa') {
     const jasaRows = tbodyJasaBarang.querySelectorAll('tr');
     let adaRowKosong = false;
@@ -875,21 +836,15 @@ form?.addEventListener('submit', async e => {
       const qty = tr.querySelector('[data-qty]');
       if (!sel?.value || !qty?.value || Number(qty.value) <= 0) {
         adaRowKosong = true;
-        // Tandai baris bermasalah
         sel?.classList.add('border-red-300');
       }
     });
     if (adaRowKosong) {
-      showToast(
-        'Gagal',
-        'Ada baris barang yang belum diisi. Lengkapi atau hapus baris tersebut.',
-        'error'
-      );
+      showToast('Gagal', 'Ada baris barang yang belum diisi. Lengkapi atau hapus baris tersebut.', 'error');
       return;
     }
   }
 
-  // Cek stok server
   const activetbody = kategori === 'barang' ? tbodyBarang : tbodyJasaBarang;
   const activeItems  = collectItems(activetbody);
   if(activeItems.length > 0){

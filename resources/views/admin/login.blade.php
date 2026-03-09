@@ -77,7 +77,7 @@
                                     >
                                 </div>
                                 <h1 class="mt-8 text-4xl md:text-5xl font-semibold tracking-tight">
-                                    DPW Workshop
+                                    DPM Workshop
                                 </h1>
                             </div>
                         </div>

@@ -10,86 +10,101 @@ class BarangGmailObserver
 {
     private const STOK_MIN = 25;
 
+    private static array $buffer     = [];
+    private static array $registered = [];
+
     public function updated(Barang $barang): void
     {
-        // Hanya proses jika kolom stok yang berubah
         if (!$barang->isDirty('stok')) {
             return;
         }
 
+        $id       = $barang->barang_id;
         $stokBaru = (int) $barang->stok;
         $stokLama = (int) $barang->getOriginal('stok');
 
-        // Hanya proses jika stok BERKURANG
         if ($stokBaru >= $stokLama) {
             return;
         }
 
-        $notif  = app(GmailNotifikasiService::class);
-
-        $admins = User::whereIn('role',['admin', 'staff'])
-            ->where('status', 'aktif')
-            ->whereNotNull('email')
-            ->get();
-
-        // Kasus 1: Stok habis
-        if ($stokBaru <= 0 && $stokLama > 0) {
-            $pesan = $this->buildPesanHabis($barang, $stokLama);
-
-            foreach ($admins as $admin) {
-                $notif->kirimManual(
-                    $admin->email,
-                    'Stok Habis: ' . $barang->nama_barang,
-                    $pesan,
-                    'stok',
-                    'Stok Habis: ' . $barang->nama_barang
-                );
-            }
-
-            return;
+        if (!isset(self::$buffer[$id])) {
+            self::$buffer[$id] = [
+                'barang'     => $barang,
+                'stok_awal'  => $stokLama,
+                'stok_akhir' => $stokBaru,
+            ];
+        } else {
+            self::$buffer[$id]['stok_akhir'] = $stokBaru;
+            self::$buffer[$id]['barang']     = $barang;
         }
 
-        // Kasus 2: Stok menipis
-        if ($stokBaru > 0 && $stokBaru < self::STOK_MIN) {
-            $pesan = $this->buildPesanMenipis($barang, $stokLama, $stokBaru);
+        if (!isset(self::$registered[$id])) {
+            self::$registered[$id] = true;
 
-            foreach ($admins as $admin) {
-                $notif->kirimManual(
-                    $admin->email,
-                    'Stok Menipis: ' . $barang->nama_barang,
-                    $pesan,
-                    'stok',
-                    'Stok Menipis: ' . $barang->nama_barang
-                );
-            }
+            app()->terminating(function () use ($id) {
+                $entry = self::$buffer[$id] ?? null;
+                unset(self::$buffer[$id], self::$registered[$id]);
 
-            return;
+                if (!$entry) return;
+
+                $barang    = $entry['barang'];
+                $stokAwal  = $entry['stok_awal'];
+                $stokAkhir = $entry['stok_akhir'];
+
+                if ($stokAkhir >= $stokAwal) return;
+
+                $notif  = app(GmailNotifikasiService::class);
+                $admins = User::whereIn('role', ['admin', 'staff'])
+                    ->where('status', 'aktif')
+                    ->whereNotNull('email')
+                    ->get();
+
+                if ($stokAkhir <= 0) {
+                    $subject = 'Stok Habis: ' . $barang->nama_barang;
+                    $pesan   = $this->buildPesanHabis($barang, $stokAwal);
+                } elseif ($stokAkhir < self::STOK_MIN) {
+                    $subject = 'Stok Menipis: ' . $barang->nama_barang;
+                    $pesan   = $this->buildPesanMenipis($barang, $stokAwal, $stokAkhir);
+                } else {
+                    return;
+                }
+
+                foreach ($admins as $admin) {
+                    $notif->kirimManual(
+                        $admin->email,
+                        $subject,
+                        $pesan,
+                        'stok',
+                        $subject
+                    );
+                }
+            });
         }
     }
 
-    private function buildPesanMenipis(Barang $barang, int $stokLama, int $stokBaru): string
+    private function buildPesanMenipis(Barang $barang, int $stokAwal, int $stokAkhir): string
     {
-        $berkurang = $stokLama - $stokBaru;
+        $berkurang = $stokAwal - $stokAkhir;
 
         $pesan  = "⚠️ Peringatan Stok Menipis\n\n";
         $pesan .= "{$barang->nama_barang}\n";
         $pesan .= "Kode   : {$barang->kode_barang}\n";
         $pesan .= "Satuan : {$barang->satuan}\n";
-        $pesan .= "Stok sebelum  : {$stokLama} {$barang->satuan}\n";
+        $pesan .= "Stok sebelum  : {$stokAwal} {$barang->satuan}\n";
         $pesan .= "Berkurang     : -{$berkurang} {$barang->satuan}\n";
-        $pesan .= "Stok sekarang : {$stokBaru} {$barang->satuan}\n";
+        $pesan .= "Stok sekarang : {$stokAkhir} {$barang->satuan}\n";
         $pesan .= "\nSegera lakukan pengadaan barang.\n";
 
         return $pesan;
     }
 
-    private function buildPesanHabis(Barang $barang, int $stokLama): string
+    private function buildPesanHabis(Barang $barang, int $stokAwal): string
     {
         $pesan  = "🚨 Stok Habis!\n\n";
         $pesan .= "{$barang->nama_barang}\n";
         $pesan .= "Kode   : {$barang->kode_barang}\n";
         $pesan .= "Satuan : {$barang->satuan}\n";
-        $pesan .= "Stok sebelum  : {$stokLama} {$barang->satuan}\n";
+        $pesan .= "Stok sebelum  : {$stokAwal} {$barang->satuan}\n";
         $pesan .= "Stok sekarang : 0 {$barang->satuan}\n";
         $pesan .= "\nSegera restok sebelum transaksi terhambat!\n";
 
