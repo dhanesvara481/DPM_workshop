@@ -19,12 +19,11 @@
 
             <div class="min-w-0">
                 <h1 class="text-sm font-semibold tracking-tight text-slate-900">Stok Real-time</h1>
-                <p class="text-xs text-slate-500">Tampilan stok terkini dari data barang (view-only untuk staf).</p>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="/tampilan_notifikasi"
+            <a href="{{ route('tampilan_notifikasi') }}"
                class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
                data-tip="Notifikasi"
                aria-label="Notifikasi">

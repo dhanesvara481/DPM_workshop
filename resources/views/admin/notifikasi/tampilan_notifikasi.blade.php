@@ -20,20 +20,20 @@
         <h1 class="text-sm font-semibold tracking-tight text-slate-900 leading-tight">Notifikasi</h1>
       </div>
     </div>
-    <div class="shrink-0">
-      <a href="/tampilan_dashboard"
-         class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
+    <div class="shrink-0 flex items-center gap-2">
+      <a href="{{ route('tampilan_dashboard') }}"
+        class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5 whitespace-nowrap">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
         Kembali
       </a>
+
       <button type="button"
-            class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold whitespace-nowrap shrink-0">
-      {{ now()->format('d M Y') }}
-    </button>
+              class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold whitespace-nowrap shrink-0 inline-flex items-center">
+        {{ now()->format('d M Y') }}
+      </button>
     </div>
-  </div>
 </header>
 
 <section class="relative p-4 sm:p-6">
@@ -156,7 +156,7 @@
                   <p class="text-sm text-slate-700 leading-relaxed line-clamp-2">
                     {{ $pesan ?: '-' }}
                   </p>
-                  <<div class="mt-2 flex items-center justify-between gap-2">
+                  <div class="mt-2 flex items-center justify-between gap-2">
                     <span class="text-xs text-slate-400 whitespace-nowrap shrink-0">
                       {{ $tgl ? \Carbon\Carbon::parse($tgl)->translatedFormat('d F Y') : '' }}
                     </span>

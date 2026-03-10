@@ -274,7 +274,7 @@
               </div>
 
               <div class="grid grid-cols-2 gap-2">
-                <a href="/tampilan_dashboard_staff" id="btnBack"
+                <a href="{{ route('tampilan_dashboard_staff') }}" id="btnBack"
                    class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   Batal
                 </a>

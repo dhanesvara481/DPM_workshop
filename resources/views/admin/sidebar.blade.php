@@ -64,7 +64,7 @@
     <nav class="mt-5 space-y-1">
 
       {{-- Dashboard --}}
-      <a href="/tampilan_dashboard" data-nav
+      <a href="{{ route('tampilan_dashboard') }}" data-nav
          class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                 text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                 {{ request()->is('tampilan_dashboard') ? 'is-active' : '' }}">
@@ -87,7 +87,7 @@
             || request()->is('ubah_barang*')
         @endphp
 
-        <a href="/tampilan_barang" data-nav
+        <a href="{{ route('mengelola_barang') }}" data-nav
            class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ $barangActive ? 'is-active' : '' }}">
@@ -101,7 +101,7 @@
           Kelola Barang
         </a>
 
-        <a href="/barang_masuk" data-nav
+        <a href="{{ route('barang_masuk') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('barang_masuk*') ? 'is-active' : '' }}">
@@ -114,7 +114,7 @@
           Barang Masuk
         </a>
 
-        <a href="/barang_keluar" data-nav
+        <a href="{{ route('barang_keluar') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('barang_keluar*') ? 'is-active' : '' }}">
@@ -132,7 +132,7 @@
       <div class="mt-3">
         <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">RIWAYAT & LAPORAN</p>
 
-        <a href="/riwayat_perubahan_stok" data-nav
+        <a href="{{ route('riwayat_perubahan_stok') }}" data-nav
            class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('riwayat_perubahan_stok*') ? 'is-active' : '' }}">
@@ -145,7 +145,7 @@
           Riwayat Perubahan Stok
         </a>
 
-        <a href="/riwayat_transaksi" data-nav
+        <a href="{{ route('riwayat_transaksi') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('riwayat_transaksi*') ? 'is-active' : '' }}">
@@ -158,7 +158,7 @@
           Riwayat Transaksi
         </a>
 
-        <a href="/laporan_penjualan" data-nav
+        <a href="{{ route('laporan_penjualan') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('laporan_penjualan*') ? 'is-active' : '' }}">
@@ -186,7 +186,7 @@
               || request()->is('hapus_jadwal_kerja*');
         @endphp
 
-        <a href="/kelola_jadwal_kerja" data-nav
+        <a href="{{ route('kelola_jadwal_kerja') }}" data-nav
            class="nav-item group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ $jadwalActive ? 'is-active' : '' }}">
@@ -206,7 +206,7 @@
               || request()->is('ubah_staf*');
         @endphp
 
-        <a href="/tampilan_manajemen_staf" data-nav
+        <a href="{{ route('tampilan_manajemen_staf') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ $manajemenStafActive ? 'is-active' : '' }}">
@@ -221,7 +221,7 @@
           Manajemen Staf
         </a>
 
-        <a href="/stok_opname" data-nav
+        <a href="{{ route('stok_opname.index') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('stok_opname*') ? 'is-active' : '' }}">

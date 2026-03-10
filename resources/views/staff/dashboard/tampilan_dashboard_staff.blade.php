@@ -54,7 +54,7 @@
       </a>
 
       {{-- TRANSAKSI --}}
-      <a href="/tampilan_invoice_staff"
+      <a href="{{ route('tampilan_invoice_staff') }}"
          class="group rounded-2xl border border-slate-900 bg-slate-900 text-white
                 shadow-[0_16px_44px_rgba(2,6,23,0.18)]
                 p-6 hover:bg-slate-800 transition

@@ -72,7 +72,7 @@
     <nav class="mt-5 space-y-1">
 
       {{-- DASHBOARD --}}
-      <a href="/tampilan_dashboard_staff" data-nav
+      <a href="{{ route('tampilan_dashboard_staff') }}" data-nav
          class="nav-item {{ $isActive(['tampilan_dashboard_staff']) ? 'is-active' : '' }}
                 group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                 text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">
@@ -108,7 +108,7 @@
       <div class="mt-3">
         <p class="px-4 pt-3 pb-2 text-[11px] tracking-widest text-white/40">TRANSAKSI</p>
 
-        <a href="/tampilan_invoice_staff" data-nav
+        <a href="{{ route('tampilan_invoice_staff') }}" data-nav
            class="nav-item {{ $isActive(['tampilan_invoice_staff']) ? 'is-active' : '' }}
                   group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden">

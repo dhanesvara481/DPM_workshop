@@ -25,7 +25,7 @@
       <p class="text-xs text-slate-500">Invoice dari user yang statusnya <span class="font-semibold">Pending</span> untuk dikonfirmasi menjadi <span class="font-semibold">Paid</span>.</p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="/tampilan_notifikasi"
+      <a href="{{ route('tampilan_notifikasi') }}"
          class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
          data-tip="Notifikasi" aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

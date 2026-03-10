@@ -24,7 +24,7 @@
     </div>
 
     <div class="flex items-center gap-2 shrink-0">
-      <a href="/tampilan_notifikasi"
+      <a href="{{ route('tampilan_notifikasi') }}"
          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -130,7 +130,7 @@
           </p>
 
           <div class="mt-5">
-            <a href="/tampilan_notifikasi"
+            <a href="{{ route('tampilan_notifikasi') }}"
                class="inline-flex items-center justify-center h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
               Kembali ke Notifikasi
             </a>
@@ -182,13 +182,6 @@
                     <div class="text-xs font-semibold text-slate-500">Tanggal Dibuat</div>
                     <div class="mt-1 text-sm font-bold text-slate-900">
                       {{ $fmtTanggal($tglD) }}
-                    </div>
-                  </div>
-
-                  <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div class="text-xs font-semibold text-slate-500">Tanggal Dikirim</div>
-                    <div class="mt-1 text-sm font-bold text-slate-900">
-                      {{ $fmtTanggal($tglK) }}
                     </div>
                   </div>
                 </div>

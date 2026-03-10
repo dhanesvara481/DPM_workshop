@@ -197,15 +197,6 @@
                     </div>
                     <div class="text-sm font-bold text-slate-900">{{ $fmtTanggal($tglD) }}</div>
                   </div>
-                  <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div class="flex items-center gap-2 mb-1">
-                      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                      </svg>
-                      <div class="text-xs font-semibold text-slate-500">Tanggal Dikirim</div>
-                    </div>
-                    <div class="text-sm font-bold text-slate-900">{{ $fmtTanggal($tglK) }}</div>
-                  </div>
                 </div>
                 {{-- Tombol Kembali di dalam card DIHAPUS --}}
 

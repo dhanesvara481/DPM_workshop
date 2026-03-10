@@ -24,7 +24,7 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="/tampilan_notifikasi"
+      <a href="{{ route('tampilan_notifikasi') }}"
          class="tip h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center"
          data-tip="Notifikasi" aria-label="Notifikasi">
         <svg class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -314,7 +314,7 @@
               </div>
 
               <div class="grid grid-cols-2 gap-2">
-                <a href="/tampilan_dashboard" id="btnBack"
+                <a href="{{ route('tampilan_dashboard') }}" id="btnBack"
                    class="h-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
                   Batal
                 </a>
@@ -811,7 +811,7 @@ document.getElementById('btnReset')?.addEventListener('click', async () => {
 document.getElementById('btnBack')?.addEventListener('click', async e => {
   if(!isDirty) return;
   e.preventDefault();
-  const href = e.currentTarget.getAttribute('href') || '/tampilan_dashboard';
+  const href = e.currentTarget.getAttribute('href') || '{{ route('tampilan_dashboard') }}';
   const ok = await cm.open({
     title: 'Keluar dari halaman?',
     message: 'Perubahan belum disimpan. Kalau keluar sekarang, data akan hilang.',

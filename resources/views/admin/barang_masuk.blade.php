@@ -171,7 +171,7 @@
           </div>
 
           <div class="flex gap-2">
-            <a id="btnKembaliMasuk" href="/tampilan_barang"
+            <a id="btnKembaliMasuk" href="{{ route('mengelola_barang') }}"
                class="tip inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold
                       border border-slate-200 bg-white hover:bg-slate-50 transition">
               Kembali
