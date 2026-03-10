@@ -142,15 +142,15 @@
           <option value="Habis">Habis</option>
         </select>
 
-        <a href="{{ route('stok_realtime_staff.print') }}"
-           class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-2">
+        <button onclick="window.open('{{ route('stok_realtime_staff.print') }}', '_blank')"
+          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-2">
           <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 14h12v8H6z"/>
           </svg>
           Print
-        </a>
+        </button>
       </div>
     </div>
 

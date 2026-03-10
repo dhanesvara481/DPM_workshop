@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Laporan Stok Real-time - DPM Workshop</title>
   @vite('resources/js/app.js')
+
   <style>
     @media print {
       .no-print { display: none !important; }
@@ -29,7 +30,6 @@
       color: #334155;
     }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: #f8fafc; }
 
     .badge {
       display: inline-flex;
@@ -51,20 +51,24 @@
 </head>
 <body>
 
-  {{-- TOMBOL NO-PRINT --}}
-  <button onclick="window.close()"
-          style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;border-style:solid;">
+  <div class="no-print" style="max-width:900px;margin:16px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;">
+    <button
+      type="button"
+      onclick="handleBackPrint()"
+      style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;">
       ← Kembali
-  </button>
-    <button onclick="window.print()"
-            style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">
+    </button>
+
+    <button
+      type="button"
+      onclick="window.print()"
+      style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">
       🖨 Print
     </button>
   </div>
 
   <div style="max-width:900px;margin:0 auto;padding:32px 24px;">
 
-    {{-- HEADER --}}
     <div style="text-align:center;margin-bottom:24px;">
       <div style="font-size:18px;font-weight:800;color:#0f172a;">LAPORAN STOK REAL-TIME</div>
       <div style="font-size:13px;color:#64748b;margin-top:4px;">DPM Workshop</div>
@@ -73,7 +77,6 @@
       </div>
     </div>
 
-    {{-- SUMMARY --}}
     @php
       $totalItem  = $barangs->count();
       $sumStok    = $barangs->sum(fn ($b) => (int) $b->stok);
@@ -105,7 +108,6 @@
       </div>
     </div>
 
-    {{-- TABLE --}}
     <table>
       <thead>
         <tr>
@@ -159,7 +161,24 @@
   </div>
 
   <script>
-    window.addEventListener('load', () => window.print());
+    function handleBackPrint() {
+      if (window.opener && !window.opener.closed) {
+        window.opener.focus();
+        window.close();
+        return;
+      }
+
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      window.location.href = "{{ route('stok_realtime_staff') }}";
+    }
+
+    window.addEventListener('load', () => {
+      window.print();
+    });
   </script>
 
 </body>

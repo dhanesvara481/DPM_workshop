@@ -81,16 +81,22 @@ tbody tr:hover{background:#f8fafc}
 <body>
 
 {{-- BAR ATAS --}}
-<div class="no-print" style="display:flex;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
-  <button onclick="window.close()"
-          style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;border-style:solid;">
+<div class="no-print" style="max-width:900px;margin:16px auto 0;padding:0 24px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <button
+      type="button"
+      onclick="handleBackPrint()"
+      style="padding:8px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;color:#0f172a;background:#fff;cursor:pointer;">
       ← Kembali
-  </button>
+    </button>
 
-  <button onclick="window.print()"
-          style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">
+    <button
+      type="button"
+      onclick="window.print()"
+      style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">
       🖨 Print
-  </button>
+    </button>
+  </div>
 </div>
 
 
@@ -202,7 +208,22 @@ Belum ada data barang.
 </div>
 
 <script>
-window.addEventListener('load',()=>window.print());
+function handleBackPrint() {
+  if (window.opener && !window.opener.closed) {
+    window.opener.focus();
+    window.close();
+    return;
+  }
+
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+
+  window.location.href = "{{ route('stok_realtime') }}";
+}
+
+window.addEventListener('load', () => window.print());
 </script>
 
 </body>
