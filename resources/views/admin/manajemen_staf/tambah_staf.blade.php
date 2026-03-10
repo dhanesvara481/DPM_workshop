@@ -73,16 +73,11 @@
 
       {{-- Card header --}}
       <div class="p-5 sm:p-6 border-b border-slate-200">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-lg font-semibold text-slate-900">Form Tambah Staf</div>
-            <div class="text-xs text-slate-500 mt-1">
-              Admin tidak dapat membuat admin baru. Role dikunci sebagai <span class="font-semibold">staff</span>.
-            </div>
+        <div class="min-w-0">
+          <div class="text-lg font-semibold text-slate-900">Form Tambah Staf</div>
+          <div class="text-xs text-slate-500 mt-1">
+            Admin tidak dapat membuat admin baru. Role dikunci sebagai <span class="font-semibold">staff</span>.
           </div>
-          <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700">
-            Role: staff
-          </span>
         </div>
       </div>
 

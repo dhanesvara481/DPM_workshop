@@ -69,15 +69,16 @@
                 </div>
 
                 {{-- BUTTON --}}
-                <div class="sm:col-span-1 flex sm:flex-col gap-3 sm:justify-end">
+               <div class="sm:col-span-1 grid grid-cols-2 sm:grid-cols-1 gap-3 sm:justify-end">
                     <button type="submit"
-                            class="rounded-2xl bg-blue-950 text-white py-3 text-sm font-semibold
-                                   hover:bg-blue-900 transition shadow">
+                            class="w-full rounded-2xl bg-blue-950 text-white px-4 py-3 text-sm font-semibold
+                                hover:bg-blue-900 transition shadow">
                         Filter
                     </button>
+
                     <a href="{{ route('riwayat_transaksi_staff') }}"
-                       class="rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-center
-                              hover:bg-slate-50 transition">
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-center
+                            hover:bg-slate-50 transition inline-flex items-center justify-center">
                         Reset
                     </a>
                 </div>

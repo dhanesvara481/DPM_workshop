@@ -64,10 +64,10 @@
                             <div class="text-xs text-slate-500 mt-1">Cari nama / filter status.</div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row gap-2 flex-wrap">
+                        <div class="grid grid-cols-1 sm:flex sm:flex-row gap-2 flex-wrap staff-toolbar-actions w-full lg:w-auto">
 
                             {{-- Search --}}
-                            <div class="relative">
+                            <div class="relative w-full sm:w-auto">
                                 <input name="q" id="q" type="text"
                                        value="{{ request('q') }}"
                                        placeholder="Cari nama / no HP..."
@@ -81,7 +81,7 @@
 
                             {{-- Filter status --}}
                             <select name="status"
-                                    class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">
+                                    class="h-10 w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-slate-200">
                                 <option value="">Semua Status</option>
                                 <option value="aktif"    {{ request('status') === 'aktif'    ? 'selected' : '' }}>Aktif</option>
                                 <option value="nonaktif" {{ request('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
@@ -93,15 +93,15 @@
 
                             {{-- Tombol Filter --}}
                             <button type="submit"
-                                    class="h-10 px-4 rounded-xl bg-blue-950 text-white hover:bg-blue-900 transition text-sm font-semibold">
+                                    class="h-10 w-full sm:w-auto px-4 rounded-xl bg-blue-950 text-white hover:bg-blue-900 transition text-sm font-semibold inline-flex items-center justify-center text-center">
                                 Filter
                             </button>
 
                             {{-- Tombol Reset (hanya muncul kalau ada filter aktif) --}}
                             @if(request('q') || request('status'))
                                 <a href="{{ route('tampilan_manajemen_staf', array_filter(['sort' => request('sort'), 'dir' => request('dir')])) }}"
-                                   class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
-                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                   class="h-10 w-full sm:w-auto px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center justify-center gap-1.5 text-center">
+                                    <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                     Reset
@@ -109,8 +109,8 @@
                             @endif
 
                             <a href="{{ route('tambah_staf') }}"
-                               class="h-10 px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold inline-flex items-center gap-2">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                               class="h-10 w-full sm:w-auto px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-semibold inline-flex items-center justify-center gap-2 text-center">
+                                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
                                 </svg>
                                 Tambah Staf
@@ -209,11 +209,11 @@
 
                                 {{-- Aksi --}}
                                 <td class="px-5 py-4">
-                                    <div class="flex items-center justify-end gap-2">
+                                    <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2 staff-row-actions">
 
                                         {{-- Detail popup --}}
                                         <button type="button"
-                                                class="btnDetail inline-flex h-9 items-center justify-center px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold whitespace-nowrap"
+                                                class="btnDetail inline-flex h-9 items-center justify-center px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold whitespace-nowrap text-center"
                                                 data-id="{{ $staf->user_id }}"
                                                 data-username="{{ $staf->username }}"
                                                 data-email="{{ $staf->email }}"
@@ -227,7 +227,7 @@
 
                                         @if($isStaff)
                                             <a href="{{ route('ubah_staf', $staf->user_id) }}"
-                                               class="inline-flex h-9 items-center justify-center px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold whitespace-nowrap">
+                                               class="inline-flex h-9 items-center justify-center px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-xs font-semibold whitespace-nowrap text-center">
                                                 Ubah
                                             </a>
 
@@ -235,7 +235,7 @@
                                                 <button type="button"
                                                         class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
                                                                 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition
-                                                                text-xs font-semibold whitespace-nowrap"
+                                                                text-xs font-semibold whitespace-nowrap text-center"
                                                         data-id="{{ $staf->user_id }}"
                                                         data-action="nonaktifkan"
                                                         data-nama="{{ $staf->username }}">
@@ -245,7 +245,7 @@
                                                 <button type="button"
                                                         class="btnToggleStatus inline-flex h-9 min-w-[112px] items-center justify-center px-3 rounded-xl
                                                                 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition
-                                                                text-xs font-semibold whitespace-nowrap"
+                                                                text-xs font-semibold whitespace-nowrap text-center"
                                                         data-id="{{ $staf->user_id }}"
                                                         data-action="aktifkan"
                                                         data-nama="{{ $staf->username }}">
@@ -453,6 +453,24 @@
         pointer-events: none; transition: .15s ease;
     }
     .tip:hover::after { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 640px) {
+        .staff-toolbar-actions {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            width: 100%;
+        }
+
+        .staff-toolbar-actions > * {
+            width: 100% !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+
+        .staff-row-actions {
+            justify-content: center !important;
+        }
+    }
 </style>
 @endpush
 
