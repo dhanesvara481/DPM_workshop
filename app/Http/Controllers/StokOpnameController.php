@@ -17,7 +17,7 @@ class StokOpnameController extends Controller
 {
     // ── 1. Daftar semua sesi opname ──────────────────────────────────────────
 
-    public function index(Request $request)
+    public function daftarOpname(Request $request)
     {
         $sortable = ['tanggal_opname', 'status', 'created_at'];
         $sort     = in_array($request->sort, $sortable) ? $request->sort : 'created_at';
@@ -41,7 +41,7 @@ class StokOpnameController extends Controller
 
     // ── 2. Form buat sesi opname baru ────────────────────────────────────────
 
-    public function create()
+    public function buatOpname()
     {
         // Cek apakah ada sesi draft yang belum selesai
         $draftAktif = StokOpname::where('status', 'draft')
@@ -56,7 +56,7 @@ class StokOpnameController extends Controller
 
     // ── 3. Simpan sesi opname baru (hanya header + snapshot semua barang) ────
 
-    public function store(Request $request)
+    public function simpanOpname(Request $request)
     {
         $request->validate([
             'tanggal_opname' => 'required|date',
@@ -94,20 +94,20 @@ class StokOpnameController extends Controller
         });
 
         return redirect()
-            ->route('stok_opname.index')
+            ->route('stok_opname.daftarOpname')
             ->with('success', 'Sesi stok opname berhasil dibuat. Silakan isi stok fisik.');
     }
 
     // ── 4. Form input stok fisik (edit) ──────────────────────────────────────
 
-    public function edit(int $id)
+    public function ubahOpname(int $id)
     {
         $opname = StokOpname::with('details')->findOrFail($id);
 
         // Hanya bisa edit saat masih draft
         if (!$opname->isDraft()) {
             return redirect()
-                ->route('stok_opname.show', $id)
+                ->route('stok_opname.detailOpname', $id)
                 ->with('error', 'Sesi ini tidak bisa diedit karena statusnya: ' . $opname->status_label);
         }
 
@@ -116,7 +116,7 @@ class StokOpnameController extends Controller
 
     // ── 5. Simpan input stok fisik (update detail) ───────────────────────────
 
-    public function update(Request $request, int $id)
+    public function updateOpname(Request $request, int $id)
     {
         $opname = StokOpname::with('details')->findOrFail($id);
 
@@ -161,7 +161,7 @@ class StokOpnameController extends Controller
 
     // ── 6. Submit untuk approval (draft → menunggu_approval) ─────────────────
 
-    public function submit(int $id)
+    public function submitOpname(int $id)
     {
         $opname = StokOpname::with('details')->findOrFail($id);
 
@@ -179,13 +179,13 @@ class StokOpnameController extends Controller
         $opname->update(['status' => 'menunggu_approval']);
 
         return redirect()
-            ->route('stok_opname.show', $id)
+            ->route('stok_opname.detailOpname', $id)
             ->with('success', 'Sesi opname berhasil disubmit. Menunggu persetujuan.');
     }
 
     // ── 7. Detail / tampilan sesi opname ─────────────────────────────────────
 
-    public function show(int $id, Request $request)
+    public function detailOpname(int $id, Request $request)
     {
         $opname = StokOpname::with('details')->findOrFail($id);
 
@@ -220,7 +220,7 @@ class StokOpnameController extends Controller
 
     // ── 8. Approve — update stok, catat riwayat ──────────────────────────────
 
-    public function approve(Request $request, int $id)
+    public function setujuiOpname(Request $request, int $id)
     {
         $request->validate([
             'catatan_approval' => 'nullable|string|max:255',
@@ -335,13 +335,13 @@ class StokOpnameController extends Controller
         });
 
         return redirect()
-            ->route('stok_opname.show', $id)
+            ->route('stok_opname.detailOpname', $id)
             ->with('success', 'Stok opname berhasil disetujui. Semua selisih telah disesuaikan.');
     }
 
     // ── 9. Tolak opname ───────────────────────────────────────────────────────
 
-    public function tolak(Request $request, int $id)
+    public function tolakOpname(Request $request, int $id)
     {
         $request->validate([
             'catatan_approval' => 'required|string|max:255',
@@ -366,13 +366,13 @@ class StokOpnameController extends Controller
         ]);
 
         return redirect()
-            ->route('stok_opname.show', $id)
+            ->route('stok_opname.detailOpname', $id)
             ->with('info', 'Sesi opname telah ditolak.');
     }
 
     // ── 10. Hapus sesi (hanya draft / ditolak) ───────────────────────────────
 
-    public function destroy(int $id)
+    public function hapusOpname(int $id)
     {
         $opname = StokOpname::findOrFail($id);
 
@@ -383,7 +383,7 @@ class StokOpnameController extends Controller
         $opname->delete(); // cascade → detail_stok_opname ikut terhapus
 
         return redirect()
-            ->route('stok_opname.index')
+            ->route('stok_opname.daftarOpname')
             ->with('success', 'Sesi opname berhasil dihapus.');
     }
 }

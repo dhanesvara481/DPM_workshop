@@ -246,60 +246,46 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [ManajemenStafController::class, 'toggleStatus']
         )->name('toggle_status_staf');
 
-        //============== Profil =================//
-        Route::get('/profil',
-            [ProfilController::class, 'getTampilanProfil']
-        )->name('tampilan_profil');
-
-        Route::get('/profil/edit',
-            [ProfilController::class, 'getEditProfil']
-        )->name('edit_profil');
-
-        Route::put('/profil/update',
-            [ProfilController::class, 'updateProfil']
-        )->name('update_profil');
-
         //============== Stok Opname =================//
         Route::get('/stok_opname',
-            [StokOpnameController::class, 'index']
-        )->name('stok_opname.index');
+            [StokOpnameController::class, 'daftarOpname']
+        )->name('stok_opname.daftarOpname');
 
         Route::get('/stok_opname/buat',
-            [StokOpnameController::class, 'create']
-        )->name('stok_opname.create');
+            [StokOpnameController::class, 'buatOpname']
+        )->name('stok_opname.buatOpname');
 
         Route::post('/stok_opname/simpan',
-            [StokOpnameController::class, 'store']
-        )->name('stok_opname.store');
+            [StokOpnameController::class, 'simpanOpname']
+        )->name('stok_opname.simpanOpname');
 
         Route::get('/stok_opname/{id}',
-            [StokOpnameController::class, 'show']
-        )->name('stok_opname.show');
+            [StokOpnameController::class, 'detailOpname']
+        )->name('stok_opname.detailOpname');
 
         Route::get('/stok_opname/{id}/edit',
-            [StokOpnameController::class, 'edit']
-        )->name('stok_opname.edit');
+            [StokOpnameController::class, 'ubahOpname']
+        )->name('stok_opname.ubahOpname');
 
         Route::post('/stok_opname/{id}/update',
-            [StokOpnameController::class, 'update']
-        )->name('stok_opname.update');
+            [StokOpnameController::class, 'updateOpname']
+        )->name('stok_opname.updateOpname');
 
         Route::post('/stok_opname/{id}/submit',
-            [StokOpnameController::class, 'submit']
-        )->name('stok_opname.submit');
+            [StokOpnameController::class, 'submitOpname']
+        )->name('stok_opname.submitOpname');
 
         Route::post('/stok_opname/{id}/approve',
-            [StokOpnameController::class, 'approve']
-        )->name('stok_opname.approve');
+            [StokOpnameController::class, 'setujuiOpname']
+        )->name('stok_opname.setujuiOpname');
 
         Route::post('/stok_opname/{id}/tolak',
-            [StokOpnameController::class, 'tolak']
-        )->name('stok_opname.tolak');
+            [StokOpnameController::class, 'tolakOpname']
+        )->name('stok_opname.tolakOpname');
 
         Route::delete('/stok_opname/{id}/hapus',
-            [StokOpnameController::class, 'destroy']
-        )->name('stok_opname.destroy');
-
+            [StokOpnameController::class, 'hapusOpname']
+        )->name('stok_opname.hapusOpname');
     });
 
     /*
