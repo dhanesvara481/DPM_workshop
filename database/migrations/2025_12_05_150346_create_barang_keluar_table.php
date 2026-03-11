@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('jumlah_keluar', 10);
             $table->datetime('tanggal_keluar');
             $table->enum('keterangan', ['Barang Rusak', 'Barang Dikembalikan','Penyesuaian Stok', 'Invoice']);
-            $table->string('ref_invoice')->nullable();
+            $table->string('ref_invoice', 20)->nullable();
             $table->string('foto_bukti')->nullable();
             $table->timestamps();
         });
