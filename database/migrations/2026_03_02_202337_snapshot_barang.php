@@ -10,22 +10,22 @@ return new class extends Migration
     {
         // BARANG MASUK
         Schema::table('barang_masuk', function (Blueprint $table) {
-            $table->string('kode_barang_snapshot')->nullable()->after('barang_id');
-            $table->string('nama_barang_snapshot')->nullable()->after('kode_barang_snapshot');
-            $table->string('satuan_snapshot')->nullable()->after('nama_barang_snapshot');
+            $table->string('kode_barang_snapshot', 50)->nullable()->after('barang_id');
+            $table->string('nama_barang_snapshot', 100)->nullable()->after('kode_barang_snapshot');
+            $table->string('satuan_snapshot', 20)->nullable()->after('nama_barang_snapshot');
         });
 
         // BARANG KELUAR
         Schema::table('barang_keluar', function (Blueprint $table) {
-            $table->string('kode_barang_snapshot')->nullable()->after('barang_id');
-            $table->string('nama_barang_snapshot')->nullable()->after('kode_barang_snapshot');
-            $table->string('satuan_snapshot')->nullable()->after('nama_barang_snapshot');
+            $table->string('kode_barang_snapshot', 50)->nullable()->after('barang_id');
+            $table->string('nama_barang_snapshot', 100  )->nullable()->after('kode_barang_snapshot');
+            $table->string('satuan_snapshot', 20)->nullable()->after('nama_barang_snapshot');   
         });
 
         // RIWAYAT STOK
         Schema::table('riwayat_stok', function (Blueprint $table) {
-            $table->string('kode_barang_snapshot')->nullable()->after('barang_id');
-            $table->string('nama_barang_snapshot')->nullable()->after('kode_barang_snapshot');
+            $table->string('kode_barang_snapshot', 50)->nullable()->after('barang_id');
+            $table->string('nama_barang_snapshot', 100)->nullable()->after('kode_barang_snapshot');
         });
     }
 
