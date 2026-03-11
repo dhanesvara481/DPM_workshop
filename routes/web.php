@@ -50,6 +50,15 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         [InvoiceController::class, 'checkStok']
     )->name('invoice.check-stok');
 
+    //============== Notifikasi (Admin & Staff) =================//
+    Route::get('/notifikasi',
+        [NotifikasiController::class, 'getTampilanNotifikasi']
+    )->name('tampilan_notifikasi');
+
+    Route::get('/notifikasi/{id}',
+        [NotifikasiController::class, 'getDetailNotifikasi']
+    )->name('detail_notifikasi');
+
     /*
     |--------------------------------------------------------------------------
     | Admin Routes
@@ -237,15 +246,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [ManajemenStafController::class, 'toggleStatus']
         )->name('toggle_status_staf');
 
-        //============== Notifikasi =================//
-        Route::get('/tampilan_notifikasi',
-            [NotifikasiController::class, 'getTampilanNotifikasi']
-        )->name('tampilan_notifikasi');
-
-        Route::get('/detail_notifikasi/{id}',
-            [NotifikasiController::class, 'getDetailNotifikasi']
-        )->name('detail_notifikasi');
-
         //============== Profil =================//
         Route::get('/profil',
             [ProfilController::class, 'getTampilanProfil']
@@ -340,14 +340,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::get('/jadwal_kerja_staff',
             [JadwalKerjaController::class, 'getJadwalKerjaStaff']
         )->name('jadwal_kerja_staff');
-
-        Route::get('/staff/notifikasi',
-            [NotifikasiController::class, 'getNotifikasiStaff']
-        )->name('notifikasi_staff');
-
-        Route::get('/staff/notifikasi/{id}',
-            [NotifikasiController::class, 'getDetailNotifikasiStaff']
-        )->name('detail_notifikasi_staff');
 
         Route::get('/staff/profil',
             [ProfilController::class, 'getTampilanProfilStaff']

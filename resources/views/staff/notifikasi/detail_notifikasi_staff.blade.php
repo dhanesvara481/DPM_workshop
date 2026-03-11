@@ -23,7 +23,7 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="/staff/notifikasi"
+      <a href="{{ route('tampilan_notifikasi') }}"
          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>

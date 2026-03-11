@@ -10,27 +10,21 @@ class NotifikasiController extends Controller
     {
         $notifs = Notifikasi::orderBy('tanggal_dibuat', 'desc')->paginate(10);
 
-        return view('admin.notifikasi.tampilan_notifikasi', compact('notifs'));
+        $view = auth()->user()->role === 'admin'
+            ? 'admin.notifikasi.tampilan_notifikasi'
+            : 'staff.notifikasi.tampilan_notifikasi_staff';
+
+        return view($view, compact('notifs'));
     }
 
     public function getDetailNotifikasi($id)
     {
         $notif = Notifikasi::findOrFail($id);
 
-        return view('admin.notifikasi.detail_notifikasi', compact('notif'));
-    }
+        $view = auth()->user()->role === 'admin'
+            ? 'admin.notifikasi.detail_notifikasi'
+            : 'staff.notifikasi.detail_notifikasi_staff';
 
-    public function getNotifikasiStaff()
-    {
-        $notifs = Notifikasi::orderBy('tanggal_dibuat', 'desc')->paginate(10);
-
-        return view('staff.notifikasi.tampilan_notifikasi_staff', compact('notifs'));
-    }
-
-    public function getDetailNotifikasiStaff($id)
-    {
-        $notif = Notifikasi::findOrFail($id);
-
-        return view('staff.notifikasi.detail_notifikasi_staff', compact('notif'));
+        return view($view, compact('notif'));
     }
 }
