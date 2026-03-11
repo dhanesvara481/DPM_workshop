@@ -22,7 +22,7 @@
     </div>
     <div class="flex items-center gap-2 shrink-0">
       @if($opname->isDraft())
-        <a href="{{ route('stok_opname.edit', $opname->opname_id) }}"
+        <a href="{{ route('stok_opname.ubahOpname', $opname->opname_id) }}"
            class="h-10 px-3 sm:px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-700 transition text-sm font-semibold inline-flex items-center gap-1.5">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -30,7 +30,7 @@
           <span class="hidden sm:inline">Isi Stok</span>
         </a>
       @endif
-      <a href="{{ route('stok_opname.index') }}"
+      <a href="{{ route('stok_opname.daftarOpname') }}"
          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -159,12 +159,12 @@
     {{-- Filter tabel --}}
     <div class="flex items-center gap-3 flex-wrap">
       <span class="text-sm text-slate-600 font-medium">Tampilkan:</span>
-      <a href="{{ route('stok_opname.show', $opname->opname_id) }}"
+      <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition
                 {{ !$tampilkanSelisih ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
         Semua Barang
       </a>
-      <a href="{{ route('stok_opname.show', $opname->opname_id) }}?hanya_selisih=1"
+      <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}?hanya_selisih=1"
          class="px-3 py-1.5 rounded-lg text-sm font-medium transition
                 {{ $tampilkanSelisih ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50' }}">
         Hanya Selisih
@@ -341,7 +341,7 @@
       Stok sistem untuk <strong>{{ $adaSelisih }}</strong> barang akan disesuaikan ke stok fisik.
       Tindakan ini tidak dapat dibatalkan.
     </p>
-    <form method="POST" action="{{ route('stok_opname.approve', $opname->opname_id) }}">
+    <form method="POST" action="{{ route('stok_opname.setujuiOpname', $opname->opname_id) }}">
       @csrf
       <div class="mb-4">
         <label class="block text-sm font-medium text-slate-700 mb-1.5">Catatan (opsional)</label>
@@ -366,7 +366,7 @@
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
     <h2 class="text-lg font-bold text-slate-800 mb-1">Tolak Stok Opname</h2>
     <p class="text-sm text-slate-500 mb-4">Sesi ini akan ditolak dan stok tidak akan diubah. Wajib isi alasan penolakan.</p>
-    <form method="POST" action="{{ route('stok_opname.tolak', $opname->opname_id) }}">
+    <form method="POST" action="{{ route('stok_opname.tolakOpname', $opname->opname_id) }}">
       @csrf
       <div class="mb-4">
         <label class="block text-sm font-medium text-slate-700 mb-1.5">Alasan Penolakan <span class="text-rose-500">*</span></label>

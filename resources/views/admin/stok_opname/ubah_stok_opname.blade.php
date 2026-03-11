@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="shrink-0">
-      <a href="{{ route('stok_opname.index') }}"
+      <a href="{{ route('stok_opname.daftarOpname') }}"
          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -78,7 +78,7 @@
     </div>
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('stok_opname.update', $opname->opname_id) }}" id="formStokFisik">
+    <form method="POST" action="{{ route('stok_opname.updateOpname', $opname->opname_id) }}" id="formStokFisik">
       @csrf
 
       {{-- Toolbar --}}
@@ -204,7 +204,7 @@
                 class="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition shadow-sm">
           Submit untuk Approval
         </button>
-        <a href="{{ route('stok_opname.show', $opname->opname_id) }}"
+        <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
            class="h-10 px-5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition inline-flex items-center">
           Lihat Detail
         </a>
@@ -212,7 +212,7 @@
     </form>
 
     {{-- Form submit terpisah --}}
-    <form id="formSubmit" method="POST" action="{{ route('stok_opname.submit', $opname->opname_id) }}" class="hidden">
+    <form id="formSubmit" method="POST" action="{{ route('stok_opname.submitOpname', $opname->opname_id) }}" class="hidden">
       @csrf
     </form>
 

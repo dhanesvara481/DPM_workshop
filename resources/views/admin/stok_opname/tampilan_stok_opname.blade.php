@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="shrink-0">
-      <a href="{{ route('stok_opname.create') }}"
+      <a href="{{ route('stok_opname.buatOpname') }}"
          class="h-10 px-4 rounded-xl bg-slate-900 text-white hover:bg-slate-700 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -94,7 +94,7 @@
             Filter
           </button>
           @if(request()->hasAny(['status','dari','sampai']))
-            <a href="{{ route('stok_opname.index') }}"
+            <a href="{{ route('stok_opname.daftarOpname') }}"
                class="h-9 px-4 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition inline-flex items-center">
               Reset
             </a>
@@ -114,7 +114,7 @@
             </svg>
           </div>
           <p class="text-slate-500 text-sm">Belum ada sesi stok opname.</p>
-          <a href="{{ route('stok_opname.create') }}" class="mt-3 inline-block text-sm font-medium text-slate-900 underline underline-offset-2">
+          <a href="{{ route('stok_opname.buatOpname') }}" class="mt-3 inline-block text-sm font-medium text-slate-900 underline underline-offset-2">
             Buat sesi pertama
           </a>
         </div>
@@ -165,12 +165,12 @@
                 </td>
                 <td class="px-5 py-4 text-center">
                   <div class="flex items-center justify-center gap-2">
-                    <a href="{{ route('stok_opname.show', $opname->opname_id) }}"
+                    <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
                       Detail
                     </a>
                     @if($opname->isDraft())
-                      <a href="{{ route('stok_opname.edit', $opname->opname_id) }}"
+                      <a href="{{ route('stok_opname.ubahOpname', $opname->opname_id) }}"
                          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 transition">
                         Isi Stok
                       </a>
@@ -181,7 +181,7 @@
                               data-id="{{ $opname->opname_id }}"
                               data-tanggal="{{ $opname->tanggal_opname->format('d M Y') }}"
                               data-keterangan="{{ $opname->keterangan ?? '-' }}"
-                              data-action="{{ route('stok_opname.destroy', $opname->opname_id) }}">
+                              data-action="{{ route('stok_opname.hapusOpname', $opname->opname_id) }}">
                         Hapus
                       </button>
                     @endif
@@ -214,12 +214,12 @@
               @endif
             </div>
             <div class="flex flex-wrap gap-2">
-              <a href="{{ route('stok_opname.show', $opname->opname_id) }}"
+              <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
                  class="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
                 Detail
               </a>
               @if($opname->isDraft())
-                <a href="{{ route('stok_opname.edit', $opname->opname_id) }}"
+                <a href="{{ route('stok_opname.ubahOpname', $opname->opname_id) }}"
                    class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 transition">
                   Isi Stok
                 </a>
@@ -230,7 +230,7 @@
                         data-id="{{ $opname->opname_id }}"
                         data-tanggal="{{ $opname->tanggal_opname->format('d M Y') }}"
                         data-keterangan="{{ $opname->keterangan ?? '-' }}"
-                        data-action="{{ route('stok_opname.destroy', $opname->opname_id) }}">
+                        data-action="{{ route('stok_opname.hapusOpname', $opname->opname_id) }}">
                   Hapus
                 </button>
               @endif

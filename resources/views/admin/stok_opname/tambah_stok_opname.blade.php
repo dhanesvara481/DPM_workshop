@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="shrink-0">
-      <a href="{{ route('stok_opname.index') }}"
+      <a href="{{ route('stok_opname.daftarOpname') }}"
          class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-1.5">
         <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -54,7 +54,7 @@
         <div>
           Masih ada sesi opname yang belum selesai
           ({{ $draftAktif->tanggal_opname->format('d M Y') }} — <strong>{{ $draftAktif->status_label }}</strong>).
-          <a href="{{ route('stok_opname.show', $draftAktif->opname_id) }}" class="underline font-medium ml-1">
+          <a href="{{ route('stok_opname.detailOpname', $draftAktif->opname_id) }}" class="underline font-medium ml-1">
             Lihat sesi tersebut
           </a>
         </div>
@@ -70,7 +70,7 @@
         </p>
       </div>
 
-      <form method="POST" action="{{ route('stok_opname.store') }}" class="space-y-5">
+      <form method="POST" action="{{ route('stok_opname.simpanOpname') }}" class="space-y-5">
         @csrf
 
         {{-- Tanggal --}}
@@ -125,7 +125,7 @@
                   class="h-10 px-5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 transition shadow-sm">
             Buat Sesi Opname
           </button>
-          <a href="{{ route('stok_opname.index') }}"
+          <a href="{{ route('stok_opname.daftarOpname') }}"
              class="h-10 px-5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition inline-flex items-center">
             Batal
           </a>
