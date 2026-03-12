@@ -17,8 +17,9 @@ class KirimDigestMingguanJadwalWahaCommand extends Command
 
     public function handle(WahaNotifikasiService $notif): int
     {
-        $senin  = $this->option('week')
-            ? Carbon::createFromIsoFormat('GGGG-[W]WW', $this->option('week'))->startOfWeek()
+        // ✅ FIX — pakai DateTime native PHP lalu convert ke Carbon
+        $senin = $this->option('week')
+            ? Carbon::instance(new \DateTime($this->option('week')))->startOfWeek()
             : Carbon::now()->startOfWeek();
 
         $minggu = $senin->copy()->endOfWeek();

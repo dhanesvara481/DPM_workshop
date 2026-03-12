@@ -18,8 +18,9 @@ class KirimDigestMingguanJadwalCommand extends Command
     public function handle(GmailNotifikasiService $notif): int
     {
         // ── Tentukan rentang minggu ───────────────────────────────────────────
-        $senin  = $this->option('week')
-            ? Carbon::createFromIsoFormat('GGGG-[W]WW', $this->option('week'))->startOfWeek()
+        // ✅ Fix sama
+        $senin = $this->option('week')
+            ? Carbon::instance(new \DateTime($this->option('week')))->startOfWeek()
             : Carbon::now()->startOfWeek();
 
         $minggu = $senin->copy()->endOfWeek();
