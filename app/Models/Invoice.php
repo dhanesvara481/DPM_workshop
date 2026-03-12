@@ -84,19 +84,29 @@ class Invoice extends Model
     /**
      * grand_total dihitung dari subtotal invoice + pajak - diskon
      * yang tersimpan di row ringkasan detail_invoice.
+     *
+     * Menggunakan bcmath untuk presisi desimal yang akurat —
+     * menghindari floating point error pada kalkulasi nilai uang.
+     *
+     * @return string  Nilai dalam format string desimal (e.g. "150000.00")
      */
-    public function getGrandTotalAttribute(): float
+    public function getGrandTotalAttribute(): string
     {
-        $subtotal  = (float) $this->subtotal;
+        $subtotal  = (string) ($this->subtotal ?? '0');
         $ringkasan = $this->ringkasan;
 
-        $diskon    = (float) ($ringkasan?->diskon ?? 0);
-        $pajakPct  = (float) ($ringkasan?->pajak  ?? 0);
+        $diskon   = (string) ($ringkasan?->diskon ?? '0');
+        $pajakPct = (string) ($ringkasan?->pajak  ?? '0');
 
-        $afterDisc = max(0, $subtotal - $diskon);
-        $pajakVal  = round($afterDisc * ($pajakPct / 100));
+        // afterDisc = max(0, subtotal - diskon)
+        $selisih   = bcsub($subtotal, $diskon, 2);
+        $afterDisc = bccomp($selisih, '0', 2) >= 0 ? $selisih : '0.00';
 
-        return $afterDisc + $pajakVal;
+        // pajakVal = round(afterDisc * pajakPct / 100, 2)
+        $pajakRaw = bcdiv(bcmul($afterDisc, $pajakPct, 6), '100', 6);
+        $pajakVal = number_format((float) $pajakRaw, 2, '.', '');
+
+        return bcadd($afterDisc, $pajakVal, 2);
     }
 
     /**

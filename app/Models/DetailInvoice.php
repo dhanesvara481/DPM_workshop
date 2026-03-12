@@ -46,17 +46,30 @@ class DetailInvoice extends Model
     /**
      * Harga per satuan: prioritas kolom snapshot `harga_satuan`,
      * fallback kalkulasi dari total/jumlah (data lama sebelum migrasi).
+     *
+     * Menggunakan bcmath untuk presisi desimal yang akurat.
+     * Return string agar aman dipakai langsung di kalkulasi bcmath berikutnya.
+     *
+     * @return string  Contoh: "25000.00"
      */
-    public function getHargaAttribute(): float
+    public function getHargaAttribute(): string
     {
+        $hargaSatuan = (string) ($this->harga_satuan ?? '0');
+
         // Kalau kolom harga_satuan ada dan terisi, pakai itu (snapshot)
-        if (!is_null($this->harga_satuan) && (float) $this->harga_satuan > 0) {
-            return (float) $this->harga_satuan;
+        if (bccomp($hargaSatuan, '0', 2) > 0) {
+            return $hargaSatuan;
         }
 
         // Fallback: kalkulasi dari total ÷ qty (data lama)
-        $qty = (int) $this->jumlah;
-        return $qty > 0 ? (float) $this->total / $qty : (float) $this->total;
+        $qty   = (int) $this->jumlah;
+        $total = (string) ($this->total ?? '0');
+
+        if ($qty > 0) {
+            return bcdiv($total, (string) $qty, 2);
+        }
+
+        return $total;
     }
 
     public function getQtyAttribute(): int
@@ -73,7 +86,7 @@ class DetailInvoice extends Model
 
     /**
      * Relasi ke barang — bisa null jika barang sudah dihapus.
-     * Gunakan accessor getNamaBarangAttribute() untuk tampilan, bukan langsung $item->barang->nama_barang.
+     * Gunakan accessor getNamaBarangAttribute() untuk tampilan.
      */
     public function barang()
     {

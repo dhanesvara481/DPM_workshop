@@ -507,7 +507,7 @@
       msg: `Yakin mau hapus ${kode} — ${nama}?`,
       onConfirm: () => {
         const form = document.getElementById('deleteForm');
-        form.action = `/hapus_barang/${barangId}`;
+        form.action = `{{ url('/barang') }}/` + barangId;
         form.submit();
       }
     });

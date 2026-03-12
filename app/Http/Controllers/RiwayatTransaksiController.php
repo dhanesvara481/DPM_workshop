@@ -7,6 +7,42 @@ use Illuminate\Http\Request;
 
 class RiwayatTransaksiController extends Controller
 {
+    // ── Helper: konversi ke string desimal aman ──────────────────────────────
+
+    /**
+     * Konversi nilai ke string desimal 2 angka.
+     * Menghindari (float) cast untuk mencegah floating point error pada nilai uang.
+     */
+    private function toDecimalString(mixed $value): string
+    {
+        if (is_null($value) || $value === '') {
+            return '0.00';
+        }
+        $str = preg_replace('/[^0-9.\-]/', '', (string) $value);
+        return is_numeric($str) ? number_format((float) $str, 2, '.', '') : '0.00';
+    }
+
+    /**
+     * Hitung grand total dari subtotal, diskon, dan pajak menggunakan bcmath.
+     * Menghindari float agar tidak ada selisih pembulatan pada nilai uang.
+     *
+     * @return string  Contoh: "150000.00"
+     */
+    private function hitungGrandTotal(mixed $subtotal, mixed $diskon, mixed $pajakPct): string
+    {
+        $sub  = $this->toDecimalString($subtotal);
+        $disc = $this->toDecimalString($diskon);
+        $pct  = (string) max(0, (int) $pajakPct);
+
+        $selisih   = bcsub($sub, $disc, 2);
+        $afterDisc = bccomp($selisih, '0', 2) >= 0 ? $selisih : '0.00';
+
+        $pajakRaw = bcdiv(bcmul($afterDisc, $pct, 6), '100', 6);
+        $pajakVal = number_format((float) $pajakRaw, 2, '.', '');
+
+        return bcadd($afterDisc, $pajakVal, 2);
+    }
+
     // ===================== ADMIN =====================
 
     public function getRiwayatTransaksi(Request $request)
@@ -32,7 +68,6 @@ class RiwayatTransaksiController extends Controller
                 invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
-                /* ── Snapshot-first: nama lama dipertahankan walau user ganti username ── */
                 COALESCE(riwayat_transaksi.username_snapshot, user.username, '[User Dihapus]')
                                                                             AS nama_pembuat,
                 COALESCE(riwayat_transaksi.email_snapshot, user.email, '') AS email_pembuat,
@@ -98,7 +133,6 @@ class RiwayatTransaksiController extends Controller
                            ->whereColumn('detail_invoice.invoice_id', 'invoice.invoice_id')
                            ->where('detail_invoice.nama_pelanggan', 'like', "%{$q}%");
                     })
-                    // ── Bisa search berdasarkan nama pembuat (snapshot) ──
                     ->orWhere('riwayat_transaksi.username_snapshot', 'like', "%{$q}%");
             });
         }
@@ -121,32 +155,33 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => $this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
             ? $rowRingkasan->deskripsi
             : '-';
 
-        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
-        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
+        $diskon   = $this->toDecimalString($rowRingkasan?->diskon ?? '0');
+        $pajakPct = (int) ($rowRingkasan?->pajak ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !($this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        // ── Snapshot-first: pakai nama lama walau admin sudah ganti username ──
         $namaPembuat     = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
 
-        $subtotal     = (float) $invoice->subtotal;
-        $afterDisc    = max(0, $subtotal - $diskon);
-        $pajakNominal = round($afterDisc * ($pajakPct / 100));
-        $grandTotal   = $afterDisc + $pajakNominal;
+        $subtotal     = $this->toDecimalString($invoice->subtotal);
+        $grandTotal   = $this->hitungGrandTotal($subtotal, $diskon, $pajakPct);
+
+        $afterDisc    = bcsub($subtotal, $diskon, 2);
+        $afterDisc    = bccomp($afterDisc, '0', 2) >= 0 ? $afterDisc : '0.00';
+        $pajakNominal = $this->toDecimalString(bcsub($grandTotal, $afterDisc, 2));
 
         $trx = (object) [
             'id'               => $riwayat->riwayat_transaksi_id,
@@ -155,8 +190,8 @@ class RiwayatTransaksiController extends Controller
             'nama_pengguna'    => $nama,
             'kontak'           => $kontak,
             'subtotal'         => $subtotal,
-            'subtotal_barang'  => (float) $invoice->subtotal_barang,
-            'biaya_jasa'       => (float) $invoice->biaya_jasa,
+            'subtotal_barang'  => $this->toDecimalString($invoice->subtotal_barang),
+            'biaya_jasa'       => $this->toDecimalString($invoice->biaya_jasa),
             'diskon'           => $diskon,
             'pajak'            => $pajakPct,
             'pajak_nominal'    => $pajakNominal,
@@ -180,30 +215,31 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => $this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
             ? $rowRingkasan->deskripsi
             : '-';
 
-        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
-        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
+        $diskon   = $this->toDecimalString($rowRingkasan?->diskon ?? '0');
+        $pajakPct = (int) ($rowRingkasan?->pajak ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !($this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        // ── Snapshot-first ──
-        $namaPembuat = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
+        $namaPembuat  = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
 
-        $subtotal     = (float) $invoice->subtotal;
-        $afterDisc    = max(0, $subtotal - $diskon);
-        $pajakNominal = round($afterDisc * ($pajakPct / 100));
-        $grandTotal   = $afterDisc + $pajakNominal;
+        $subtotal     = $this->toDecimalString($invoice->subtotal);
+        $grandTotal   = $this->hitungGrandTotal($subtotal, $diskon, $pajakPct);
+
+        $afterDisc    = bcsub($subtotal, $diskon, 2);
+        $afterDisc    = bccomp($afterDisc, '0', 2) >= 0 ? $afterDisc : '0.00';
+        $pajakNominal = $this->toDecimalString(bcsub($grandTotal, $afterDisc, 2));
 
         $trx = (object) [
             'id'              => $riwayat->riwayat_transaksi_id,
@@ -212,8 +248,8 @@ class RiwayatTransaksiController extends Controller
             'nama_pengguna'   => $nama,
             'kontak'          => $kontak,
             'subtotal'        => $subtotal,
-            'subtotal_barang' => (float) $invoice->subtotal_barang,
-            'biaya_jasa'      => (float) $invoice->biaya_jasa,
+            'subtotal_barang' => $this->toDecimalString($invoice->subtotal_barang),
+            'biaya_jasa'      => $this->toDecimalString($invoice->biaya_jasa),
             'diskon'          => $diskon,
             'pajak'           => $pajakPct,
             'pajak_nominal'   => $pajakNominal,
@@ -253,7 +289,6 @@ class RiwayatTransaksiController extends Controller
                 invoice.subtotal                                            AS total_sebelum,
                 invoice.status,
                 invoice.tanggal_invoice,
-                /* ── Snapshot-first ── */
                 COALESCE(riwayat_transaksi.username_snapshot, user.username, '[User Dihapus]')
                                                                             AS nama_pembuat,
                 COALESCE(riwayat_transaksi.email_snapshot, user.email, '') AS email_pembuat,
@@ -328,32 +363,33 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => $this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
             ? $rowRingkasan->deskripsi
             : '-';
 
-        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
-        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
+        $diskon   = $this->toDecimalString($rowRingkasan?->diskon ?? '0');
+        $pajakPct = (int) ($rowRingkasan?->pajak ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !($this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        // ── Snapshot-first ──
         $namaPembuat     = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
         $hasJasa         = $itemsReal->contains(fn($i) => $i->tipe_transaksi === 'Jasa');
         $kategoriInvoice = $hasJasa ? 'Jasa' : 'Barang';
 
-        $subtotal     = (float) $invoice->subtotal;
-        $afterDisc    = max(0, $subtotal - $diskon);
-        $pajakNominal = round($afterDisc * ($pajakPct / 100));
-        $grandTotal   = $afterDisc + $pajakNominal;
+        $subtotal     = $this->toDecimalString($invoice->subtotal);
+        $grandTotal   = $this->hitungGrandTotal($subtotal, $diskon, $pajakPct);
+
+        $afterDisc    = bcsub($subtotal, $diskon, 2);
+        $afterDisc    = bccomp($afterDisc, '0', 2) >= 0 ? $afterDisc : '0.00';
+        $pajakNominal = $this->toDecimalString(bcsub($grandTotal, $afterDisc, 2));
 
         $trx = (object) [
             'id'               => $riwayat->riwayat_transaksi_id,
@@ -362,8 +398,8 @@ class RiwayatTransaksiController extends Controller
             'nama_pengguna'    => $nama,
             'kontak'           => $kontak,
             'subtotal'         => $subtotal,
-            'subtotal_barang'  => (float) $invoice->subtotal_barang,
-            'biaya_jasa'       => (float) $invoice->biaya_jasa,
+            'subtotal_barang'  => $this->toDecimalString($invoice->subtotal_barang),
+            'biaya_jasa'       => $this->toDecimalString($invoice->biaya_jasa),
             'diskon'           => $diskon,
             'pajak'            => $pajakPct,
             'pajak_nominal'    => $pajakNominal,
@@ -388,30 +424,31 @@ class RiwayatTransaksiController extends Controller
         $invoice = $riwayat->invoice;
 
         $rowRingkasan = $invoice->items->first(
-            fn($i) => (float) $i->total == 0 && (int) $i->jumlah == 0
+            fn($i) => $this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0
         );
 
         $catatan = ($rowRingkasan?->deskripsi && $rowRingkasan->deskripsi !== '-')
             ? $rowRingkasan->deskripsi
             : '-';
 
-        $diskon   = (float) ($rowRingkasan?->diskon ?? 0);
-        $pajakPct = (int)   ($rowRingkasan?->pajak  ?? 0);
+        $diskon   = $this->toDecimalString($rowRingkasan?->diskon ?? '0');
+        $pajakPct = (int) ($rowRingkasan?->pajak ?? 0);
 
         $itemsReal = $invoice->items->filter(
-            fn($i) => !((float) $i->total == 0 && (int) $i->jumlah == 0)
+            fn($i) => !($this->toDecimalString($i->total) === '0.00' && (int) $i->jumlah == 0)
         )->values();
 
         $nama   = $itemsReal->first()?->nama_pelanggan ?? $invoice->items->first()?->nama_pelanggan ?? 'User';
         $kontak = $itemsReal->first()?->kontak ?? $invoice->items->first()?->kontak ?? '-';
 
-        // ── Snapshot-first ──
-        $namaPembuat = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
+        $namaPembuat  = $riwayat->username_snapshot ?? $riwayat->user?->username ?? '-';
 
-        $subtotal     = (float) $invoice->subtotal;
-        $afterDisc    = max(0, $subtotal - $diskon);
-        $pajakNominal = round($afterDisc * ($pajakPct / 100));
-        $grandTotal   = $afterDisc + $pajakNominal;
+        $subtotal     = $this->toDecimalString($invoice->subtotal);
+        $grandTotal   = $this->hitungGrandTotal($subtotal, $diskon, $pajakPct);
+
+        $afterDisc    = bcsub($subtotal, $diskon, 2);
+        $afterDisc    = bccomp($afterDisc, '0', 2) >= 0 ? $afterDisc : '0.00';
+        $pajakNominal = $this->toDecimalString(bcsub($grandTotal, $afterDisc, 2));
 
         $trx = (object) [
             'id'              => $riwayat->riwayat_transaksi_id,
@@ -420,8 +457,8 @@ class RiwayatTransaksiController extends Controller
             'nama_pengguna'   => $nama,
             'kontak'          => $kontak,
             'subtotal'        => $subtotal,
-            'subtotal_barang' => (float) $invoice->subtotal_barang,
-            'biaya_jasa'      => (float) $invoice->biaya_jasa,
+            'subtotal_barang' => $this->toDecimalString($invoice->subtotal_barang),
+            'biaya_jasa'      => $this->toDecimalString($invoice->biaya_jasa),
             'diskon'          => $diskon,
             'pajak'           => $pajakPct,
             'pajak_nominal'   => $pajakNominal,

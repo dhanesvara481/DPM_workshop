@@ -442,7 +442,7 @@
     btn.textContent = '...';
 
     try {
-      const res  = await fetch('/barang/buat_kode_barang');
+      const res  = await fetch('{{ route("buat_kode_barang") }}')
       const data = await res.json();
       if (data.kode) {
         kodeBarangInput.value = data.kode;

@@ -18,6 +18,7 @@
 ### All Defined Routes in routes/web.php (65 total)
 
 **Admin Routes:**
+
 - `tampilan_dashboard`, `mengelola_barang`, `tambah_barang`, `simpan_barang`, `ubah_barang`, `perbarui_barang`, `hapus_barang`, `buat_kode_barang`
 - `barang_keluar`, `simpan_barang_keluar`
 - `barang_masuk`, `simpan_barang_masuk`
@@ -31,11 +32,13 @@
 - `tampilan_profil`, `edit_profil`, `update_profil`
 
 **Staff Routes:**
+
 - `tampilan_dashboard_staff`, `tampilan_invoice_staff`, `stok_realtime_staff`, `stok_realtime_staff.print`
 - `riwayat_transaksi_staff`, `detail_riwayat_transaksi_staff`, `transaksi.nota_staff`
 - `jadwal_kerja_staff`, `tampilan_profil_staff`
 
 **Shared Routes:**
+
 - `login`, `login.attempt`, `logout`, `dashboard`
 - `tampilan_notifikasi`, `detail_notifikasi`
 - `invoice.simpan`, `invoice.check-stok`
@@ -75,18 +78,18 @@
 
 All 10 stok_opname routes correctly use dot notation prefix as a route group:
 
-| Route Name | Used In | Status |
-|-----------|---------|--------|
-| `stok_opname.daftarOpname` | sidebar, mengelola_barang, stok_opname views | ✅ |
-| `stok_opname.buatOpname` | tampilan_stok_opname.blade.php | ✅ |
-| `stok_opname.simpanOpname` | tambah_stok_opname.blade.php | ✅ |
-| `stok_opname.detailOpname` | tampilan_stok_opname, tambah_stok_opname, detail views | ✅ |
-| `stok_opname.ubahOpname` | ubah, detail, tampilan views | ✅ |
-| `stok_opname.updateOpname` | ubah_stok_opname.blade.php | ✅ |
-| `stok_opname.submitOpname` | ubah_stok_opname.blade.php | ✅ |
-| `stok_opname.setujuiOpname` | detail_stok_opname.blade.php | ✅ |
-| `stok_opname.tolakOpname` | detail_stok_opname.blade.php | ✅ |
-| `stok_opname.hapusOpname` | tampilan_stok_opname.blade.php | ✅ |
+| Route Name                  | Used In                                                | Status |
+| --------------------------- | ------------------------------------------------------ | ------ |
+| `stok_opname.daftarOpname`  | sidebar, mengelola_barang, stok_opname views           | ✅     |
+| `stok_opname.buatOpname`    | tampilan_stok_opname.blade.php                         | ✅     |
+| `stok_opname.simpanOpname`  | tambah_stok_opname.blade.php                           | ✅     |
+| `stok_opname.detailOpname`  | tampilan_stok_opname, tambah_stok_opname, detail views | ✅     |
+| `stok_opname.ubahOpname`    | ubah, detail, tampilan views                           | ✅     |
+| `stok_opname.updateOpname`  | ubah_stok_opname.blade.php                             | ✅     |
+| `stok_opname.submitOpname`  | ubah_stok_opname.blade.php                             | ✅     |
+| `stok_opname.setujuiOpname` | detail_stok_opname.blade.php                           | ✅     |
+| `stok_opname.tolakOpname`   | detail_stok_opname.blade.php                           | ✅     |
+| `stok_opname.hapusOpname`   | tampilan_stok_opname.blade.php                         | ✅     |
 
 ---
 
@@ -95,6 +98,7 @@ All 10 stok_opname routes correctly use dot notation prefix as a route group:
 These routes are hardcoded as raw URLs instead of using the `route()` helper:
 
 ### 1. **`hapus_barang` - Delete Button**
+
 - **File:** [admin/mengelola_barang/tampilan_barang.blade.php](resources/views/admin/mengelola_barang/tampilan_barang.blade.php#L510)
 - **Current Usage:** `form.action = `/hapus_barang/${barangId}`;`
 - **Should Be:** `form.action = "{{ route('hapus_barang', ['id' => ''] }}/" + barangId;`
@@ -102,6 +106,7 @@ These routes are hardcoded as raw URLs instead of using the `route()` helper:
 - **Severity:** MEDIUM
 
 ### 2. **`buat_kode_barang` - Auto-generate Code**
+
 - **File:** [admin/mengelola_barang/tambah_barang.blade.php](resources/views/admin/mengelola_barang/tambah_barang.blade.php#L445)
 - **Current Usage:** `const res = await fetch('/barang/buat_kode_barang');`
 - **Should Be:** `const res = await fetch("{{ route('buat_kode_barang') }}");`
@@ -113,41 +118,43 @@ These routes are hardcoded as raw URLs instead of using the `route()` helper:
 ## Routes Defined But Not Used in Blade Files
 
 These routes are defined in `routes/web.php` but not referenced in blade files. They may be called via:
+
 - JavaScript/AJAX after being built once with route()
 - API calls
 - Migrations or other backend code
 
-| Route Name | Purpose | Status |
-|-----------|---------|--------|
-| `delete_jadwal_kerja` | DELETE jadwal | ✓ (Called via JS) |
-| `toggle_status_staf` | PATCH toggle status | ✓ (Called via JS) |
-| `dashboard` | Redirect router | ✓ (Not direct link) |
-| `login` | GET login page | ? (Not visible) |
+| Route Name            | Purpose             | Status              |
+| --------------------- | ------------------- | ------------------- |
+| `delete_jadwal_kerja` | DELETE jadwal       | ✓ (Called via JS)   |
+| `toggle_status_staf`  | PATCH toggle status | ✓ (Called via JS)   |
+| `dashboard`           | Redirect router     | ✓ (Not direct link) |
+| `login`               | GET login page      | ? (Not visible)     |
 
 ---
 
 ## Summary Table
 
-| Category | Count | Status |
-|----------|-------|--------|
-| Total defined routes | 65 | - |
-| Routes using `route()` helper correctly | 52 | ✅ |
-| Routes using raw URLs | 2 | ⚠️ |
-| Routes defined but not used | ~11 | ℹ️ |
-| Route mismatches found | 0 | ✅ |
+| Category                                | Count | Status |
+| --------------------------------------- | ----- | ------ |
+| Total defined routes                    | 65    | -      |
+| Routes using `route()` helper correctly | 52    | ✅     |
+| Routes using raw URLs                    | 2     | ⚠️     |
+| Routes defined but not used             | ~11   | ℹ️    |
+| Route mismatches found                  | 0     | ✅     |
 
 ---
 
 ## Recommendations
 
 ### Priority 1: Medium Risk
+
 1. **[admin/mengelola_barang/tampilan_barang.blade.php](resources/views/admin/mengelola_barang/tampilan_barang.blade.php#L510)** - Line 510
-   - Replace raw URL with `route()` helper for `hapus_barang`
-   
+    - Replace raw URL with `route()` helper for `hapus_barang`
 2. **[admin/mengelola_barang/tambah_barang.blade.php](resources/views/admin/mengelola_barang/tambah_barang.blade.php#L445)** - Line 445
-   - Replace raw URL with `route()` helper for `buat_kode_barang`
+    - Replace raw URL with `route()` helper for `buat_kode_barang`
 
 ### Result
+
 ✅ **All route names that use route() helper are CORRECT**  
 ✅ **All stok_opname routes use proper dot notation**  
 ⚠️ **2 routes use hardcoded URLs instead of route() helper** (recommend fixing)

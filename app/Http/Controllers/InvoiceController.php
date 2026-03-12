@@ -149,12 +149,21 @@ class InvoiceController extends Controller
             $userId        = auth()->id();
             $currentUser   = auth()->user();
 
-            $subtotalBarang = (float) ($request->subtotal_barang ?? 0);
-            $biayaJasa      = $kategori === 'jasa' ? (float) ($request->subtotal_jasa ?? 0) : 0;
-            $subtotal       = $subtotalBarang + $biayaJasa;
+            // Gunakan string untuk kalkulasi uang — hindari float
+            $subtotalBarang = $this->toDecimalString($request->subtotal_barang ?? '0');
+            $biayaJasa      = $kategori === 'jasa'
+                ? $this->toDecimalString($request->subtotal_jasa ?? '0')
+                : '0.00';
 
-            $diskon = max(0, (float) ($request->diskon ?? 0));
-            $pajak  = min(100, max(0, (int) ($request->pajak ?? 0)));
+            $subtotal = bcadd($subtotalBarang, $biayaJasa, 2);
+
+            $diskon = $this->toDecimalString($request->diskon ?? '0');
+            // Pastikan diskon tidak negatif
+            if (bccomp($diskon, '0', 2) < 0) {
+                $diskon = '0.00';
+            }
+
+            $pajak = min(100, max(0, (int) ($request->pajak ?? 0)));
 
             $invoice = Invoice::create([
                 'user_id'         => $userId,
@@ -208,8 +217,8 @@ class InvoiceController extends Controller
                 'kontak'         => $kontak,
                 'deskripsi'      => $deskripsi !== '' ? $deskripsi : '-',
                 'jumlah'         => '0',
-                'harga_satuan'   => 0,
-                'total'          => 0,
+                'harga_satuan'   => '0.00',
+                'total'          => '0.00',
                 'tipe_transaksi' => 'Jasa',
                 'diskon'         => $diskon,
                 'pajak'          => $pajak,
@@ -243,7 +252,7 @@ class InvoiceController extends Controller
     private function simpanItemJasa(
         int     $invoiceId,
         string  $jasaNama,
-        float   $biayaJasa,
+        string  $biayaJasa,
         ?string $namaPelanggan,
         ?string $kontak
     ): void {
@@ -282,8 +291,11 @@ class InvoiceController extends Controller
                 );
             }
 
-            $totalItem   = (float) ($item['total'] ?? 0);
-            $hargaSatuan = $qty > 0 ? $totalItem / $qty : (float) $barang->harga_jual;
+            // Gunakan string untuk kalkulasi — hindari float
+            $totalItem   = $this->toDecimalString($item['total'] ?? '0');
+            $hargaSatuan = $qty > 0
+                ? bcdiv($totalItem, (string) $qty, 2)
+                : (string) $barang->harga_jual;
 
             DetailInvoice::create([
                 'invoice_id'            => $invoiceId,
@@ -305,20 +317,6 @@ class InvoiceController extends Controller
 
     /**
      * Dipanggil saat invoice dikonfirmasi Paid.
-     *
-     * ROOT CAUSE yang ditemukan:
-     * Barang dihapus → ON DELETE SET NULL → barang_id di detail_invoice jadi NULL.
-     * Query lama pakai whereNotNull('barang_id') → items kosong → validasi skip → Paid.
-     *
-     * FIX:
-     * - Ambil semua item Barang termasuk yang barang_id sudah NULL
-     * - TAHAP 1: cek barang_id NULL → throw Exception (barang dihapus)
-     * - TAHAP 2: cek stok cukup
-     * - TAHAP 3: eksekusi mutasi stok
-     *
-     * Semua snapshot (nama, kode, satuan) diambil dari detail_invoice,
-     * bukan dari master — sehingga perubahan data barang setelah invoice
-     * dibuat tidak mempengaruhi histori.
      */
     private function prosesStokDariInvoice(Invoice $invoice): void
     {
@@ -333,23 +331,18 @@ class InvoiceController extends Controller
         $usernameSnap = $riwayat?->username_snapshot ?? $invoice->user?->username ?? '-';
         $emailSnap    = $riwayat?->email_snapshot    ?? $invoice->user?->email    ?? '-';
 
-        // ── Ambil semua item Barang — TERMASUK yang barang_id sudah NULL ──────
         $items = $invoice->items()
             ->where('tipe_transaksi', 'Barang')
             ->where('jumlah', '>', '0')
             ->get();
 
-        // ════════════════════════════════════════════════════════════════════
-        // TAHAP 1 — Cek barang_id NULL (barang dihapus → ON DELETE SET NULL)
-        // ════════════════════════════════════════════════════════════════════
+        // ── TAHAP 1: Cek barang_id NULL (barang dihapus) ─────────────────────
         $barangDihapus = [];
-
         foreach ($items as $item) {
             if (is_null($item->barang_id)) {
                 $barangDihapus[] = $item->deskripsi ?? 'Barang tidak diketahui';
             }
         }
-
         if (!empty($barangDihapus)) {
             $daftar = implode(', ', array_map(fn($n) => "\"{$n}\"", $barangDihapus));
             throw new \Exception(
@@ -358,32 +351,23 @@ class InvoiceController extends Controller
             );
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // TAHAP 2 — Validasi stok mencukupi
-        // ════════════════════════════════════════════════════════════════════
+        // ── TAHAP 2: Validasi stok mencukupi ─────────────────────────────────
         $stokKurang = [];
-
         foreach ($items as $item) {
             $barang = Barang::find($item->barang_id);
             $qty    = (int) $item->jumlah;
-
             if (!$barang || (int) $barang->stok < $qty) {
                 $namaBarang   = $item->deskripsi ?? 'Barang tidak diketahui';
                 $stokTersedia = $barang ? (int) $barang->stok : 0;
                 $stokKurang[] = "{$namaBarang} (diminta: {$qty}, tersedia: {$stokTersedia})";
             }
         }
-
         if (!empty($stokKurang)) {
             $daftar = implode('; ', $stokKurang);
-            throw new \Exception(
-                "Konfirmasi gagal. Stok tidak mencukupi untuk: {$daftar}."
-            );
+            throw new \Exception("Konfirmasi gagal. Stok tidak mencukupi untuk: {$daftar}.");
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        // TAHAP 3 — Semua validasi lolos, eksekusi mutasi stok
-        // ════════════════════════════════════════════════════════════════════
+        // ── TAHAP 3: Eksekusi mutasi stok ────────────────────────────────────
         foreach ($items as $item) {
             $barang = Barang::find($item->barang_id);
             $qty    = (int) $item->jumlah;
@@ -417,10 +401,9 @@ class InvoiceController extends Controller
 
             $barang->update(['stok' => (string) $stokAkhir]);
 
-            // ── Semua snapshot diambil dari detail_invoice, bukan master ──────
-            $namaSnapshot = $item->deskripsi              ?? $barang->nama_barang;
-            $kodeSnapshot = $item->kode_barang_snapshot   ?? $barang->kode_barang;
-            $satuanSnapshot = $item->satuan_snapshot      ?? $barang->satuan;
+            $namaSnapshot   = $item->deskripsi            ?? $barang->nama_barang;
+            $kodeSnapshot   = $item->kode_barang_snapshot ?? $barang->kode_barang;
+            $satuanSnapshot = $item->satuan_snapshot       ?? $barang->satuan;
 
             $barangKeluar = BarangKeluar::create([
                 'user_id'              => $userId,
@@ -462,5 +445,33 @@ class InvoiceController extends Controller
 
         return redirect()->route('tampilan_konfirmasi_invoice')
             ->with('success', 'Invoice berhasil dihapus.');
+    }
+
+    // ── Helper: konversi input ke string desimal yang aman ───────────────────
+
+    /**
+     * Konversi nilai numerik dari request menjadi string desimal 2 angka di belakang koma.
+     * Menghindari (float) cast untuk mencegah floating point error.
+     *
+     * @param  mixed  $value
+     * @return string  Contoh: "150000.00"
+     */
+    private function toDecimalString(mixed $value): string
+    {
+        if (is_null($value) || $value === '') {
+            return '0.00';
+        }
+
+        // Jika sudah string numerik, pakai langsung
+        $str = (string) $value;
+
+        // Bersihkan karakter non-numerik kecuali titik dan tanda minus
+        $str = preg_replace('/[^0-9.\-]/', '', $str);
+
+        if (!is_numeric($str)) {
+            return '0.00';
+        }
+
+        return number_format((float) $str, 2, '.', '');
     }
 }
