@@ -238,10 +238,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [ManajemenStafController::class, 'updateStaf']
         )->name('update_staf');
 
-        Route::get('/detail_staf/{id}',
-            [ManajemenStafController::class, 'getDetailStaf']
-        )->name('detail_staf');
-
         Route::patch('/toggle_status_staf/{id}',
             [ManajemenStafController::class, 'toggleStatus']
         )->name('toggle_status_staf');

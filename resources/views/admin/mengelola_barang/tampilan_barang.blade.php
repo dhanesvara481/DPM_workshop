@@ -59,7 +59,7 @@
         <p class="text-sm text-amber-800">
           <strong>Ubah & Hapus barang dinonaktifkan</strong> — ada Sesi Stok Opname aktif
           (Tanggal: {{ $tglOpname }}, Status: {{ $statusOpname }}).
-          <a href="{{ route('daftarOpname) }}" class="underline font-semibold">Lihat opname</a>
+          <a href="{{ route('stok_opname.daftarOpname') }}" class="underline font-semibold">Lihat opname</a>
           dan selesaikan terlebih dahulu.
         </p>
       </div>

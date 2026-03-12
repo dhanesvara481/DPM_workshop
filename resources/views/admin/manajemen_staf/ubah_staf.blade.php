@@ -127,7 +127,7 @@
       {{-- Info staf (readonly summary) --}}
       <div class="px-5 sm:px-6 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
         <span>ID: <strong class="text-slate-700">{{ $staf->user_id ?? '-' }}</strong></span>
-        <span>Status DB: <strong class="text-slate-700">{{ $statusDB }}</strong></span>
+        <span>Status: <strong class="text-slate-700">{{ $statusDB }}</strong></span>
         <span>Bergabung: <strong class="text-slate-700">{{ $staf->created_at?->format('d M Y') ?? '-' }}</strong></span>
         <span>Diperbarui: <strong class="text-slate-700">{{ $staf->updated_at?->format('d M Y, H:i') ?? '-' }}</strong></span>
       </div>

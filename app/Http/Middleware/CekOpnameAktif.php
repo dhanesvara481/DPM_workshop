@@ -27,7 +27,7 @@ class CekOpnameAktif
             $tanggal = \Carbon\Carbon::parse($opnameAktif->tanggal_opname)->format('d M Y');
             $status  = $opnameAktif->status === 'draft' ? 'Draft' : 'Menunggu Persetujuan';
 
-            $pesan = "Transaksi stok dinonaktifkan sementara karena ada sesi Stok Opname aktif "
+            $pesan = "Pergerakan Stok dinonaktifkan sementara karena ada sesi Stok Opname aktif "
                    . "(Tanggal: {$tanggal}, Status: {$status}). "
                    . "Selesaikan atau batalkan sesi opname terlebih dahulu sebelum melakukan transaksi stok.";
 

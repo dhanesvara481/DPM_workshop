@@ -275,6 +275,9 @@
     {{-- JADWAL KERJA --}}
     @php
       $MAX_EVENTS_PER_DAY = $MAX_EVENTS_PER_DAY ?? 4;
+      
+      // Ganti ini: mulai dari Minggu 
+      $startOfWeek = now()->startOfWeek(\Carbon\Carbon::SUNDAY);
 
       $statusFor = function ($date) use ($events) {
         $ev = $events[$date] ?? [];
@@ -304,7 +307,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
         @for ($i = 0; $i < 7; $i++)
           @php
-            $d    = now()->addDays($i);
+            $d    = $startOfWeek->copy()->addDays($i);  // ← pakai $startOfWeek
             $key  = $d->format('Y-m-d');
             $info = $statusFor($key);
           @endphp

@@ -6,6 +6,7 @@
 @section('content')
 
 @php
+  $startOfWeek = now()->startOfWeek(\Carbon\Carbon::SUNDAY);
 
   $statusFor = function($date) use ($events) {
     $ev = $events[$date] ?? [];
@@ -20,6 +21,7 @@
 
     return ['label' => '—', 'class' => 'bg-slate-100 text-slate-700'];
   };
+  
 @endphp
 
 <section class="relative p-4 sm:p-6">
@@ -178,7 +180,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-sm">
         @for ($i = 0; $i < 7; $i++)
           @php
-            $d    = now()->addDays($i);
+            $d    = $startOfWeek->copy()->addDays($i);  
             $key  = $d->format('Y-m-d');
             $info = $statusFor($key);
           @endphp

@@ -206,7 +206,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 class="text-base font-semibold text-slate-900">Riwayat Barang Masuk</h2>
-            <p class="text-sm text-slate-500">Daftar transaksi stok masuk terbaru.</p>
+            <p class="text-sm text-slate-500">Daftar Stok masuk terbaru.</p>
           </div>
 
           <div class="w-full sm:w-[380px]">
