@@ -222,7 +222,7 @@
           <span class="min-w-0 truncate">Manajemen Staf</span>
         </a>
 
-        <a href="{{ route('stok_opname.index') }}" data-nav
+        <a href="{{ route('stok_opname.daftarOpname') }}" data-nav
            class="nav-item group mt-1 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
                   text-white/80 hover:bg-white/10 hover:text-white transition relative overflow-hidden
                   {{ request()->is('stok_opname*') ? 'is-active' : '' }}">

@@ -286,6 +286,19 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::delete('/stok_opname/{id}/hapus',
             [StokOpnameController::class, 'hapusOpname']
         )->name('stok_opname.hapusOpname');
+
+        //============== Profil Admin =================//
+        Route::get('/profil',
+            [ProfilController::class, 'getTampilanProfil']
+        )->name('tampilan_profil');
+
+        Route::get('/profil/edit',
+            [ProfilController::class, 'getEditProfil']
+        )->name('edit_profil');
+
+        Route::put('/profil/update',
+            [ProfilController::class, 'updateProfil']
+        )->name('update_profil');
     });
 
     /*
