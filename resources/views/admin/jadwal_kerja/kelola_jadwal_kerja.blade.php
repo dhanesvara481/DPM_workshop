@@ -495,6 +495,7 @@
     const year  = current.getFullYear();
     const month = current.getMonth();
 
+    // ini yg menentukan hari apa yg pertama di tampilan
     const first      = new Date(year, month, 1);
     const startDay   = first.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();

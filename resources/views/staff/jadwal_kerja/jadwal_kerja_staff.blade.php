@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="rounded-xl border border-slate-200 bg-white p-4">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <div class="text-sm font-semibold text-slate-900 truncate">${e.title || 'Jadwal'}</div>
+                <div class="text-sm font-semibold text-slate-900 truncate">${status.toLowerCase() === 'tutup' ? 'Hari Libur' : (e.title || 'Jadwal')}</div>
                 ${time}
               </div>
               <span class="pill ${status}">${String(status).toUpperCase()}</span>
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pill = document.createElement('div');
         pill.className   = `pill ${e.status || 'aktif'}`;
         pill.title       = e.title || '';
-        pill.textContent = e.title || 'Jadwal';
+        pill.textContent = (e.status?.toLowerCase() === 'tutup') ? 'Hari Libur' : (e.title || 'Jadwal');
         body.appendChild(pill);
       });
 
