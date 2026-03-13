@@ -36,11 +36,11 @@ class BarangSeeder extends Seeder
             ],
             [
                 'kode_barang' => 'BRG-00004',
-                'nama_barang' => 'Thermal Pad 1mm 10x10cm',
+                'nama_barang' => 'Thermal Pad Silicone 1mm 10x10cm',
                 'stok' => 0,
                 'satuan' => 'pcs',
-                'harga_beli' => 20000,
-                'harga_jual' => 30000,
+                'harga_beli' => 25000,
+                'harga_jual' => 35000,
             ],
             [
                 'kode_barang' => 'BRG-00005',
