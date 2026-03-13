@@ -12,11 +12,11 @@ class BarangSeeder extends Seeder
         DB::table('barang')->insert([
             [
                 'kode_barang' => 'BRG-00001',
-                'nama_barang' => 'Thermal Paste Arctic MX-4 4g',
+                'nama_barang' => 'THERMAL GRIZZLY Kryonaut Extreme 2g',
                 'stok' => 0,
                 'satuan' => 'pcs',
-                'harga_beli' => 45000,
-                'harga_jual' => 70000,
+                'harga_beli' => 260000,
+                'harga_jual' => 280000,
             ],
             [
                 'kode_barang' => 'BRG-00002',
@@ -28,7 +28,7 @@ class BarangSeeder extends Seeder
             ],
             [
                 'kode_barang' => 'BRG-00003',
-                'nama_barang' => 'Thermal Paste Generic MX4 (Servis) 1g',
+                'nama_barang' => 'Thermal Paste MX4 (Servis) 1g',
                 'stok' => 0,
                 'satuan' => 'pcs',
                 'harga_beli' => 10000,
