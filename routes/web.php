@@ -55,7 +55,8 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         [NotifikasiController::class, 'getTampilanNotifikasi']
     )->name('tampilan_notifikasi');
 
-    Route::get('/notifikasi/{id}',
+    // FIX: ganti {id} → {notifikasi} agar tidak konflik dengan route lain
+    Route::get('/notifikasi/{notifikasi}',
         [NotifikasiController::class, 'getDetailNotifikasi']
     )->name('detail_notifikasi');
 
@@ -247,6 +248,7 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [StokOpnameController::class, 'daftarOpname']
         )->name('stok_opname.daftarOpname');
 
+        // FIX: 'buat' dan 'simpan' HARUS di atas /{id} agar tidak tertangkap wildcard
         Route::get('/stok_opname/buat',
             [StokOpnameController::class, 'buatOpname']
         )->name('stok_opname.buatOpname');
@@ -339,7 +341,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::get('/staff/profil',
             [ProfilController::class, 'getTampilanProfilStaff']
         )->name('tampilan_profil_staff');
-
     });
 
 });

@@ -17,9 +17,9 @@ class NotifikasiController extends Controller
         return view($view, compact('notifs'));
     }
 
-    public function getDetailNotifikasi($id)
+    public function getDetailNotifikasi($notifikasi)
     {
-        $notif = Notifikasi::findOrFail($id);
+        $notif = Notifikasi::findOrFail($notifikasi);
 
         $view = auth()->user()->role === 'admin'
             ? 'admin.notifikasi.detail_notifikasi'
