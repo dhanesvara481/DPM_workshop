@@ -170,6 +170,14 @@ class BarangSeeder extends Seeder
                 'harga_beli' => 70000,
                 'harga_jual' => 90000,
             ],
+            [
+                'kode_barang' => 'BRG-00021',
+                'nama_barang' => 'PTM Thermal Grizzly 50x40x0.2mm',
+                'stok' => 0,
+                'satuan' => 'set',
+                'harga_beli' => 160000,
+                'harga_jual' => 180000,
+            ],
         ]);
     }
 }
