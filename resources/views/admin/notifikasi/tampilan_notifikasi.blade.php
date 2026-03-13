@@ -139,7 +139,7 @@
                 };
               @endphp
 
-              <a href="/detail_notifikasi/{{ $id }}"
+              <a href="{{ route('detail_notifikasi', $id) }}" 
                  class="group py-4 first:pt-0 flex gap-4 items-start hover:bg-slate-50/60 -mx-6 px-6 transition rounded-xl">
                 <div class="h-11 w-11 rounded-xl border grid place-items-center shrink-0 {{ $iconWrap }}">
                   {!! $iconSvg !!}
