@@ -51,7 +51,7 @@ class BarangController extends Controller
     {
         try {
             $validated = $request->validate([
-                'kode_barang' => 'required|string|max:50|unique:barang,kode_barang',
+                'kode_barang' => 'required|string|regex:/^BRG-\d{5}$/|unique:barang,kode_barang',
                 'nama_barang' => 'required|string|max:100',
                 'satuan'      => 'required|in:pcs,unit,set',
                 'harga_beli'  => 'required|min:0',
@@ -59,6 +59,7 @@ class BarangController extends Controller
             ], [
                 'kode_barang.required' => 'Kode barang wajib diisi',
                 'kode_barang.unique'   => 'Kode barang sudah digunakan',
+                'kode_barang.regex'    => 'Format kode barang harus BRG-XXXXX (5 digit angka).',
                 'nama_barang.required' => 'Nama barang wajib diisi',
                 'satuan.required'      => 'Satuan wajib dipilih',
                 'satuan.in'            => 'Satuan tidak valid',
@@ -115,7 +116,7 @@ class BarangController extends Controller
             $barang = Barang::findOrFail($id);
 
             $validated = $request->validate([
-                'kode_barang' => 'required|string|max:50|unique:barang,kode_barang,' . $id . ',barang_id',
+                'kode_barang' => 'required|string|regex:/^BRG-\d{5}$/|unique:barang,kode_barang,' . $id . ',barang_id',
                 'nama_barang' => 'required|string|max:100',
                 'satuan'      => 'required|in:pcs,unit,set',
                 'harga_beli'  => 'required|min:0',
@@ -123,6 +124,7 @@ class BarangController extends Controller
             ], [
                 'kode_barang.required' => 'Kode barang wajib diisi',
                 'kode_barang.unique'   => 'Kode barang sudah digunakan',
+                'kode_barang.regex'    => 'Format kode barang harus BRG-XXXXX (5 digit angka).',
                 'nama_barang.required' => 'Nama barang wajib diisi',
                 'satuan.required'      => 'Satuan wajib dipilih',
                 'satuan.in'            => 'Satuan tidak valid',
@@ -172,27 +174,35 @@ class BarangController extends Controller
      */
     public function buatKodeBarang()
     {
-        $kode = DB::transaction(function () {
-            $last = Barang::lockForUpdate()
-                ->orderBy('barang_id', 'desc')
-                ->first();
+        try {
+            $kode = DB::transaction(function () {
+                $maxNumber = Barang::lockForUpdate()
+                    ->get(['kode_barang'])
+                    ->map(function ($b) {
+                        preg_match('/^BRG-(\d{5})$/', $b->kode_barang, $match);
+                        return isset($match[1]) ? (int) $match[1] : 0;
+                    })
+                    ->max() ?? 0;
 
-            $number = 1;
+                if ($maxNumber >= 99999) {
+                    throw new \Exception('Kode barang sudah mencapai batas maksimal (BRG-99999).');
+                }
 
-            if ($last) {
-                preg_match('/(\d+)$/', $last->kode_barang, $match);
-                $number = isset($match[1]) ? ((int) $match[1] + 1) : $last->barang_id + 1;
-            }
+                $number = $maxNumber + 1;
 
-            do {
-                $kode = 'BRG-' . str_pad($number, 5, '0', STR_PAD_LEFT);
-                $number++;
-            } while (Barang::where('kode_barang', $kode)->exists());
+                do {
+                    $kode = 'BRG-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+                    $number++;
+                } while ($number <= 99999 && Barang::where('kode_barang', $kode)->exists());
 
-            return $kode;
-        });
+                return $kode;
+            });
 
-        return response()->json(['kode' => $kode]);
+            return response()->json(['kode' => $kode]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 
     // ── Private Helpers ──────────────────────────────────────────────────────
