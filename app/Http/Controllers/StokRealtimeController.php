@@ -20,10 +20,12 @@ class StokRealtimeController extends Controller
 
     public function getStokRealtime(Request $request)
     {
-        $q = $request->input('q');
+        $q      = $request->input('q');
+        $status = $request->input('status');
 
         $query = Barang::query()->orderBy('barang_id', 'asc');
 
+        // Filter pencarian kode / nama
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $like = "%{$q}%";
@@ -32,9 +34,34 @@ class StokRealtimeController extends Controller
             });
         }
 
-        $barangs = $query->get();
+        // Filter status stok
+        if ($status === 'Aman') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) >= ?', [self::STOK_MIN]);
+        } elseif ($status === 'Menipis') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) > 0')
+                  ->whereRaw('CAST(stok AS UNSIGNED) < ?', [self::STOK_MIN]);
+        } elseif ($status === 'Habis') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) = 0');
+        }
 
-        return view('admin.stok_realtime', compact('barangs', 'q'));
+        $barangs = $query->paginate(10)->withQueryString();
+
+        // ── Summary cards — selalu dari SEMUA barang (tidak terpengaruh filter) ──
+        $allBarangs   = Barang::all();
+        $summaryTotal = $allBarangs->count();
+        $summarySum   = $allBarangs->sum(fn ($b) => (int) $b->stok);
+        $summaryLow   = $allBarangs->filter(fn ($b) => (int) $b->stok > 0 && (int) $b->stok < self::STOK_MIN)->count();
+        $summaryOut   = $allBarangs->filter(fn ($b) => (int) $b->stok <= 0)->count();
+
+        return view('admin.stok_realtime', compact(
+            'barangs',
+            'q',
+            'status',
+            'summaryTotal',
+            'summarySum',
+            'summaryLow',
+            'summaryOut',
+        ));
     }
 
     public function print(Request $request)
@@ -48,10 +75,12 @@ class StokRealtimeController extends Controller
 
     public function getStokRealtimeStaff(Request $request)
     {
-        $q = $request->input('q');
+        $q      = $request->input('q');
+        $status = $request->input('status');
 
         $query = Barang::query()->orderBy('barang_id', 'asc');
 
+        // Filter pencarian kode / nama
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $like = "%{$q}%";
@@ -60,9 +89,34 @@ class StokRealtimeController extends Controller
             });
         }
 
-        $barangs = $query->get();
+        // Filter status stok
+        if ($status === 'Aman') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) >= ?', [self::STOK_MIN]);
+        } elseif ($status === 'Menipis') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) > 0')
+                  ->whereRaw('CAST(stok AS UNSIGNED) < ?', [self::STOK_MIN]);
+        } elseif ($status === 'Habis') {
+            $query->whereRaw('CAST(stok AS UNSIGNED) = 0');
+        }
 
-        return view('staff.stok_realtime.stok_realtime_staff', compact('barangs', 'q'));
+        $barangs = $query->paginate(10)->withQueryString();
+
+        // ── Summary cards — selalu dari SEMUA barang ──
+        $allBarangs   = Barang::all();
+        $summaryTotal = $allBarangs->count();
+        $summarySum   = $allBarangs->sum(fn ($b) => (int) $b->stok);
+        $summaryLow   = $allBarangs->filter(fn ($b) => (int) $b->stok > 0 && (int) $b->stok < self::STOK_MIN)->count();
+        $summaryOut   = $allBarangs->filter(fn ($b) => (int) $b->stok <= 0)->count();
+
+        return view('staff.stok_realtime.stok_realtime_staff', compact(
+            'barangs',
+            'q',
+            'status',
+            'summaryTotal',
+            'summarySum',
+            'summaryLow',
+            'summaryOut',
+        ));
     }
 
     public function printStaff()

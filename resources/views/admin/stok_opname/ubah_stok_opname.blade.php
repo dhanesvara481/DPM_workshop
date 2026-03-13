@@ -93,10 +93,11 @@
       </div>
 
       {{-- Desktop: tabel --}}
-      <div class="hidden sm:block border-x border-b border-slate-200 rounded-b-2xl overflow-x-auto bg-white/85 backdrop-blur shadow-[0_4px_20px_rgba(2,6,23,0.06)]">
+      <div class="hidden sm:block border-x border-slate-200 overflow-x-auto bg-white/85 backdrop-blur">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-slate-100 bg-slate-50">
+              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[60px]">No</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Kode</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Barang</th>
               <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Sat.</th>
@@ -110,8 +111,10 @@
             @foreach($opname->details as $i => $detail)
             <tr class="hover:bg-slate-50 transition barang-row"
                 data-nama="{{ strtolower($detail->nama_barang_snapshot) }}"
-                data-kode="{{ strtolower($detail->kode_barang_snapshot) }}">
+                data-kode="{{ strtolower($detail->kode_barang_snapshot) }}"
+                data-index="{{ $i }}">
               <input type="hidden" name="items[{{ $i }}][detail_id]" value="{{ $detail->detail_opname_id }}">
+              <td class="px-5 py-3 text-slate-400 text-xs row-no">{{ $i + 1 }}</td>
               <td class="px-5 py-3 text-slate-500 font-mono text-xs whitespace-nowrap">{{ $detail->kode_barang_snapshot }}</td>
               <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ $detail->nama_barang_snapshot }}</td>
               <td class="px-5 py-3 text-center text-slate-500 text-xs">{{ $detail->satuan_snapshot }}</td>
@@ -146,15 +149,16 @@
       </div>
 
       {{-- Mobile: card input --}}
-      <div class="sm:hidden border-x border-b border-slate-200 rounded-b-2xl bg-white/85 backdrop-blur shadow-[0_4px_20px_rgba(2,6,23,0.06)] divide-y divide-slate-100" id="mobileCards">
+      <div class="sm:hidden border-x border-slate-200 bg-white/85 backdrop-blur divide-y divide-slate-100" id="mobileCards">
         @foreach($opname->details as $i => $detail)
         <div class="p-4 barang-row"
              data-nama="{{ strtolower($detail->nama_barang_snapshot) }}"
-             data-kode="{{ strtolower($detail->kode_barang_snapshot) }}">
-          <input type="hidden" name="items[{{ $i }}][detail_id]" value="{{ $detail->detail_opname_id }}">
+             data-kode="{{ strtolower($detail->kode_barang_snapshot) }}"
+             data-index="{{ $i }}">
 
           <div class="flex items-start justify-between gap-2 mb-3">
             <div>
+              <p class="text-xs text-slate-400 mb-0.5">No. {{ $i + 1 }}</p>
               <p class="text-sm font-semibold text-slate-800">{{ $detail->nama_barang_snapshot }}</p>
               <p class="text-xs text-slate-400 font-mono">{{ $detail->kode_barang_snapshot }} · {{ $detail->satuan_snapshot }}</p>
             </div>
@@ -192,6 +196,14 @@
           </div>
         </div>
         @endforeach
+      </div>
+
+      {{-- PAGINATION BAR --}}
+      <div class="border-x border-b border-slate-200 rounded-b-2xl bg-white/85 backdrop-blur shadow-[0_4px_20px_rgba(2,6,23,0.06)]">
+        <div id="paginationWrap" class="px-6 py-4 flex items-center justify-between gap-3 flex-wrap">
+          <p id="paginationInfo" class="text-xs text-slate-500"></p>
+          <div id="paginationBtns" class="flex items-center gap-1"></div>
+        </div>
       </div>
 
       {{-- Tombol aksi --}}
@@ -250,16 +262,22 @@
 @push('scripts')
 <script>
 (function () {
-  const inputs  = document.querySelectorAll('.stok-fisik-input');
-  const sudahEl = document.getElementById('sudahDiisi');
-  const belumEl = document.getElementById('belumDiisi');
+  const PER_PAGE = 10;
+  let currentPage = 1;
+  let isSearching = false;
 
-  // ── Sanitize: hanya digit, hapus leading zero ─────────────────────────────
+  const inputs    = document.querySelectorAll('.stok-fisik-input:not([data-mobile="1"])');
+  const sudahEl   = document.getElementById('sudahDiisi');
+  const belumEl   = document.getElementById('belumDiisi');
+  const allRows     = Array.from(document.querySelectorAll('#tabelBody .barang-row'));
+  const allMobCards = Array.from(document.querySelectorAll('#mobileCards .barang-row'));
+
+  // ── Sanitize input ────────────────────────────────────────────────────────
   function sanitizeInput(inp) {
     const pos    = inp.selectionStart;
     const before = inp.value;
-    let raw = before.replace(/\D/g, '');                     // buang semua non-digit
-    if (raw.length > 1) raw = raw.replace(/^0+/, '') || '0'; // hapus leading zero
+    let raw = before.replace(/\D/g, '');
+    if (raw.length > 1) raw = raw.replace(/^0+/, '') || '0';
     if (before !== raw) {
       inp.value = raw;
       try { inp.setSelectionRange(Math.min(pos, raw.length), Math.min(pos, raw.length)); } catch (_) {}
@@ -311,9 +329,118 @@
     belumEl.textContent = seen.size - sudah;
   }
 
-  // ── Bind events ───────────────────────────────────────────────────────────
+  // ── CLIENT-SIDE PAGINATION ────────────────────────────────────────────────
+
+  // Rows yang sedang visible (setelah filter search)
+  function getVisibleRows() {
+    return allRows.filter(r => r.dataset.visible !== 'false');
+  }
+
+  function renderPage(page) {
+    currentPage = page;
+    const visible  = getVisibleRows();
+    const total    = visible.length;
+    const lastPage = Math.max(1, Math.ceil(total / PER_PAGE));
+    currentPage    = Math.min(currentPage, lastPage);
+
+    const start = (currentPage - 1) * PER_PAGE; // index dalam visible[]
+    const end   = start + PER_PAGE;
+
+    // Sembunyikan / tampilkan baris — baris tidak dalam search tetap hidden
+    allRows.forEach(r => {
+      if (r.dataset.visible === 'false') {
+        r.style.display = 'none';
+        return;
+      }
+      const idx = visible.indexOf(r);
+      // sync mobile card dengan index yang sama
+      const mobCard = allMobCards.find(c => c.dataset.index === r.dataset.index);
+      if (mobCard) mobCard.style.display = (r.dataset.visible !== 'false' && idx >= start && idx < end) ? '' : 'none';
+      r.style.display = (idx >= start && idx < end) ? '' : 'none';
+    });
+
+    // Update nomor urut pada kolom "No" sesuai halaman
+    visible.forEach((r, idx) => {
+      const noEl = r.querySelector('.row-no');
+      if (noEl) noEl.textContent = idx + 1;
+    });
+
+    renderPaginationUI(currentPage, lastPage, total);
+  }
+
+  function renderPaginationUI(page, lastPage, total) {
+    const infoEl = document.getElementById('paginationInfo');
+    const btnsEl = document.getElementById('paginationBtns');
+    const wrap   = document.getElementById('paginationWrap');
+
+    if (lastPage <= 1) {
+      wrap.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+
+    const firstItem = (page - 1) * PER_PAGE + 1;
+    const lastItem  = Math.min(page * PER_PAGE, total);
+    infoEl.textContent = `Menampilkan ${firstItem}–${lastItem} dari ${total} barang`;
+
+    btnsEl.innerHTML = '';
+
+    const btnClass      = 'h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm cursor-pointer select-none';
+    const btnDisabled   = 'h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed select-none';
+    const btnActive     = 'h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold select-none';
+
+    // Prev
+    const prev = document.createElement('span');
+    prev.innerHTML = '‹';
+    if (page <= 1) {
+      prev.className = btnDisabled;
+    } else {
+      prev.className = btnClass;
+      prev.addEventListener('click', () => renderPage(page - 1));
+    }
+    btnsEl.appendChild(prev);
+
+    // Page numbers (semua halaman)
+    for (let p = 1; p <= lastPage; p++) {
+      const btn = document.createElement('span');
+      btn.textContent = p;
+      btn.className   = p === page ? btnActive : btnClass;
+      if (p !== page) {
+        const _p = p;
+        btn.addEventListener('click', () => renderPage(_p));
+      }
+      btnsEl.appendChild(btn);
+    }
+
+    // Next
+    const next = document.createElement('span');
+    next.innerHTML = '›';
+    if (page >= lastPage) {
+      next.className = btnDisabled;
+    } else {
+      next.className = btnClass;
+      next.addEventListener('click', () => renderPage(page + 1));
+    }
+    btnsEl.appendChild(next);
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  document.getElementById('searchBarang').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    isSearching = q !== '';
+
+    allRows.forEach(r => {
+      const match = r.dataset.nama.includes(q) || r.dataset.kode.includes(q);
+      r.dataset.visible = match ? 'true' : 'false';
+      const mc = allMobCards.find(c => c.dataset.index === r.dataset.index);
+      if (mc) mc.dataset.visible = r.dataset.visible;
+    });
+
+    renderPage(1); // reset ke halaman 1 setelah search
+  });
+
+  // ── Bind input events ─────────────────────────────────────────────────────
   inputs.forEach(inp => {
-    // Blokir karakter non-angka sebelum masuk (-, +, e, ., koma, spasi)
     inp.addEventListener('keydown', e => {
       const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
       if (allowed.includes(e.key) || (e.key >= '0' && e.key <= '9')) return;
@@ -323,7 +450,11 @@
     inp.addEventListener('blur',  () => { sanitizeInput(inp); hitungSelisih(inp); updateCounter(); });
     hitungSelisih(inp);
   });
+
+  // Init: semua baris visible
+  allRows.forEach(r => r.dataset.visible = 'true');
   updateCounter();
+  renderPage(1);
 
   // ── Modal konfirmasi submit ───────────────────────────────────────────────
   const modalConfirm = document.getElementById('modalSubmitConfirm');
@@ -342,15 +473,11 @@
   });
 
   function doSubmit() {
-    document.getElementById('formStokFisik').addEventListener('submit', function handler(e) {
-      e.preventDefault();
-      this.removeEventListener('submit', handler);
-      // Disable input mobile agar tidak duplikat di POST
-      document.querySelectorAll('[data-mobile="1"]').forEach(el => el.disabled = true);
-      fetch(this.action, { method: 'POST', body: new FormData(this) })
-        .then(() => document.getElementById('formSubmit').submit());
-    });
-    document.getElementById('formStokFisik').dispatchEvent(new Event('submit'));
+    // Disable input mobile agar tidak duplikat di POST
+    document.querySelectorAll('[data-mobile="1"]').forEach(el => el.disabled = true);
+    // Tampilkan semua baris sebelum submit agar semua input ikut terkirim
+    allRows.forEach(r => r.style.display = '');
+    document.getElementById('formStokFisik').submit();
   }
 
   window.submitOpname = function () {
@@ -365,13 +492,6 @@
     }
   };
 
-  // ── Search ────────────────────────────────────────────────────────────────
-  document.getElementById('searchBarang').addEventListener('input', function () {
-    const q = this.value.toLowerCase();
-    document.querySelectorAll('.barang-row').forEach(row => {
-      row.style.display = (row.dataset.nama.includes(q) || row.dataset.kode.includes(q)) ? '' : 'none';
-    });
-  });
 })();
 </script>
 @endpush

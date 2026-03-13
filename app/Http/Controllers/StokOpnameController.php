@@ -192,9 +192,34 @@ class StokOpnameController extends Controller
         // Filter tampilan: semua / hanya_selisih
         $tampilkanSelisih = $request->boolean('hanya_selisih', false);
 
-        $details = $tampilkanSelisih
+        $detailsQuery = $tampilkanSelisih
             ? $opname->details->filter(fn($d) => $d->has_selisih)
             : $opname->details;
+
+        // Paginasi manual dari collection
+        $perPage     = 10;
+        $currentPage = (int) ($request->input('page', 1));
+        $currentPage = max(1, $currentPage);
+        $total       = $detailsQuery->count();
+        $lastPage    = max(1, (int) ceil($total / $perPage));
+        $currentPage = min($currentPage, $lastPage);
+
+        $details = new \Illuminate\Pagination\LengthAwarePaginator(
+            $detailsQuery->slice(($currentPage - 1) * $perPage, $perPage)->values(),
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path'  => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        // Statistik selalu dari SEMUA detail (bukan halaman ini saja)
+        $totalItem  = $opname->details->count();
+        $sudahDiisi = $opname->details->filter(fn($d) => !is_null($d->stok_fisik))->count();
+        $adaSelisih = $opname->details->filter(fn($d) => $d->has_selisih)->count();
+        $balance    = $opname->details->filter(fn($d) => !is_null($d->stok_fisik) && $d->selisih === 0)->count();
 
         // Rekap riwayat stok per barang yang selisih (untuk cross-check)
         $riwayatSelisih = [];
@@ -213,8 +238,9 @@ class StokOpnameController extends Controller
             }
         }
 
-        return view('admin.stok_opname.detail_stok_opname', compact(  
-            'opname', 'details', 'riwayatSelisih', 'tampilkanSelisih'
+        return view('admin.stok_opname.detail_stok_opname', compact(
+            'opname', 'details', 'riwayatSelisih', 'tampilkanSelisih',
+            'totalItem', 'sudahDiisi', 'adaSelisih', 'balance'
         ));
     }
 

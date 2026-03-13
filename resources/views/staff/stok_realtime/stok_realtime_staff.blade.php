@@ -66,33 +66,26 @@
 
   <div class="max-w-[1120px] mx-auto w-full">
 
-    @php
-      $totalItem = $barangs->count();
-      $sumStok   = $barangs->sum(fn ($b) => (int) $b->stok);
-      $stokLow   = $barangs->filter(fn ($b) => (int) $b->stok > 0 && (int) $b->stok < 25)->count();
-      $stokOut   = $barangs->filter(fn ($b) => (int) $b->stok <= 0)->count();
-    @endphp
-
     {{-- SUMMARY --}}
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
         <p class="text-xs text-slate-500">Total Item</p>
-        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalItem }}</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $summaryTotal }}</p>
         <p class="text-xs text-slate-400 mt-1">Jumlah jenis barang</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
         <p class="text-xs text-slate-500">Total Stok</p>
-        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $sumStok }}</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $summarySum }}</p>
         <p class="text-xs text-slate-400 mt-1">Akumulasi semua barang</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
         <p class="text-xs text-slate-500">Stok Menipis</p>
-        <p class="text-2xl font-bold text-amber-700 mt-1">{{ $stokLow }}</p>
+        <p class="text-2xl font-bold text-amber-700 mt-1">{{ $summaryLow }}</p>
         <p class="text-xs text-slate-400 mt-1">1 – 24 unit</p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_16px_44px_rgba(2,6,23,0.08)] p-5">
         <p class="text-xs text-slate-500">Barang Habis</p>
-        <p class="text-2xl font-bold text-rose-700 mt-1">{{ $stokOut }}</p>
+        <p class="text-2xl font-bold text-rose-700 mt-1">{{ $summaryOut }}</p>
         <p class="text-xs text-slate-400 mt-1">= 0 unit</p>
       </div>
     </div>
@@ -112,7 +105,8 @@
     </div>
 
     {{-- TOOLBAR --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <form method="GET" action="{{ route('stok_realtime_staff') }}" id="filterForm"
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
       <div class="w-full sm:w-[420px]">
         <div class="relative">
           <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
@@ -121,7 +115,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M11 19a8 8 0 100-16 8 8 0 000 16z"/>
             </svg>
           </span>
-          <input id="searchStok"
+          <input name="q"
                  type="text"
                  value="{{ $q ?? '' }}"
                  placeholder="Cari kode / nama barang..."
@@ -132,17 +126,22 @@
       </div>
 
       <div class="flex items-center gap-2">
-        {{-- Filter Status --}}
-        <select id="filterStatus"
+        <select name="status"
+                onchange="this.form.submit()"
                 class="h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm
                        focus:outline-none focus:ring-4 focus:ring-blue-900/10 focus:border-blue-900/30 transition">
           <option value="">Semua Status</option>
-          <option value="Aman">Aman</option>
-          <option value="Menipis">Menipis</option>
-          <option value="Habis">Habis</option>
+          <option value="Aman"    {{ ($status ?? '') === 'Aman'    ? 'selected' : '' }}>Aman</option>
+          <option value="Menipis" {{ ($status ?? '') === 'Menipis' ? 'selected' : '' }}>Menipis</option>
+          <option value="Habis"   {{ ($status ?? '') === 'Habis'   ? 'selected' : '' }}>Habis</option>
         </select>
 
-        <button onclick="window.open('{{ route('stok_realtime_staff.print') }}', '_blank')"
+        <button type="submit"
+                class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
+          Cari
+        </button>
+
+        <button onclick="window.open('{{ route('stok_realtime_staff.print') }}', '_blank')" type="button"
           class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold inline-flex items-center gap-2">
           <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -152,13 +151,13 @@
           Print
         </button>
       </div>
-    </div>
+    </form>
 
     {{-- TABLE --}}
     <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200
                 shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm" id="stokTable">
+        <table class="min-w-full text-sm">
           <thead class="bg-slate-50/90 sticky top-0 z-10 backdrop-blur">
             <tr class="text-left text-slate-600">
               <th class="px-5 py-4 font-semibold w-[70px]">No</th>
@@ -171,7 +170,7 @@
             </tr>
           </thead>
 
-          <tbody class="divide-y divide-slate-200" id="stokTbody">
+          <tbody class="divide-y divide-slate-200">
             @forelse ($barangs as $i => $b)
               @php
                 $stok = (int) $b->stok;
@@ -187,8 +186,8 @@
                     $cls   = 'bg-emerald-100 text-emerald-700 border-emerald-200';
                 }
               @endphp
-              <tr class="row-lift hover:bg-slate-50/70 transition" data-status="{{ $label }}">
-                <td class="px-5 py-4 text-slate-600">{{ $i + 1 }}</td>
+              <tr class="row-lift hover:bg-slate-50/70 transition">
+                <td class="px-5 py-4 text-slate-600">{{ $barangs->firstItem() + $loop->index }}</td>
                 <td class="px-5 py-4 font-semibold text-slate-900">{{ $b->kode_barang }}</td>
                 <td class="px-5 py-4 text-slate-700">{{ $b->nama_barang }}</td>
                 <td class="px-5 py-4 text-slate-700">{{ $b->satuan }}</td>
@@ -208,7 +207,7 @@
             @empty
               <tr>
                 <td colspan="7" class="px-5 py-10 text-center text-slate-400 text-sm">
-                  Belum ada data barang.
+                  Tidak ada barang yang cocok dengan pencarian / filter.
                 </td>
               </tr>
             @endforelse
@@ -216,10 +215,41 @@
         </table>
       </div>
 
-      {{-- Empty state setelah filter --}}
-      <div id="emptyFilter" class="hidden px-6 py-10 text-center text-sm text-slate-400">
-        Tidak ada barang yang cocok dengan pencarian / filter.
-      </div>
+      {{-- PAGINATION --}}
+      @if ($barangs->hasPages())
+        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap">
+          <p class="text-xs text-slate-500">
+            Menampilkan {{ $barangs->firstItem() }}–{{ $barangs->lastItem() }} dari {{ $barangs->total() }} barang
+          </p>
+          <div class="flex items-center gap-1">
+            {{-- Prev --}}
+            @if ($barangs->onFirstPage())
+              <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">‹</span>
+            @else
+              <a href="{{ $barangs->previousPageUrl() }}"
+                 class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">‹</a>
+            @endif
+
+            {{-- Pages --}}
+            @foreach ($barangs->getUrlRange(max(1, $barangs->currentPage() - 2), min($barangs->lastPage(), $barangs->currentPage() + 2)) as $page => $url)
+              @if ($page == $barangs->currentPage())
+                <span class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold">{{ $page }}</span>
+              @else
+                <a href="{{ $url }}"
+                   class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">{{ $page }}</a>
+              @endif
+            @endforeach
+
+            {{-- Next --}}
+            @if ($barangs->hasMorePages())
+              <a href="{{ $barangs->nextPageUrl() }}"
+                 class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">›</a>
+            @else
+              <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">›</span>
+            @endif
+          </div>
+        </div>
+      @endif
 
       <div class="px-6 py-4 border-t border-slate-200 text-xs text-slate-500">
         © DPM Workshop 2025
@@ -246,35 +276,11 @@
 
 @push('scripts')
 <script>
-  const searchInput  = document.getElementById('searchStok');
-  const filterSelect = document.getElementById('filterStatus');
-  const tbody        = document.getElementById('stokTbody');
-  const emptyFilter  = document.getElementById('emptyFilter');
-
-  function applyFilter() {
-    const q      = (searchInput?.value ?? '').trim().toLowerCase();
-    const status = (filterSelect?.value ?? '').toLowerCase();
-
-    let visible = 0;
-
-    Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-      const text      = (tr.innerText || '').toLowerCase();
-      const rowStatus = (tr.dataset.status || '').toLowerCase();
-
-      const matchQ      = !q      || text.includes(q);
-      const matchStatus = !status || rowStatus === status;
-
-      const show = matchQ && matchStatus;
-      tr.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
-
-    if (emptyFilter) {
-      emptyFilter.classList.toggle('hidden', visible > 0);
-    }
-  }
-
-  searchInput?.addEventListener('input',   applyFilter);
-  filterSelect?.addEventListener('change', applyFilter);
+  // Auto-submit saat mengetik (debounce 400ms)
+  let debounce;
+  document.querySelector('input[name="q"]')?.addEventListener('input', function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => this.form.submit(), 400);
+  });
 </script>
 @endpush

@@ -97,13 +97,7 @@
         </div>
       </div>
 
-      {{-- Statistik --}}
-      @php
-        $totalItem  = $opname->details->count();
-        $sudahDiisi = $opname->details->filter(fn($d) => !is_null($d->stok_fisik))->count();
-        $adaSelisih = $opname->details->filter(fn($d) => $d->has_selisih)->count();
-        $balance    = $opname->details->filter(fn($d) => !is_null($d->stok_fisik) && $d->selisih === 0)->count();
-      @endphp
+      {{-- Statistik — selalu dari SEMUA detail, bukan halaman ini saja --}}
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-center">
           <p class="text-2xl font-bold text-slate-800">{{ $totalItem }}</p>
@@ -182,6 +176,7 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-slate-100 bg-slate-50">
+              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[60px]">No</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Kode</th>
               <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Barang</th>
               <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Satuan</th>
@@ -197,6 +192,7 @@
           <tbody class="divide-y divide-slate-100">
             @forelse($details as $detail)
             <tr class="hover:bg-slate-50 transition {{ $detail->has_selisih ? 'bg-rose-50/30' : '' }}">
+              <td class="px-5 py-3 text-slate-400 text-xs">{{ $details->firstItem() + $loop->index }}</td>
               <td class="px-5 py-3 text-slate-500 font-mono text-xs">{{ $detail->kode_barang_snapshot }}</td>
               <td class="px-5 py-3 font-medium text-slate-800">{{ $detail->nama_barang_snapshot }}</td>
               <td class="px-5 py-3 text-center text-slate-500 text-xs">{{ $detail->satuan_snapshot }}</td>
@@ -228,7 +224,7 @@
             {{-- Riwayat mutasi (saat menunggu approval) --}}
             @if($opname->isMenungguApproval() && $detail->has_selisih && isset($riwayatSelisih[$detail->barang_id]))
             <tr class="bg-slate-50">
-              <td colspan="{{ $opname->isDisetujui() ? 8 : 7 }}" class="px-5 py-3">
+              <td colspan="{{ $opname->isDisetujui() ? 9 : 8 }}" class="px-5 py-3">
                 <div class="text-xs text-slate-600">
                   <p class="font-semibold text-slate-700 mb-2">Riwayat mutasi terakhir — {{ $detail->nama_barang_snapshot }}:</p>
                   <div class="space-y-1 max-h-32 overflow-y-auto">
@@ -250,7 +246,7 @@
 
             @empty
             <tr>
-              <td colspan="7" class="px-5 py-12 text-center text-slate-400 text-sm">
+              <td colspan="{{ $opname->isDisetujui() ? 9 : 8 }}" class="px-5 py-12 text-center text-slate-400 text-sm">
                 Tidak ada barang yang ditampilkan.
               </td>
             </tr>
@@ -327,6 +323,42 @@
         </div>
         @endforelse
       </div>
+
+      {{-- PAGINATION --}}
+      @if($details->hasPages())
+        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap">
+          <p class="text-xs text-slate-500">
+            Menampilkan {{ $details->firstItem() }}–{{ $details->lastItem() }} dari {{ $details->total() }} barang
+          </p>
+          <div class="flex items-center gap-1">
+            {{-- Prev --}}
+            @if ($details->onFirstPage())
+              <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">‹</span>
+            @else
+              <a href="{{ $details->previousPageUrl() }}"
+                 class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">‹</a>
+            @endif
+
+            {{-- Pages --}}
+            @foreach ($details->getUrlRange(max(1, $details->currentPage() - 2), min($details->lastPage(), $details->currentPage() + 2)) as $page => $url)
+              @if ($page == $details->currentPage())
+                <span class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold">{{ $page }}</span>
+              @else
+                <a href="{{ $url }}"
+                   class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">{{ $page }}</a>
+              @endif
+            @endforeach
+
+            {{-- Next --}}
+            @if ($details->hasMorePages())
+              <a href="{{ $details->nextPageUrl() }}"
+                 class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">›</a>
+            @else
+              <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">›</span>
+            @endif
+          </div>
+        </div>
+      @endif
 
     </div>
 

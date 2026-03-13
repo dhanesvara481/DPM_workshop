@@ -239,12 +239,42 @@
           @endforeach
         </div>
 
-        {{-- Pagination --}}
+        {{-- PAGINATION --}}
         @if($opnames->hasPages())
-          <div class="px-5 py-4 border-t border-slate-100">
-            {{ $opnames->withQueryString()->links() }}
+          <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap">
+            <p class="text-xs text-slate-500">
+              Menampilkan {{ $opnames->firstItem() }}–{{ $opnames->lastItem() }} dari {{ $opnames->total() }} sesi
+            </p>
+            <div class="flex items-center gap-1">
+              {{-- Prev --}}
+              @if ($opnames->onFirstPage())
+                <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">‹</span>
+              @else
+                <a href="{{ $opnames->previousPageUrl() }}"
+                   class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">‹</a>
+              @endif
+
+              {{-- Pages --}}
+              @foreach ($opnames->getUrlRange(max(1, $opnames->currentPage() - 2), min($opnames->lastPage(), $opnames->currentPage() + 2)) as $page => $url)
+                @if ($page == $opnames->currentPage())
+                  <span class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold">{{ $page }}</span>
+                @else
+                  <a href="{{ $url }}"
+                     class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">{{ $page }}</a>
+                @endif
+              @endforeach
+
+              {{-- Next --}}
+              @if ($opnames->hasMorePages())
+                <a href="{{ $opnames->nextPageUrl() }}"
+                   class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">›</a>
+              @else
+                <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">›</span>
+              @endif
+            </div>
           </div>
         @endif
+
       @endif
     </div>
 
