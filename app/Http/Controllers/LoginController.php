@@ -30,12 +30,18 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Coba autentikasi dengan username + password
         if (Auth::attempt(
             ['username' => $credentials['username'], 'password' => $credentials['password']],
             $request->boolean('remember')
         )) {
-            // Cek status akun (aktif / nonaktif)
+            // Cek case-sensitive secara manual
+            if (Auth::user()->username !== $credentials['username']) {
+                Auth::logout();
+                return back()
+                    ->withInput($request->only('username'))
+                    ->with('error', 'Username atau password salah.');
+            }
+
             if (Auth::user()->status === 'nonaktif') {
                 Auth::logout();
                 return back()
@@ -44,7 +50,6 @@ class LoginController extends Controller
             }
 
             $request->session()->regenerate();
-
             return redirect()->intended(route('tampilan_dashboard'));
         }
 
@@ -52,7 +57,6 @@ class LoginController extends Controller
             ->withInput($request->only('username'))
             ->with('error', 'Username atau password salah.');
     }
-
     /**
      * Logout.
      */
