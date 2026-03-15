@@ -50,9 +50,19 @@ class BarangController extends Controller
     public function simpanBarang(Request $request)
     {
         try {
+            // Trim nama_barang sebelum validasi agar spasi tidak bypass unique check
+            $request->merge([
+                'nama_barang' => trim($request->nama_barang ?? ''),
+            ]);
+
             $validated = $request->validate([
                 'kode_barang' => 'required|string|regex:/^BRG-\d{5}$/|unique:barang,kode_barang',
-                'nama_barang' => 'required|string|max:100',
+                'nama_barang' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    \Illuminate\Validation\Rule::unique('barang', 'nama_barang'),
+                ],
                 'satuan'      => 'required|in:pcs,unit,set',
                 'harga_beli'  => 'required|min:0',
                 'harga_jual'  => 'required|min:0',
@@ -61,6 +71,7 @@ class BarangController extends Controller
                 'kode_barang.unique'   => 'Kode barang sudah digunakan',
                 'kode_barang.regex'    => 'Format kode barang harus BRG-XXXXX (5 digit angka).',
                 'nama_barang.required' => 'Nama barang wajib diisi',
+                'nama_barang.unique'   => 'Nama barang sudah digunakan, gunakan nama yang berbeda.',
                 'satuan.required'      => 'Satuan wajib dipilih',
                 'satuan.in'            => 'Satuan tidak valid',
                 'harga_beli.required'  => 'Harga beli wajib diisi',
@@ -115,9 +126,20 @@ class BarangController extends Controller
         try {
             $barang = Barang::findOrFail($id);
 
+            // Trim nama_barang sebelum validasi agar spasi tidak bypass unique check
+            $request->merge([
+                'nama_barang' => trim($request->nama_barang ?? ''),
+            ]);
+
             $validated = $request->validate([
                 'kode_barang' => 'required|string|regex:/^BRG-\d{5}$/|unique:barang,kode_barang,' . $id . ',barang_id',
-                'nama_barang' => 'required|string|max:100',
+                'nama_barang' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    \Illuminate\Validation\Rule::unique('barang', 'nama_barang')
+                        ->ignore($id, 'barang_id'),
+                ],
                 'satuan'      => 'required|in:pcs,unit,set',
                 'harga_beli'  => 'required|min:0',
                 'harga_jual'  => 'required|min:0',
@@ -126,6 +148,7 @@ class BarangController extends Controller
                 'kode_barang.unique'   => 'Kode barang sudah digunakan',
                 'kode_barang.regex'    => 'Format kode barang harus BRG-XXXXX (5 digit angka).',
                 'nama_barang.required' => 'Nama barang wajib diisi',
+                'nama_barang.unique'   => 'Nama barang sudah digunakan, gunakan nama yang berbeda.',
                 'satuan.required'      => 'Satuan wajib dipilih',
                 'satuan.in'            => 'Satuan tidak valid',
                 'harga_beli.required'  => 'Harga beli wajib diisi',
