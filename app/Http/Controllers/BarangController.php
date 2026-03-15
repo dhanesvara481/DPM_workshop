@@ -132,13 +132,17 @@ class BarangController extends Controller
             ]);
 
             $validated = $request->validate([
-                'kode_barang' => 'required|string|regex:/^BRG-\d{5}$/|unique:barang,kode_barang,' . $id . ',barang_id',
+                'kode_barang' => [
+                    'required',
+                    'string',
+                    'regex:/^BRG-\d{5}$/',
+                    \Illuminate\Validation\Rule::unique('barang', 'kode_barang')->ignore($id, 'barang_id'),
+                ],
                 'nama_barang' => [
                     'required',
                     'string',
                     'max:100',
-                    \Illuminate\Validation\Rule::unique('barang', 'nama_barang')
-                        ->ignore($id, 'barang_id'),
+                    \Illuminate\Validation\Rule::unique('barang', 'nama_barang')->ignore($id, 'barang_id'),
                 ],
                 'satuan'      => 'required|in:pcs,unit,set',
                 'harga_beli'  => 'required|min:0',
