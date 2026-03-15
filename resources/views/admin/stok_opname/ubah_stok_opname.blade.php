@@ -77,7 +77,7 @@
       </div>
     </div>
 
-    {{-- Form --}}
+    {{-- Form simpan draft --}}
     <form method="POST" action="{{ route('stok_opname.updateOpname', $opname->opname_id) }}" id="formStokFisik">
       @csrf
 
@@ -128,8 +128,7 @@
                        data-sistem="{{ $detail->stok_sistem }}" data-row="{{ $i }}">
               </td>
               <td class="px-5 py-3 text-center">
-                <span id="selisih-{{ $i }}" class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold
-                  {{ !is_null($detail->stok_fisik)
+                <span id="selisih-{{ $i }}" class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ !is_null($detail->stok_fisik)
                     ? ($detail->selisih > 0 ? 'bg-blue-100 text-blue-700' : ($detail->selisih < 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'))
                     : 'bg-slate-100 text-slate-400' }}">
                   {{ !is_null($detail->stok_fisik) ? $detail->selisih_label : '—' }}
@@ -208,7 +207,8 @@
 
       {{-- Tombol aksi --}}
       <div class="mt-5 flex flex-wrap items-center gap-3">
-        <button type="submit"
+        {{-- FIX: type="button" + onclick="saveDraft()" agar tidak konflik dengan submitOpname() --}}
+        <button type="button" onclick="saveDraft()"
                 class="h-10 px-5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 transition shadow-sm">
           Simpan Draft
         </button>
@@ -223,7 +223,7 @@
       </div>
     </form>
 
-    {{-- Form submit terpisah --}}
+    {{-- Form submit approval terpisah --}}
     <form id="formSubmit" method="POST" action="{{ route('stok_opname.submitOpname', $opname->opname_id) }}" class="hidden">
       @csrf
     </form>
@@ -264,11 +264,10 @@
 (function () {
   const PER_PAGE = 10;
   let currentPage = 1;
-  let isSearching = false;
 
-  const inputs    = document.querySelectorAll('.stok-fisik-input:not([data-mobile="1"])');
-  const sudahEl   = document.getElementById('sudahDiisi');
-  const belumEl   = document.getElementById('belumDiisi');
+  const inputs      = document.querySelectorAll('.stok-fisik-input:not([data-mobile="1"])');
+  const sudahEl     = document.getElementById('sudahDiisi');
+  const belumEl     = document.getElementById('belumDiisi');
   const allRows     = Array.from(document.querySelectorAll('#tabelBody .barang-row'));
   const allMobCards = Array.from(document.querySelectorAll('#mobileCards .barang-row'));
 
@@ -330,8 +329,6 @@
   }
 
   // ── CLIENT-SIDE PAGINATION ────────────────────────────────────────────────
-
-  // Rows yang sedang visible (setelah filter search)
   function getVisibleRows() {
     return allRows.filter(r => r.dataset.visible !== 'false');
   }
@@ -343,23 +340,23 @@
     const lastPage = Math.max(1, Math.ceil(total / PER_PAGE));
     currentPage    = Math.min(currentPage, lastPage);
 
-    const start = (currentPage - 1) * PER_PAGE; // index dalam visible[]
+    const start = (currentPage - 1) * PER_PAGE;
     const end   = start + PER_PAGE;
 
-    // Sembunyikan / tampilkan baris — baris tidak dalam search tetap hidden
     allRows.forEach(r => {
       if (r.dataset.visible === 'false') {
         r.style.display = 'none';
+        const mc = allMobCards.find(c => c.dataset.index === r.dataset.index);
+        if (mc) mc.style.display = 'none';
         return;
       }
-      const idx = visible.indexOf(r);
-      // sync mobile card dengan index yang sama
-      const mobCard = allMobCards.find(c => c.dataset.index === r.dataset.index);
-      if (mobCard) mobCard.style.display = (r.dataset.visible !== 'false' && idx >= start && idx < end) ? '' : 'none';
-      r.style.display = (idx >= start && idx < end) ? '' : 'none';
+      const idx     = visible.indexOf(r);
+      const visible_ = idx >= start && idx < end;
+      r.style.display = visible_ ? '' : 'none';
+      const mc = allMobCards.find(c => c.dataset.index === r.dataset.index);
+      if (mc) mc.style.display = visible_ ? '' : 'none';
     });
 
-    // Update nomor urut pada kolom "No" sesuai halaman
     visible.forEach((r, idx) => {
       const noEl = r.querySelector('.row-no');
       if (noEl) noEl.textContent = idx + 1;
@@ -373,10 +370,7 @@
     const btnsEl = document.getElementById('paginationBtns');
     const wrap   = document.getElementById('paginationWrap');
 
-    if (lastPage <= 1) {
-      wrap.classList.add('hidden');
-      return;
-    }
+    if (lastPage <= 1) { wrap.classList.add('hidden'); return; }
     wrap.classList.remove('hidden');
 
     const firstItem = (page - 1) * PER_PAGE + 1;
@@ -384,59 +378,41 @@
     infoEl.textContent = `Menampilkan ${firstItem}–${lastItem} dari ${total} barang`;
 
     btnsEl.innerHTML = '';
+    const btnClass   = 'h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm cursor-pointer select-none';
+    const btnDisabled= 'h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed select-none';
+    const btnActive  = 'h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold select-none';
 
-    const btnClass      = 'h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm cursor-pointer select-none';
-    const btnDisabled   = 'h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed select-none';
-    const btnActive     = 'h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold select-none';
-
-    // Prev
     const prev = document.createElement('span');
     prev.innerHTML = '‹';
-    if (page <= 1) {
-      prev.className = btnDisabled;
-    } else {
-      prev.className = btnClass;
-      prev.addEventListener('click', () => renderPage(page - 1));
-    }
+    prev.className = page <= 1 ? btnDisabled : btnClass;
+    if (page > 1) prev.addEventListener('click', () => renderPage(page - 1));
     btnsEl.appendChild(prev);
 
-    // Page numbers (semua halaman)
     for (let p = 1; p <= lastPage; p++) {
       const btn = document.createElement('span');
       btn.textContent = p;
       btn.className   = p === page ? btnActive : btnClass;
-      if (p !== page) {
-        const _p = p;
-        btn.addEventListener('click', () => renderPage(_p));
-      }
+      if (p !== page) { const _p = p; btn.addEventListener('click', () => renderPage(_p)); }
       btnsEl.appendChild(btn);
     }
 
-    // Next
     const next = document.createElement('span');
     next.innerHTML = '›';
-    if (page >= lastPage) {
-      next.className = btnDisabled;
-    } else {
-      next.className = btnClass;
-      next.addEventListener('click', () => renderPage(page + 1));
-    }
+    next.className = page >= lastPage ? btnDisabled : btnClass;
+    if (page < lastPage) next.addEventListener('click', () => renderPage(page + 1));
     btnsEl.appendChild(next);
   }
 
   // ── Search ────────────────────────────────────────────────────────────────
   document.getElementById('searchBarang').addEventListener('input', function () {
     const q = this.value.toLowerCase().trim();
-    isSearching = q !== '';
-
     allRows.forEach(r => {
       const match = r.dataset.nama.includes(q) || r.dataset.kode.includes(q);
       r.dataset.visible = match ? 'true' : 'false';
       const mc = allMobCards.find(c => c.dataset.index === r.dataset.index);
       if (mc) mc.dataset.visible = r.dataset.visible;
     });
-
-    renderPage(1); // reset ke halaman 1 setelah search
+    renderPage(1);
   });
 
   // ── Bind input events ─────────────────────────────────────────────────────
@@ -451,10 +427,23 @@
     hitungSelisih(inp);
   });
 
-  // Init: semua baris visible
   allRows.forEach(r => r.dataset.visible = 'true');
   updateCounter();
   renderPage(1);
+
+  // ── Helper: siapkan semua input sebelum submit ────────────────────────────
+  function prepareSubmit() {
+    // Disable input mobile agar tidak duplikat di POST
+    document.querySelectorAll('[data-mobile="1"]').forEach(el => el.disabled = true);
+    // Tampilkan semua baris agar semua hidden input ikut terkirim
+    allRows.forEach(r => r.style.display = '');
+  }
+
+  // ── FIX: saveDraft() → submit formStokFisik (simpan draft) ───────────────
+  window.saveDraft = function () {
+    prepareSubmit();
+    document.getElementById('formStokFisik').submit();
+  };
 
   // ── Modal konfirmasi submit ───────────────────────────────────────────────
   const modalConfirm = document.getElementById('modalSubmitConfirm');
@@ -472,14 +461,13 @@
     if (e.key === 'Escape' && !modalConfirm.classList.contains('hidden')) closeModal();
   });
 
+  // ── FIX: doSubmit() → submit formSubmit (approval) ───────────────────────
   function doSubmit() {
-    // Disable input mobile agar tidak duplikat di POST
-    document.querySelectorAll('[data-mobile="1"]').forEach(el => el.disabled = true);
-    // Tampilkan semua baris sebelum submit agar semua input ikut terkirim
-    allRows.forEach(r => r.style.display = '');
-    document.getElementById('formStokFisik').submit();
+    prepareSubmit();
+    document.getElementById('formSubmit').submit(); // ← submit ke submitOpname route
   }
 
+  // ── FIX: submitOpname() — cek belum diisi lalu submit ke approval ─────────
   window.submitOpname = function () {
     const belum = parseInt(belumEl.textContent);
     if (belum > 0) {
