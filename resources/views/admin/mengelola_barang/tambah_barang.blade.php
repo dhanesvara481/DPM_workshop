@@ -56,7 +56,7 @@
     <div class="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 shadow-[0_18px_48px_rgba(2,6,23,0.10)] overflow-hidden">
       <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
         <div>
-          <p class="text-sm font-semibold text-slate-900">Form Barang</p>
+          <p class="text-sm font-semibold text-slate-900">Form Tambah Barang</p>
           <p class="text-xs text-slate-500">Pastikan data benar sebelum disimpan.</p>
         </div>
 

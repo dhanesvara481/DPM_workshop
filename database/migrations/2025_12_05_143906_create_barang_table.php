@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('barang', function (Blueprint $table) {
             $table->id('barang_id');
             $table->string('kode_barang', 50)->unique();
-            $table->string('nama_barang', 100);
+            $table->string('nama_barang', 100)->unique();
             $table->string('stok', 10);
             $table->enum('satuan', ['pcs', 'unit', 'set']);
             $table->decimal('harga_beli',12, 2);
