@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Schema;
  * detail_stok_opname : per-barang dalam satu sesi
  *
  * Flow:
- *  1. Admin buat sesi → status: draft
- *  2. Admin input stok_fisik per barang → selisih dihitung otomatis
- *  3. Admin submit → status: menunggu_approval
- *  4. Admin approve → status: disetujui → stok diupdate + riwayat dicatat
- *     atau tolak   → status: ditolak
+ *  1. Admin buat sesi + assign staff → status: draft → stok freeze otomatis
+ *  2. Staff yang di-assign input stok_fisik per barang → selisih dihitung otomatis
+ *  3. Staff submit → status: menunggu_approval
+ *  4. Admin approve → status: disetujui → stok diupdate + freeze dicabut
+ *     atau tolak    → status: ditolak   → stok tidak berubah + freeze dicabut
  */
 return new class extends Migration
 {
@@ -30,6 +30,14 @@ return new class extends Migration
             $table->foreign('user_id')
                   ->references('user_id')->on('user')
                   ->onDelete('set null');
+
+            // Staff yang di-assign untuk mengisi stok fisik
+            // Nullable — kalau null berarti admin sendiri yang isi
+            $table->unsignedBigInteger('assigned_to')->nullable();
+            $table->foreign('assigned_to')
+                  ->references('user_id')->on('user')
+                  ->onDelete('set null');
+            $table->string('assignee_username_snapshot', 20)->nullable();
 
             $table->date('tanggal_opname');
             $table->string('keterangan', 255)->nullable();

@@ -66,7 +66,7 @@
       <div class="mb-5">
         <h2 class="text-lg font-bold text-slate-800">Buat Sesi Stok Opname</h2>
         <p class="text-sm text-slate-500 mt-1">
-          Sistem akan menyimpan snapshot stok semua barang saat ini sebagai acuan perbandingan.
+          Sistem akan menyimpan snapshot stok semua barang saat ini. Kamu bisa assign staff untuk mengisi stok fisik.
         </p>
       </div>
 
@@ -88,6 +88,36 @@
           @enderror
         </div>
 
+        {{-- Assign Staff --}}
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            Assign ke Staff
+            <span class="text-slate-400 font-normal text-xs ml-1">(opsional — biarkan kosong jika admin sendiri yang isi)</span>
+          </label>
+          <select name="assigned_to"
+                  class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800
+                         focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent
+                         @error('assigned_to') border-rose-400 @enderror">
+            <option value="">— Admin isi sendiri —</option>
+            @foreach($staffList as $staff)
+              <option value="{{ $staff->user_id }}" {{ old('assigned_to') == $staff->user_id ? 'selected' : '' }}>
+                {{ $staff->username }}
+              </option>
+            @endforeach
+          </select>
+          @error('assigned_to')
+            <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
+          @enderror
+          {{-- Info box tergantung pilihan --}}
+          <div id="infoAssign" class="hidden mt-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-700">
+            Staff yang dipilih akan mendapat tugas mengisi stok fisik dan melakukan submit untuk approval.
+            Admin tetap yang melakukan approve/tolak.
+          </div>
+          <div id="infoAdmin" class="mt-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-500">
+            Admin akan mengisi stok fisik dan submit langsung.
+          </div>
+        </div>
+
         {{-- Keterangan --}}
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1.5">Keterangan</label>
@@ -101,23 +131,28 @@
           @enderror
         </div>
 
-        {{-- Info --}}
+        {{-- Info alur --}}
         <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
-          <p class="font-medium text-slate-700 mb-2">Yang akan terjadi setelah klik Buat:</p>
-          <ul class="space-y-1.5 text-slate-500 text-xs">
+          <p class="font-medium text-slate-700 mb-2">Alur proses:</p>
+          <ol class="space-y-1.5 text-slate-500 text-xs list-none">
             <li class="flex items-start gap-2">
-              <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0"></span>
-              Semua barang beserta stok sistem saat ini akan di-snapshot
+              <span class="mt-0.5 h-4 w-4 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold grid place-items-center shrink-0">1</span>
+              Admin buat sesi → stok semua barang di-freeze (tidak bisa ada transaksi stok)
             </li>
             <li class="flex items-start gap-2">
-              <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0"></span>
-              Kamu bisa mengisi stok fisik hasil hitung manual
+              <span class="mt-0.5 h-4 w-4 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold grid place-items-center shrink-0">2</span>
+              Staff yang di-assign (atau admin sendiri) input stok fisik hasil hitung manual
             </li>
             <li class="flex items-start gap-2">
-              <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 shrink-0"></span>
-              Sistem menghitung selisih otomatis untuk setiap barang
+              <span class="mt-0.5 h-4 w-4 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold grid place-items-center shrink-0">3</span>
+              Staff/admin submit → status berubah jadi <em>Menunggu Approval</em>
             </li>
-          </ul>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 h-4 w-4 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold grid place-items-center shrink-0">4</span>
+              Admin approve → stok otomatis disesuaikan + freeze dicabut<br>
+              Admin tolak → stok tidak berubah, sesi bisa dihapus + freeze dicabut
+            </li>
+          </ol>
         </div>
 
         <div class="flex flex-wrap gap-3 pt-1">
@@ -135,5 +170,28 @@
 
   </div>
 </section>
+
+@push('scripts')
+<script>
+(function () {
+  const sel       = document.querySelector('select[name="assigned_to"]');
+  const infoAssign = document.getElementById('infoAssign');
+  const infoAdmin  = document.getElementById('infoAdmin');
+
+  function toggle() {
+    if (sel.value) {
+      infoAssign.classList.remove('hidden');
+      infoAdmin.classList.add('hidden');
+    } else {
+      infoAssign.classList.add('hidden');
+      infoAdmin.classList.remove('hidden');
+    }
+  }
+
+  sel.addEventListener('change', toggle);
+  toggle();
+})();
+</script>
+@endpush
 
 @endsection

@@ -55,7 +55,6 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         [NotifikasiController::class, 'getTampilanNotifikasi']
     )->name('tampilan_notifikasi');
 
-    // FIX: ganti {id} → {notifikasi} agar tidak konflik dengan route lain
     Route::get('/notifikasi/{notifikasi}',
         [NotifikasiController::class, 'getDetailNotifikasi']
     )->name('detail_notifikasi');
@@ -243,12 +242,12 @@ Route::middleware(['auth', 'check.status'])->group(function () {
             [ManajemenStafController::class, 'toggleStatus']
         )->name('toggle_status_staf');
 
-        //============== Stok Opname =================//
+        //============== Stok Opname (Admin) =================//
+        // PENTING: route statik (/buat, /simpan) HARUS di atas /{id} wildcard
         Route::get('/stok_opname',
             [StokOpnameController::class, 'daftarOpname']
         )->name('stok_opname.daftarOpname');
-
-        // FIX: 'buat' dan 'simpan' HARUS di atas /{id} agar tidak tertangkap wildcard
+        
         Route::get('/stok_opname/buat',
             [StokOpnameController::class, 'buatOpname']
         )->name('stok_opname.buatOpname');
@@ -297,6 +296,7 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::put('/profil/update',
             [ProfilController::class, 'updateProfil']
         )->name('update_profil');
+
     });
 
     /*
@@ -341,6 +341,30 @@ Route::middleware(['auth', 'check.status'])->group(function () {
         Route::get('/staff/profil',
             [ProfilController::class, 'getTampilanProfilStaff']
         )->name('tampilan_profil_staff');
+
+        //============== Stok Opname (Staff) =================//
+        // PENTING: route statik (/{id}/edit) HARUS di atas /{id} wildcard
+
+        Route::get('/stok_opname_staff',
+            [StokOpnameController::class, 'daftarOpnameStaff']
+        )->name('stok_opname.daftarOpnameStaff');
+
+        Route::get('/stok_opname_staff/{id}/edit',
+            [StokOpnameController::class, 'ubahOpnameStaff']
+        )->name('stok_opname.ubahOpnameStaff');
+
+        Route::post('/stok_opname_staff/{id}/update',
+            [StokOpnameController::class, 'updateOpnameStaff']
+        )->name('stok_opname.updateOpnameStaff');
+
+        Route::post('/stok_opname_staff/{id}/submit',
+            [StokOpnameController::class, 'submitOpnameStaff']
+        )->name('stok_opname.submitOpnameStaff');
+
+        Route::get('/stok_opname_staff/{id}',
+            [StokOpnameController::class, 'detailOpnameStaff']
+        )->name('stok_opname.detailOpnameStaff');
+
     });
 
 });

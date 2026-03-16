@@ -19,6 +19,9 @@ class StokOpname extends Model
         // snapshot pembuat
         'username_snapshot',
         'email_snapshot',
+        // staff yang di-assign
+        'assigned_to',
+        'assignee_username_snapshot',
         // approval
         'approved_by',
         'approver_username_snapshot',
@@ -38,6 +41,11 @@ class StokOpname extends Model
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to', 'user_id');
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by', 'user_id');
@@ -53,6 +61,11 @@ class StokOpname extends Model
     public function getNamaPembuatAttribute(): string
     {
         return $this->username_snapshot ?? $this->user?->username ?? '-';
+    }
+
+    public function getNamaAssigneeAttribute(): string
+    {
+        return $this->assignee_username_snapshot ?? $this->assignee?->username ?? '-';
     }
 
     public function getNamaApproverAttribute(): string
@@ -102,6 +115,27 @@ class StokOpname extends Model
     public function isDitolak(): bool
     {
         return $this->status === 'ditolak';
+    }
+
+    /**
+     * Apakah sesi ini di-assign ke staff tertentu (bukan admin sendiri).
+     */
+    public function isAssigned(): bool
+    {
+        return !is_null($this->assigned_to);
+    }
+
+    /**
+     * Apakah user tertentu boleh input stok fisik:
+     * - Kalau ada assigned_to → hanya staff yang di-assign
+     * - Kalau tidak ada assigned_to → siapapun admin
+     */
+    public function bisaDiisiOleh(int $userId): bool
+    {
+        if ($this->assigned_to) {
+            return $this->assigned_to === $userId;
+        }
+        return true;
     }
 
     /**

@@ -57,10 +57,12 @@
     @endif
     @if(session('error'))
       <div class="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-        <svg class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-        </svg>
         {{ session('error') }}
+      </div>
+    @endif
+    @if(session('info'))
+      <div class="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        {{ session('info') }}
       </div>
     @endif
 
@@ -103,7 +105,7 @@
       </form>
     </div>
 
-    {{-- Konten --}}
+    {{-- Tabel --}}
     <div class="rounded-2xl border border-slate-200 bg-white/85 backdrop-blur shadow-[0_4px_20px_rgba(2,6,23,0.06)] overflow-hidden">
 
       @if($opnames->isEmpty())
@@ -120,7 +122,7 @@
         </div>
       @else
 
-        {{-- Desktop: tabel --}}
+        {{-- Desktop --}}
         <div class="hidden sm:block overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
@@ -128,6 +130,7 @@
                 <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tanggal</th>
                 <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Keterangan</th>
                 <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dibuat Oleh</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Penanggung Jawab</th>
                 <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
                 <th class="px-5 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Selisih</th>
                 <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -140,11 +143,21 @@
                 <td class="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">
                   {{ $opname->tanggal_opname->format('d M Y') }}
                 </td>
-                <td class="px-5 py-4 text-slate-600 max-w-[180px] truncate">
+                <td class="px-5 py-4 text-slate-600 max-w-[150px] truncate">
                   {{ $opname->keterangan ?? '-' }}
                 </td>
                 <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
                   {{ $opname->nama_pembuat }}
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap">
+                  @if($opname->assigned_to)
+                    <span class="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                      <span class="h-5 w-5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold grid place-items-center shrink-0">S</span>
+                      {{ $opname->nama_assignee }}
+                    </span>
+                  @else
+                    <span class="text-slate-400 text-xs italic">Admin</span>
+                  @endif
                 </td>
                 <td class="px-5 py-4 text-center text-slate-700 font-medium">
                   {{ $opname->details_count }}
@@ -169,10 +182,17 @@
                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
                       Detail
                     </a>
-                    @if($opname->isDraft())
+                    {{-- Tombol isi stok hanya muncul jika tidak ada assignee dan masih draft --}}
+                    @if($opname->isDraft() && !$opname->assigned_to)
                       <a href="{{ route('stok_opname.ubahOpname', $opname->opname_id) }}"
                          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 transition">
                         Isi Stok
+                      </a>
+                    @endif
+                    @if($opname->isMenungguApproval())
+                      <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
+                         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 transition">
+                        Review
                       </a>
                     @endif
                     @if(in_array($opname->status, ['draft', 'ditolak']))
@@ -193,7 +213,7 @@
           </table>
         </div>
 
-        {{-- Mobile: card list --}}
+        {{-- Mobile --}}
         <div class="sm:hidden divide-y divide-slate-100">
           @foreach($opnames as $opname)
           <div class="p-4">
@@ -206,8 +226,11 @@
                 {{ $opname->status_label }}
               </span>
             </div>
-            <div class="flex items-center gap-4 text-xs text-slate-500 mb-3">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-3">
               <span>Oleh: <strong class="text-slate-700">{{ $opname->nama_pembuat }}</strong></span>
+              @if($opname->assigned_to)
+                <span>PJ: <strong class="text-blue-600">{{ $opname->nama_assignee }}</strong></span>
+              @endif
               <span>{{ $opname->details_count }} barang</span>
               @if($opname->jumlah_selisih_count > 0)
                 <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-medium">{{ $opname->jumlah_selisih_count }} selisih</span>
@@ -218,10 +241,16 @@
                  class="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
                 Detail
               </a>
-              @if($opname->isDraft())
+              @if($opname->isDraft() && !$opname->assigned_to)
                 <a href="{{ route('stok_opname.ubahOpname', $opname->opname_id) }}"
                    class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-700 transition">
                   Isi Stok
+                </a>
+              @endif
+              @if($opname->isMenungguApproval())
+                <a href="{{ route('stok_opname.detailOpname', $opname->opname_id) }}"
+                   class="inline-flex items-center px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 transition">
+                  Review
                 </a>
               @endif
               @if(in_array($opname->status, ['draft', 'ditolak']))
@@ -239,32 +268,26 @@
           @endforeach
         </div>
 
-        {{-- PAGINATION --}}
+        {{-- Pagination --}}
         @if($opnames->hasPages())
           <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap">
             <p class="text-xs text-slate-500">
               Menampilkan {{ $opnames->firstItem() }}–{{ $opnames->lastItem() }} dari {{ $opnames->total() }} sesi
             </p>
             <div class="flex items-center gap-1">
-              {{-- Prev --}}
               @if ($opnames->onFirstPage())
                 <span class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center text-slate-300 text-sm cursor-not-allowed">‹</span>
               @else
                 <a href="{{ $opnames->previousPageUrl() }}"
                    class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">‹</a>
               @endif
-
-              {{-- Pages --}}
               @foreach ($opnames->getUrlRange(max(1, $opnames->currentPage() - 2), min($opnames->lastPage(), $opnames->currentPage() + 2)) as $page => $url)
                 @if ($page == $opnames->currentPage())
                   <span class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-sm font-semibold">{{ $page }}</span>
                 @else
-                  <a href="{{ $url }}"
-                     class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">{{ $page }}</a>
+                  <a href="{{ $url }}" class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">{{ $page }}</a>
                 @endif
               @endforeach
-
-              {{-- Next --}}
               @if ($opnames->hasMorePages())
                 <a href="{{ $opnames->nextPageUrl() }}"
                    class="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition grid place-items-center text-slate-700 text-sm">›</a>
@@ -281,13 +304,13 @@
   </div>
 </section>
 
-{{-- Hidden form untuk hapus --}}
+{{-- Hidden form hapus --}}
 <form id="formHapusOpname" method="POST" action="" class="hidden">
   @csrf
   @method('DELETE')
 </form>
 
-{{-- MODAL HAPUS --}}
+{{-- Modal Hapus --}}
 <div id="hapusOpnameModal" class="fixed inset-0 z-[999] hidden">
   <div id="hapusOpnameOverlay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
   <div class="relative min-h-screen flex items-center justify-center p-4">
@@ -319,7 +342,7 @@
             </div>
           </div>
         </div>
-        <p class="text-xs text-slate-500">Seluruh data sesi opname beserta detail stok fisiknya akan <span class="font-semibold text-rose-600">dihapus permanen</span>.</p>
+        <p class="text-xs text-slate-500">Seluruh data sesi opname beserta detail stok fisiknya akan <span class="font-semibold text-rose-600">dihapus permanen</span>. Stok tidak akan berubah.</p>
         <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
           <button type="button" id="hapusOpnameCancel"
                   class="h-11 px-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition text-sm font-semibold">
