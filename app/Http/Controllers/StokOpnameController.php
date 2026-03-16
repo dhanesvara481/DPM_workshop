@@ -525,6 +525,11 @@ class StokOpnameController extends Controller
             }
         });
 
+        // FIX: kalau request AJAX (dari JS fetch), return JSON — jangan redirect
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['ok' => true, 'message' => 'Data berhasil disimpan.']);
+        }
+
         return back()->with('success', 'Data stok fisik berhasil disimpan.');
     }
 
